@@ -6,14 +6,14 @@ use sha2::{Digest, Sha256};
 
 #[test]
 fn test_model_spec_creation() {
-    let spec = gliner2_large();
-    assert_eq!(spec.name, "gliner2-large-q8.onnx");
+    let spec = gliner_large_v21_int8();
+    assert_eq!(spec.name, "gliner_large-v2.1/onnx/model_int8.onnx");
     assert!(!spec.url.is_empty());
     assert!(!spec.sha256.is_empty());
     assert!(spec.size_bytes > 0);
 
-    let spec2 = glirel_large();
-    assert_eq!(spec2.name, "glirel-large.onnx");
+    let spec2 = gliner_multitask_large();
+    assert_eq!(spec2.name, "gliner-multitask-large-v0.5/onnx/model.onnx");
 
     let spec3 = minilm_l6_v2();
     assert_eq!(spec3.name, "minilm-l6-v2.onnx");
@@ -28,9 +28,9 @@ fn test_cache_dir_creation() {
     assert!(cache_dir.exists());
 
     // model_path should be inside the cache dir
-    let spec = gliner2_large();
+    let spec = gliner_large_v21_int8();
     let path = mgr.model_path(&spec);
-    assert_eq!(path, cache_dir.join("gliner2-large-q8.onnx"));
+    assert_eq!(path, cache_dir.join("gliner_large-v2.1/onnx/model_int8.onnx"));
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn test_is_cached_returns_false_for_missing_model() {
     let tmp = tempfile::tempdir().unwrap();
     let mgr = ModelManager::with_cache_dir(tmp.path().to_path_buf()).unwrap();
 
-    let spec = gliner2_large();
+    let spec = gliner_large_v21_int8();
     assert!(!mgr.is_cached(&spec));
 }
 

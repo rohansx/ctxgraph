@@ -1,0 +1,35 @@
+# ctxgraph.toml — Extraction schema configuration
+#
+# Defines which entity types and relation types ctxgraph extracts from text.
+# Entity labels are passed to GLiNER at inference time (zero-shot).
+# Relation labels constrain which entity pairs can form edges.
+#
+# Copy this file to .ctxgraph/ctxgraph.toml to customize.
+
+[schema]
+name = "default"
+
+# Entity types: Label = "description (helps the model understand context)"
+[schema.entities]
+Person = "A person who made or was involved in a decision"
+Component = "A software component, tool, library, framework, or technology"
+Service = "A service, system, or application"
+Language = "A programming language"
+Database = "A database system"
+Infrastructure = "Infrastructure or DevOps tooling"
+Decision = "An explicit choice or judgment that was made"
+Constraint = "A limitation, requirement, or condition"
+Metric = "A quantifiable performance or business metric"
+Pattern = "A design pattern or architectural pattern"
+
+# Relation types: name = { head = [allowed types], tail = [allowed types], description = "..." }
+[schema.relations]
+chose = { head = ["Person"], tail = ["Component", "Database", "Language"], description = "person chose a technology" }
+rejected = { head = ["Person"], tail = ["Component", "Database"], description = "person rejected an alternative" }
+replaced = { head = ["Component", "Database"], tail = ["Component", "Database"], description = "one thing replaced another" }
+depends_on = { head = ["Service", "Component"], tail = ["Service", "Component", "Database"], description = "dependency relationship" }
+fixed = { head = ["Person", "Component"], tail = ["Component", "Service"], description = "something fixed an issue" }
+introduced = { head = ["Person"], tail = ["Component", "Pattern"], description = "person introduced a component" }
+deprecated = { head = ["Person", "Decision"], tail = ["Component", "Pattern"], description = "deprecation action" }
+caused = { head = ["Component", "Decision"], tail = ["Metric", "Constraint"], description = "causal relationship" }
+constrained_by = { head = ["Decision", "Component"], tail = ["Constraint"], description = "decision constrained by" }

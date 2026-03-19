@@ -5,10 +5,17 @@ use crate::error::{CtxGraphError, Result};
 use crate::storage::Storage;
 use crate::types::*;
 
+#[cfg(feature = "extract")]
+use ctxgraph_extract::pipeline::ExtractionPipeline;
+#[cfg(feature = "extract")]
+use ctxgraph_extract::schema::ExtractionSchema;
+
 pub struct Graph {
     storage: Storage,
     #[allow(dead_code)]
     db_path: PathBuf,
+    #[cfg(feature = "extract")]
+    pipeline: Option<ExtractionPipeline>,
 }
 
 impl Graph {
@@ -24,6 +31,8 @@ impl Graph {
         Ok(Self {
             storage,
             db_path: db_path.to_path_buf(),
+            #[cfg(feature = "extract")]
+            pipeline: None,
         })
     }
 
@@ -43,7 +52,12 @@ impl Graph {
         fs::create_dir_all(&ctxgraph_dir)?;
 
         let storage = Storage::open(&db_path)?;
-        Ok(Self { storage, db_path })
+        Ok(Self {
+            storage,
+            db_path,
+            #[cfg(feature = "extract")]
+            pipeline: None,
+        })
     }
 
     /// Open in-memory database (for testing).
@@ -52,19 +66,136 @@ impl Graph {
         Ok(Self {
             storage,
             db_path: PathBuf::from(":memory:"),
+            #[cfg(feature = "extract")]
+            pipeline: None,
         })
+    }
+
+    /// Load the extraction pipeline from models in the given directory.
+    ///
+    /// Once loaded, `add_episode()` will automatically extract entities and relations.
+    /// Call this after `open()` or `init()` to enable extraction.
+    #[cfg(feature = "extract")]
+    pub fn load_extraction_pipeline(
+        &mut self,
+        models_dir: &Path,
+    ) -> Result<()> {
+        let pipeline = ExtractionPipeline::with_defaults(models_dir)
+            .map_err(|e| CtxGraphError::Extraction(e.to_string()))?;
+        self.pipeline = Some(pipeline);
+        Ok(())
+    }
+
+    /// Load the extraction pipeline with a custom schema.
+    #[cfg(feature = "extract")]
+    pub fn load_extraction_pipeline_with_schema(
+        &mut self,
+        models_dir: &Path,
+        schema: ExtractionSchema,
+        confidence_threshold: f64,
+    ) -> Result<()> {
+        let pipeline = ExtractionPipeline::new(schema, models_dir, confidence_threshold)
+            .map_err(|e| CtxGraphError::Extraction(e.to_string()))?;
+        self.pipeline = Some(pipeline);
+        Ok(())
+    }
+
+    /// Check if the extraction pipeline is loaded.
+    #[cfg(feature = "extract")]
+    pub fn has_extraction_pipeline(&self) -> bool {
+        self.pipeline.is_some()
     }
 
     // ── Core Operations ──
 
     /// Add an episode to the graph. Returns the episode ID and extraction results.
-    /// In v0.1, no automatic extraction happens — entities/edges must be added manually.
+    ///
+    /// If an extraction pipeline is loaded, entities and relations are automatically
+    /// extracted from the episode content and stored in the graph.
     pub fn add_episode(&self, episode: Episode) -> Result<EpisodeResult> {
         self.storage.insert_episode(&episode)?;
+
+        #[cfg(feature = "extract")]
+        if let Some(ref pipeline) = self.pipeline {
+            return self.add_episode_with_extraction(&episode, pipeline);
+        }
+
         Ok(EpisodeResult {
             episode_id: episode.id,
             entities_extracted: 0,
             edges_created: 0,
+        })
+    }
+
+    /// Internal: extract entities/relations and store them.
+    #[cfg(feature = "extract")]
+    fn add_episode_with_extraction(
+        &self,
+        episode: &Episode,
+        pipeline: &ExtractionPipeline,
+    ) -> Result<EpisodeResult> {
+        let result = pipeline
+            .extract(&episode.content, episode.recorded_at)
+            .map_err(|e| CtxGraphError::Extraction(e.to_string()))?;
+
+        let mut entities_extracted = 0;
+        let mut edges_created = 0;
+
+        // Map extracted entity text → entity ID for edge creation
+        let mut entity_id_map: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
+
+        // Step 1: Create or reuse entities
+        for extracted in &result.entities {
+            let entity_id = if let Some(existing) =
+                self.storage.get_entity_by_name(&extracted.text)?
+            {
+                // Entity already exists — reuse it
+                existing.id
+            } else {
+                // Create new entity
+                let entity = Entity::new(&extracted.text, &extracted.entity_type);
+                let id = entity.id.clone();
+                self.storage.insert_entity(&entity)?;
+                entities_extracted += 1;
+                id
+            };
+
+            entity_id_map.insert(extracted.text.clone(), entity_id.clone());
+
+            // Link episode ↔ entity
+            let _ = self.storage.link_episode_entity(
+                &episode.id,
+                &entity_id,
+                Some(extracted.span_start),
+                Some(extracted.span_end),
+            );
+        }
+
+        // Step 2: Create edges from relations
+        for rel in &result.relations {
+            let source_id = match entity_id_map.get(&rel.head) {
+                Some(id) => id,
+                None => continue, // head entity not found
+            };
+            let target_id = match entity_id_map.get(&rel.tail) {
+                Some(id) => id,
+                None => continue, // tail entity not found
+            };
+
+            let mut edge = Edge::new(source_id, target_id, &rel.relation);
+            edge.confidence = rel.confidence;
+            edge.episode_id = Some(episode.id.clone());
+            edge.fact = Some(format!("{} {} {}", rel.head, rel.relation, rel.tail));
+
+            self.storage.insert_edge(&edge)?;
+            edges_created += 1;
+        }
+
+        Ok(EpisodeResult {
+            episode_id: episode.id.clone(),
+            entities_extracted,
+            edges_created,
         })
     }
 

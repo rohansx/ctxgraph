@@ -259,3 +259,95 @@ fn test_f1_high_precision_low_recall() {
     assert!((r - 0.25).abs() < 1e-9);
     assert!((f1 - 0.4).abs() < 1e-9);
 }
+
+// ---------------------------------------------------------------------------
+// Pipeline integration benchmark (requires ONNX models)
+// ---------------------------------------------------------------------------
+
+/// Run the extraction pipeline against all 50 benchmark episodes and compute F1.
+///
+/// This test is ignored by default because it requires ONNX model files.
+/// To run: download models, then `cargo test --test benchmark_test -- --ignored`
+///
+/// Set `CTXGRAPH_MODELS_DIR` to point to your models directory.
+#[test]
+#[ignore]
+fn test_extraction_f1_against_benchmark() {
+    use chrono::Utc;
+    use ctxgraph_extract::pipeline::ExtractionPipeline;
+    use ctxgraph_extract::schema::ExtractionSchema;
+
+    let models_dir = std::env::var("CTXGRAPH_MODELS_DIR")
+        .unwrap_or_else(|_| {
+            let home = dirs::cache_dir().expect("no cache dir");
+            home.join("ctxgraph").join("models").display().to_string()
+        });
+
+    let pipeline = ExtractionPipeline::new(
+        ExtractionSchema::default(),
+        std::path::Path::new(&models_dir),
+        0.4, // lower threshold for recall
+    )
+    .expect("Failed to create pipeline. Are models downloaded?");
+
+    let episodes = load_episodes();
+    let mut total_entity_f1 = 0.0;
+    let mut total_relation_f1 = 0.0;
+
+    for (i, ep) in episodes.iter().enumerate() {
+        let result = pipeline
+            .extract(&ep.text, Utc::now())
+            .unwrap_or_else(|e| panic!("Extraction failed on episode {i}: {e}"));
+
+        // Compare entities (name:type format for matching)
+        let predicted_entities: Vec<String> = result
+            .entities
+            .iter()
+            .map(|e| format!("{}:{}", e.text, e.entity_type))
+            .collect();
+        let expected_entities: Vec<String> = ep
+            .expected_entities
+            .iter()
+            .map(|e| format!("{}:{}", e.name, e.entity_type))
+            .collect();
+        let (ep_p, ep_r, ep_f1) = compute_f1(&predicted_entities, &expected_entities);
+
+        // Compare relations (head:relation:tail format)
+        let predicted_relations: Vec<String> = result
+            .relations
+            .iter()
+            .map(|r| format!("{}:{}:{}", r.head, r.relation, r.tail))
+            .collect();
+        let expected_relations: Vec<String> = ep
+            .expected_relations
+            .iter()
+            .map(|r| format!("{}:{}:{}", r.head, r.relation, r.tail))
+            .collect();
+        let (rp_p, rp_r, rp_f1) = compute_f1(&predicted_relations, &expected_relations);
+
+        eprintln!(
+            "Episode {i:2}: entities F1={ep_f1:.3} (P={ep_p:.3} R={ep_r:.3}) | relations F1={rp_f1:.3} (P={rp_p:.3} R={rp_r:.3})"
+        );
+
+        total_entity_f1 += ep_f1;
+        total_relation_f1 += rp_f1;
+    }
+
+    let n = episodes.len() as f64;
+    let avg_entity_f1 = total_entity_f1 / n;
+    let avg_relation_f1 = total_relation_f1 / n;
+    let combined_f1 = (avg_entity_f1 + avg_relation_f1) / 2.0;
+
+    eprintln!();
+    eprintln!("=== BENCHMARK RESULTS ===");
+    eprintln!("Average entity F1:   {avg_entity_f1:.3}");
+    eprintln!("Average relation F1: {avg_relation_f1:.3}");
+    eprintln!("Combined F1:         {combined_f1:.3}");
+    eprintln!("Target:              0.800");
+    eprintln!("=========================");
+
+    assert!(
+        combined_f1 >= 0.80,
+        "Combined F1 {combined_f1:.3} is below 0.80 target"
+    );
+}

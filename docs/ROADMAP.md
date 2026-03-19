@@ -183,6 +183,78 @@ Explicitly deferred:
 
 ---
 
+## Monetization Strategy
+
+### Tier 1: Within 6 months of traction
+
+**ctxgraph Cloud — Hosted sync for teams**
+
+The free version is local-only. One developer, one machine. The moment a second person needs to query the same decision graph, they need sync.
+
+- **Free**: local SQLite, single user, unlimited episodes
+- **Team ($15/user/month)**: sync graph across team via hosted service, shared MCP server, role-based read/write, SSO
+
+Implementation: Litestream or Turso for SQLite replication. Local-first (works offline), syncs when connected. Same model as Obsidian (local files, paid sync).
+
+**GitHub App / Integration**
+
+A GitHub App that auto-ingests PRs, issues, and review comments into a hosted ctxgraph instance.
+
+- **Free**: public repos, last 100 PRs
+- **Pro ($29/month per repo)**: unlimited history, private repos, team access, MCP endpoint for the repo's graph
+
+GitHub Marketplace distribution. One-click install, no CLI, no binary, no config.
+
+### Tier 2: At 1000+ stars / real adoption
+
+**Vertical schema packs**
+
+Deeply tuned schemas for specific industries with domain-specific entity types, relation types, and extraction rules.
+
+- Fintech lending pack ($99): RBI compliance entities, loan approval decision templates, exception tracking with regulatory linkage
+- Healthcare pack ($99): HIPAA-aware entity types, clinical decision trace templates, drug interaction relationship types
+- E-commerce support pack ($49): Refund/return decision templates, customer churn risk entities, escalation path tracking
+
+**Enterprise governance add-on ($200/month)**
+
+- Role-based access control on graph segments
+- Audit log of who queried what and when
+- Data retention policies (auto-expire decisions older than N days)
+- Export to compliance formats (SOC2, ISO 27001 evidence)
+- Priority support
+
+### Tier 3: 12+ months
+
+**Managed ctxgraph for AI agent platforms**
+
+As AI agent platforms grow (LangGraph, CrewAI, AutoGen), they all need persistent memory. ctxgraph-core as an embedded Rust library becomes the default choice.
+
+- Agent memory API ($0.001 per episode ingested, $0.0005 per query)
+- Hosted ctxgraph instance per agent deployment, multi-tenant with strict isolation
+- REST API + MCP endpoint, auto-scaling, managed backups
+
+**Consulting and custom deployments**
+
+- Custom schema development: $2000-5000 per engagement
+- On-premise deployment setup: $3000-8000
+- Integration with internal tools: $5000-15000
+- Training for engineering teams: $1500/day
+
+### Phased approach
+
+| Phase | Timeline | Focus |
+|---|---|---|
+| Phase 1 | 0-6 months | Ship open-source, build community, get stars. Zero monetization. GitHub Sponsors only. |
+| Phase 2 | 6-12 months | Launch ctxgraph Cloud (team sync). First paid product. |
+| Phase 3 | 12-18 months | GitHub App for zero-setup DevTrace. Distribution play via GitHub Marketplace. |
+| Phase 4 | 18+ months | Vertical schema packs and enterprise governance based on actual demand. |
+
+### What NOT to do
+
+Don't add "pro features" to the CLI that gate basic functionality. Don't make Tier 3 (LLM integration) paid-only. Don't charge for the MCP server. Keep the core tool completely free and open. The money comes from team collaboration, hosted infrastructure, and enterprise compliance — not from nickel-and-diming solo developers. The solo dev using ctxgraph for free today is the engineering lead buying ctxgraph Cloud for their team next year.
+
+---
+
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |

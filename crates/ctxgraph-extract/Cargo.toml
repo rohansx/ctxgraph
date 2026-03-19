@@ -16,7 +16,14 @@ sha2 = "0.10"
 reqwest = { version = "0.12", features = ["blocking"] }
 indicatif = "0.17"
 dirs = "6"
+toml = { workspace = true }
+gline-rs = { workspace = true }
+ort = { workspace = true }
+orp = "0.9"
+composable = "0.9"
+ndarray = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3"
 sha2 = "0.10"
+dirs = "6"

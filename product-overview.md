@@ -69,6 +69,74 @@ ctxgraph is for the 90% of use cases where you don't need Neo4j-scale infrastruc
 
 ---
 
+## Problems ctxgraph Solves
+
+### Problem 1: The Repetition Tax — "Every new session, you re-explain yourself"
+
+**Solved.** This is ctxgraph's core purpose. The MCP server gives Claude/Cursor persistent memory across sessions. You log "I use Rust, my project is a privacy proxy, I chose axum over actix" once. Every future session, the agent queries ctxgraph and already knows. No more pasting context files.
+
+### Problem 2: Long Sessions Degrade — "Lost-in-the-middle problem"
+
+**Partially solved.** ctxgraph helps because instead of dumping your entire history into the context window, the agent retrieves only the relevant decision traces via search. Selective retrieval instead of "paste everything." But ctxgraph doesn't fix the fundamental attention degradation inside the model — that's a model architecture problem. What ctxgraph does is reduce the need for long sessions in the first place, because context persists across short sessions.
+
+### Problem 3: RAG Solves Retrieval, Not Understanding — "You lose the decision graph, not just the data"
+
+**Directly solved.** This is the whole thesis. RAG retrieves text chunks. ctxgraph retrieves decision traces — the reasoning state, the rejected alternatives, the tradeoffs, the constraints. When the agent queries "why Postgres?", it doesn't get a chunk of text mentioning Postgres. It gets a structured subgraph: who decided, what was rejected, what constraint drove it, what condition would invalidate it. That's understanding, not retrieval.
+
+### Problem 4: No Shared Context Across Tools — "Every tool is an island"
+
+**Solved via MCP.** ctxgraph runs as a single local process. Claude Desktop, Cursor, Claude Code, any MCP-compatible agent — they all connect to the same graph. You log a decision in your terminal via `ctxgraph log`, and 30 seconds later Claude Desktop can reference it. One graph, many consumers. The `.ctxgraph/graph.db` file is the shared state between all your tools.
+
+### Problem 5: The Re-orientation Overhead — "Re-orienting a model to a complex project takes time"
+
+**Partially solved.** ctxgraph reduces re-orientation because the agent can query "what are the key architecture decisions in this project?" and get a structured answer in one MCP call instead of you manually explaining. But "managing the model's understanding, checking if it got the nuances, correcting drift" — ctxgraph doesn't fix that. That's still on you. ctxgraph gives the model better input, but it can't guarantee the model processes it correctly.
+
+### The "What Good Would Look Like" Checklist
+
+| Criterion | Status | How |
+|---|---|---|
+| Session-persistent reasoning state | Yes | Decisions, rejections, tradeoffs stored as first-class graph entities with temporal validity |
+| Cross-tool context propagation | Yes | MCP server is the bridge. One graph, all tools |
+| Selective, structured recall | Yes | RRF search + graph traversal retrieves what's relevant, not everything. Schema tells ctxgraph what matters, temporal model tells it when |
+| Decay-aware memory | Yes | Bi-temporal model with valid_from/valid_until. Old facts get invalidated, not deleted. The graph knows what's current vs historical |
+
+**The honest gap:** ctxgraph solves the storage and retrieval side of these problems. It doesn't solve the model comprehension side. You can give Claude perfect context via ctxgraph, and Claude might still misunderstand the nuances. But that's a model problem, not a memory problem.
+
+**Score:** 3 out of 5 fully solved, 2 out of 5 partially solved, 4 out of 4 on the "what good looks like" checklist.
+
+---
+
+## Competitive Landscape
+
+| Problem | Graphiti | Mem0 | Claude Memory | CLAUDE.md | Windsurf/Cursor Memory | ctxgraph |
+|---|---|---|---|---|---|---|
+| 1. Repetition tax | Yes | Partial | Partial | Partial | Partial | **Yes** |
+| 2. Long session decay | Partial | No | No | No | No | **Partial** |
+| 3. Reasoning state, not facts | Yes | No | No | No | No | **Yes** |
+| 4. Cross-tool context | Yes (MCP) | No | No | No | No | **Yes (MCP)** |
+| 5. Re-orientation overhead | Partial | No | No | Partial | Partial | **Partial** |
+| Zero infrastructure | No | No | N/A | Yes | N/A | **Yes** |
+| Zero API cost | No | No | N/A | Yes | N/A | **Yes** |
+| Works offline | No | No | No | Yes | No | **Yes** |
+
+**Graphiti (Zep)** — The closest competitor. Solves problems 1, 3, and 4. But requires Neo4j + OpenAI API key + Docker + Python. Solves the memory problem while creating an infrastructure problem.
+
+**Mem0** — Key-value memory, not a graph. Remembers "user prefers Rust" but not "user chose Rust over Go because of memory safety requirements, rejecting Go's simpler concurrency model." Flat memory, not structured reasoning state.
+
+**Claude's built-in memory** — Not a graph, not queryable, not shareable across tools, and you don't control what it remembers.
+
+**CLAUDE.md / Cursor rules** — Manual documentation for your AI assistant — backwards. Creates maintenance overhead. Should be auto-captured.
+
+**Windsurf/Cursor Memory** — Product-specific memory locked inside one tool. Switch editors and your context is gone.
+
+**Microsoft GraphRAG** — Batch-oriented document understanding. No bi-temporal model, no decision trace concept, no MCP server. Built for document understanding, not decision memory.
+
+**LangMem / LangGraph** — Tied to LangChain ecosystem. Not cross-tool. Not standalone.
+
+**Positioning:** ctxgraph solves what Graphiti solves, but without the infrastructure tax. Same capability, radically different operational model.
+
+---
+
 ## Core Concepts
 
 ### Episodes

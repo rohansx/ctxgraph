@@ -170,33 +170,83 @@ impl ModelManager {
 // Pre-defined model specs
 // ---------------------------------------------------------------------------
 
-/// GLiNER2 Large quantised (Q8) model.
-pub fn gliner2_large() -> ModelSpec {
+/// GLiNER Large v2.1 INT8 quantized model (span-based NER).
+///
+/// From: <https://huggingface.co/onnx-community/gliner_large-v2.1>
+pub fn gliner_large_v21_int8() -> ModelSpec {
     ModelSpec {
-        name: "gliner2-large-q8.onnx".into(),
-        url: "https://huggingface.co/ctxgraph/models/resolve/main/gliner2-large-q8.onnx".into(),
-        sha256: "placeholder_sha256_gliner2_large_q8".into(),
-        size_bytes: 200_000_000,
+        name: "gliner_large-v2.1/onnx/model_int8.onnx".into(),
+        url: "https://huggingface.co/onnx-community/gliner_large-v2.1/resolve/main/onnx/model_int8.onnx".into(),
+        sha256: "pending_verification".into(),
+        size_bytes: 653_000_000,
     }
 }
 
-/// GLiREL Large relation-extraction model.
-pub fn glirel_large() -> ModelSpec {
+/// GLiNER Large v2.1 tokenizer.
+pub fn gliner_large_v21_tokenizer() -> ModelSpec {
     ModelSpec {
-        name: "glirel-large.onnx".into(),
-        url: "https://huggingface.co/ctxgraph/models/resolve/main/glirel-large.onnx".into(),
-        sha256: "placeholder_sha256_glirel_large".into(),
-        size_bytes: 150_000_000,
+        name: "gliner_large-v2.1/tokenizer.json".into(),
+        url: "https://huggingface.co/onnx-community/gliner_large-v2.1/resolve/main/tokenizer.json".into(),
+        sha256: "pending_verification".into(),
+        size_bytes: 17_000_000,
     }
 }
 
-/// MiniLM L6 v2 sentence-embedding model.
+/// GLiNER Multitask Large v0.5 (token-based NER + relation extraction).
+///
+/// NOTE: This model requires ONNX conversion from PyTorch. No pre-built ONNX
+/// export exists on HuggingFace. Use `scripts/convert_model.py` to convert.
+/// From: <https://huggingface.co/knowledgator/gliner-multitask-large-v0.5>
+pub fn gliner_multitask_large() -> ModelSpec {
+    ModelSpec {
+        name: "gliner-multitask-large-v0.5/onnx/model.onnx".into(),
+        url: "https://huggingface.co/knowledgator/gliner-multitask-large-v0.5/resolve/main/onnx/model.onnx".into(),
+        sha256: "pending_conversion".into(),
+        size_bytes: 1_760_000_000,
+    }
+}
+
+/// GLiNER Multitask Large v0.5 tokenizer.
+pub fn gliner_multitask_tokenizer() -> ModelSpec {
+    ModelSpec {
+        name: "gliner-multitask-large-v0.5/tokenizer.json".into(),
+        url: "https://huggingface.co/knowledgator/gliner-multitask-large-v0.5/resolve/main/tokenizer.json".into(),
+        sha256: "pending_verification".into(),
+        size_bytes: 8_660_000,
+    }
+}
+
+/// MiniLM L6 v2 sentence-embedding model (for v0.3 semantic search).
 pub fn minilm_l6_v2() -> ModelSpec {
     ModelSpec {
         name: "minilm-l6-v2.onnx".into(),
-        url: "https://huggingface.co/ctxgraph/models/resolve/main/minilm-l6-v2.onnx".into(),
-        sha256: "placeholder_sha256_minilm_l6_v2".into(),
+        url: "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx".into(),
+        sha256: "pending_verification".into(),
         size_bytes: 80_000_000,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Convenience: download all models needed for NER extraction
+// ---------------------------------------------------------------------------
+
+impl ModelManager {
+    /// Download the NER model and tokenizer needed for Tier 1 extraction.
+    ///
+    /// Downloads `gliner_large-v2.1` INT8 model + tokenizer to the cache directory.
+    pub fn ensure_ner_models(&self) -> Result<(PathBuf, PathBuf), ModelManagerError> {
+        let model = self.get_or_download(&gliner_large_v21_int8())?;
+        let tokenizer = self.get_or_download(&gliner_large_v21_tokenizer())?;
+        Ok((model, tokenizer))
+    }
+
+    /// Download the multitask model and tokenizer needed for relation extraction.
+    ///
+    /// Returns `None` if the model is not available (needs ONNX conversion).
+    pub fn ensure_rel_models(&self) -> Option<(PathBuf, PathBuf)> {
+        let model = self.get_or_download(&gliner_multitask_large()).ok()?;
+        let tokenizer = self.get_or_download(&gliner_multitask_tokenizer()).ok()?;
+        Some((model, tokenizer))
     }
 }
 
