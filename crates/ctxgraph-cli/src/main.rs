@@ -66,6 +66,25 @@ enum Commands {
 
     /// Show graph statistics
     Stats,
+
+    /// Auto-capture git commits as episodes
+    Watch {
+        /// Import the last N commits
+        #[arg(long, default_value = "10")]
+        last: usize,
+
+        /// Only import commits since this date (ISO 8601)
+        #[arg(long)]
+        since: Option<String>,
+
+        /// Path to git repository (default: current directory)
+        #[arg(long)]
+        repo: Option<std::path::PathBuf>,
+
+        /// Install as .git/hooks/post-commit hook
+        #[arg(long)]
+        install_hook: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -139,6 +158,12 @@ fn main() {
             DecisionsAction::Show { id } => commands::decisions::show(id),
         },
         Commands::Stats => commands::stats::run(),
+        Commands::Watch {
+            last,
+            since,
+            repo,
+            install_hook,
+        } => commands::watch::run_watch_command(last, since, repo, install_hook),
     };
 
     if let Err(e) = result {

@@ -467,6 +467,66 @@ fn test_migrations_idempotent() {
     let _storage = ctxgraph::storage::Storage::open(&db_path).unwrap();
 }
 
+// ── Entity Deduplication ──
+
+#[test]
+fn test_entity_dedup_merges_similar() {
+    let graph = test_graph();
+
+    // Add "PostgreSQL" entity
+    let pg = Entity::new("PostgreSQL", "Component");
+    let (pg_id, merged) = graph.add_entity_deduped(pg, 0.85).unwrap();
+    assert!(!merged, "First insert should not be merged");
+
+    // Add "Postgres" entity with dedup threshold 0.85 — should merge
+    let postgres = Entity::new("Postgres", "Component");
+    let (deduped_id, was_merged) = graph.add_entity_deduped(postgres, 0.85).unwrap();
+    assert!(was_merged, "Postgres should be merged into PostgreSQL");
+    assert_eq!(deduped_id, pg_id, "Should return canonical PostgreSQL entity id");
+
+    // Only one entity should exist
+    let all = graph.list_entities(Some("Component"), 100).unwrap();
+    assert_eq!(all.len(), 1, "Only one Component entity should exist after merge");
+    assert_eq!(all[0].name, "PostgreSQL");
+}
+
+#[test]
+fn test_entity_dedup_preserves_different() {
+    let graph = test_graph();
+
+    let pg = Entity::new("PostgreSQL", "Component");
+    graph.add_entity_deduped(pg, 0.85).unwrap();
+
+    // "Redis" has very low similarity to "PostgreSQL"
+    let redis = Entity::new("Redis", "Component");
+    let (_, was_merged) = graph.add_entity_deduped(redis, 0.85).unwrap();
+    assert!(!was_merged, "Redis should not be merged with PostgreSQL");
+
+    let all = graph.list_entities(Some("Component"), 100).unwrap();
+    assert_eq!(all.len(), 2, "Both PostgreSQL and Redis should exist as separate entities");
+}
+
+#[test]
+fn test_entity_dedup_alias_lookup() {
+    let graph = test_graph();
+
+    // Add canonical entity
+    let pg = Entity::new("PostgreSQL", "Component");
+    let (pg_id, _) = graph.add_entity_deduped(pg, 0.85).unwrap();
+
+    // Add alias variant
+    let postgres = Entity::new("Postgres", "Component");
+    let (merged_id, was_merged) = graph.add_entity_deduped(postgres, 0.85).unwrap();
+    assert!(was_merged);
+    assert_eq!(merged_id, pg_id);
+
+    // Adding "Postgres" again should hit alias table (exact alias match)
+    let postgres2 = Entity::new("Postgres", "Component");
+    let (alias_id, alias_merged) = graph.add_entity_deduped(postgres2, 0.85).unwrap();
+    assert!(alias_merged, "Second 'Postgres' should hit alias table");
+    assert_eq!(alias_id, pg_id, "Alias lookup should return canonical id");
+}
+
 // ── Empty Database ──
 
 #[test]

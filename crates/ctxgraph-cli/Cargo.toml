@@ -11,7 +11,7 @@ name = "ctxgraph"
 path = "src/main.rs"
 
 [dependencies]
-ctxgraph = { version = "0.3.0", path = "../ctxgraph-core" }
+ctxgraph = { version = "0.4.0", path = "../ctxgraph-core" }
 clap = { workspace = true }
 serde_json = { workspace = true }
 chrono = { workspace = true }

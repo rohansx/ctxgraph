@@ -532,13 +532,14 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "ctxgraph-extract",
  "rusqlite",
  "serde",
  "serde_json",
+ "strsim",
  "tempfile",
  "thiserror",
  "toml",
@@ -547,7 +548,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph-cli"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "clap",
@@ -558,7 +559,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph-embed"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "fastembed",
  "thiserror",
@@ -566,7 +567,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph-extract"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "composable",
@@ -588,7 +589,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph-mcp"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "ctxgraph",

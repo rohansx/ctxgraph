@@ -145,20 +145,15 @@ impl Graph {
         let mut entity_id_map: std::collections::HashMap<String, String> =
             std::collections::HashMap::new();
 
-        // Step 1: Create or reuse entities
+        // Step 1: Create or reuse entities (with fuzzy dedup at 0.85 threshold)
         for extracted in &result.entities {
-            let entity_id = if let Some(existing) =
-                self.storage.get_entity_by_name(&extracted.text)?
-            {
-                // Entity already exists — reuse it
-                existing.id
-            } else {
-                // Create new entity
-                let entity = Entity::new(&extracted.text, &extracted.entity_type);
-                let id = entity.id.clone();
-                self.storage.insert_entity(&entity)?;
-                entities_extracted += 1;
-                id
+            let entity = Entity::new(&extracted.text, &extracted.entity_type);
+            let entity_id = match self.add_entity_deduped(entity, 0.85)? {
+                (id, false) => {
+                    entities_extracted += 1;
+                    id
+                }
+                (id, true) => id, // merged into existing entity
             };
 
             entity_id_map.insert(extracted.text.clone(), entity_id.clone());
@@ -212,6 +207,55 @@ impl Graph {
     /// Add an entity to the graph.
     pub fn add_entity(&self, entity: Entity) -> Result<()> {
         self.storage.insert_entity(&entity)
+    }
+
+    /// Add an entity with fuzzy deduplication against existing entities of the same type.
+    ///
+    /// If an existing entity with Jaro-Winkler similarity >= threshold exists,
+    /// returns that entity's ID and stores the new name as an alias.
+    /// Otherwise creates a new entity.
+    ///
+    /// Returns (entity_id, was_merged: bool).
+    pub fn add_entity_deduped(
+        &self,
+        entity: Entity,
+        threshold: f64,
+    ) -> Result<(String, bool)> {
+        // 1. Check alias table first (exact alias match)
+        if let Some(canonical_id) = self.storage.find_by_alias(&entity.name)? {
+            return Ok((canonical_id, true));
+        }
+
+        // 2. Get all existing entities of same type
+        let existing = self.storage.get_entity_names_by_type(&entity.entity_type)?;
+
+        // 3. Compute Jaro-Winkler similarity to each
+        let name_lower = entity.name.to_lowercase();
+        let mut best: Option<(String, f64)> = None;
+        for (existing_id, existing_name) in &existing {
+            let sim = strsim::jaro_winkler(&name_lower, &existing_name.to_lowercase());
+            if sim >= threshold {
+                if best.as_ref().map_or(true, |(_, best_sim)| sim > *best_sim) {
+                    best = Some((existing_id.clone(), sim));
+                }
+            }
+        }
+
+        // 4. If match found: add alias and return existing id
+        if let Some((canonical_id, sim)) = best {
+            self.storage.add_alias(&canonical_id, &entity.name, sim)?;
+            return Ok((canonical_id, true));
+        }
+
+        // 5. Otherwise: insert new entity
+        let id = entity.id.clone();
+        self.storage.insert_entity(&entity)?;
+        Ok((id, false))
+    }
+
+    /// Check if any episode with source='git' has the given commit hash in metadata.
+    pub fn has_episode_by_git_hash(&self, hash: &str) -> Result<bool> {
+        self.storage.episode_exists_by_git_hash(hash)
     }
 
     /// Get an entity by ID.

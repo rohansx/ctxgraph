@@ -196,6 +196,80 @@ impl Storage {
         Ok(entities)
     }
 
+    // ── Entity Deduplication ──
+
+    /// Find an entity by exact name and type.
+    pub fn get_entity_by_name_and_type(
+        &self,
+        name: &str,
+        entity_type: &str,
+    ) -> Result<Option<Entity>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, name, entity_type, summary, created_at, metadata
+             FROM entities WHERE name = ?1 AND entity_type = ?2",
+        )?;
+
+        let result = stmt
+            .query_row(params![name, entity_type], map_entity_row)
+            .optional()?;
+
+        Ok(result)
+    }
+
+    /// Get all entity (id, name) pairs for a given entity type (for fuzzy matching).
+    pub fn get_entity_names_by_type(&self, entity_type: &str) -> Result<Vec<(String, String)>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, name FROM entities WHERE entity_type = ?1",
+        )?;
+
+        let rows = stmt
+            .query_map(params![entity_type], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })?
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+
+        Ok(rows)
+    }
+
+    /// Insert an alias mapping alias_name → canonical_id.
+    pub fn add_alias(
+        &self,
+        canonical_id: &str,
+        alias_name: &str,
+        similarity: f64,
+    ) -> Result<()> {
+        self.conn.execute(
+            "INSERT OR IGNORE INTO aliases (canonical_id, alias_name, similarity)
+             VALUES (?1, ?2, ?3)",
+            params![canonical_id, alias_name, similarity],
+        )?;
+        Ok(())
+    }
+
+    /// Look up the canonical entity ID for an alias name (case-insensitive).
+    pub fn find_by_alias(&self, name: &str) -> Result<Option<String>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT canonical_id FROM aliases WHERE alias_name = ?1 COLLATE NOCASE",
+        )?;
+
+        let result = stmt
+            .query_row(params![name], |row| row.get::<_, String>(0))
+            .optional()?;
+
+        Ok(result)
+    }
+
+    /// Check whether any episode with source='git' has the given commit hash in its metadata.
+    pub fn episode_exists_by_git_hash(&self, hash: &str) -> Result<bool> {
+        let count: i64 = self.conn.query_row(
+            "SELECT COUNT(*) FROM episodes \
+             WHERE source = 'git' AND json_extract(metadata, '$.commit_hash') = ?1",
+            params![hash],
+            |row| row.get(0),
+        )?;
+        Ok(count > 0)
+    }
+
     // ── Edges ──
 
     pub fn insert_edge(&self, edge: &Edge) -> Result<()> {

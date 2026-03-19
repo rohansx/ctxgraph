@@ -4,6 +4,7 @@ pub mod init;
 pub mod log;
 pub mod query;
 pub mod stats;
+pub mod watch;
 
 use std::env;
 use std::path::PathBuf;

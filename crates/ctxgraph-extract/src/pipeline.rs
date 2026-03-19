@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
 
+use crate::coref::CorefResolver;
 use crate::ner::{ExtractedEntity, NerEngine, NerError};
 use crate::rel::{ExtractedRelation, RelEngine, RelError};
 use crate::schema::{ExtractionSchema, SchemaError};
@@ -91,6 +92,10 @@ impl ExtractionPipeline {
 
         // Filter by confidence
         entities.retain(|e| e.confidence >= self.confidence_threshold);
+
+        // Step 1b: Coreference resolution — resolve pronouns to preceding entities
+        let coref_entities = CorefResolver::resolve(text, &entities);
+        entities.extend(coref_entities);
 
         // Step 2: Relation extraction
         let mut relations = self

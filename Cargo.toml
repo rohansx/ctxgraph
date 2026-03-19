@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/rohansx/ctxgraph"
@@ -23,3 +23,4 @@ gline-rs = "1.0"
 ort = "=2.0.0-rc.9"
 ndarray = "0.16"
 fastembed = "4"
+strsim = "0.11"
