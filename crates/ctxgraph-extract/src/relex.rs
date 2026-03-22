@@ -158,24 +158,41 @@ impl RelexEngine {
         let input_ids: Vec<i64> = ids.iter().map(|&id| id as i64).collect();
         let attention_mask: Vec<i64> = attention.iter().map(|&a| a as i64).collect();
 
-        // Build words_mask: maps each token to its word index in the text portion
+        // Build words_mask: maps each token to its word index in the text portion.
+        //
+        // The sentencepiece tokenizer produces offsets that include a leading `▁`
+        // (space) character as part of the token, so token offsets don't align
+        // exactly with word start positions. We use overlap-based matching: a
+        // token maps to a word if the token's character range overlaps the word's
+        // range. Only the first sub-token of each word receives the 1-based word
+        // index; continuation sub-tokens remain 0 (matching GLiNER's
+        // `prepare_word_mask` which uses `word_ids()` from HuggingFace tokenizers).
         let mut words_mask = vec![0i64; seq_len];
 
-        // Map text tokens to word indices using offsets
         let offsets = encoding.get_offsets();
         let prompt_char_len = prompt_prefix.len() + 1; // +1 for the space between prompt and text
 
-        for (tok_idx, &(start, _end)) in offsets.iter().enumerate() {
-            if tok_idx == 0 || (start == 0 && _end == 0) {
-                continue; // skip [CLS] and padding
+        let mut prev_word_idx: Option<usize> = None;
+        for (tok_idx, &(tok_start, tok_end)) in offsets.iter().enumerate() {
+            if tok_idx == 0 || (tok_start == 0 && tok_end == 0) {
+                continue; // skip [CLS], [SEP], and padding
             }
-            if start >= prompt_char_len {
-                let text_char_pos = start - prompt_char_len;
-                for (word_idx, &(w_start, w_end, _)) in words.iter().enumerate() {
-                    if text_char_pos >= w_start && text_char_pos < w_end {
+            if tok_start < prompt_char_len {
+                continue; // skip prompt tokens
+            }
+
+            // Convert token char range to text-relative offsets
+            let t_start = tok_start - prompt_char_len;
+            let t_end = tok_end - prompt_char_len;
+
+            // Find word whose range overlaps this token (first sub-token only)
+            for (word_idx, &(w_start, w_end, _)) in words.iter().enumerate() {
+                if t_start < w_end && t_end > w_start {
+                    if prev_word_idx != Some(word_idx) {
                         words_mask[tok_idx] = (word_idx + 1) as i64; // 1-based
-                        break;
+                        prev_word_idx = Some(word_idx);
                     }
+                    break;
                 }
             }
         }
@@ -254,10 +271,18 @@ impl RelexEngine {
             .get("rel_logits")
             .and_then(|v| v.try_extract_tensor::<f32>().ok())
             .map(|t| t.into_owned());
+        // rel_mask is output as bool by the ONNX model; convert to f32 for decode.
         let rel_mask = outputs
             .get("rel_mask")
-            .and_then(|v| v.try_extract_tensor::<f32>().ok())
-            .map(|t| t.into_owned());
+            .and_then(|v| {
+                // Try bool first (matches ONNX export), fall back to f32
+                if let Ok(t) = v.try_extract_tensor::<bool>() {
+                    let converted: ArrayD<f32> = t.mapv(|b| if b { 1.0f32 } else { 0.0 });
+                    Some(converted)
+                } else {
+                    v.try_extract_tensor::<f32>().ok().map(|t| t.into_owned())
+                }
+            });
 
         let owned_words: Vec<(usize, usize, String)> = words
             .iter()

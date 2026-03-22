@@ -1,9 +1,7 @@
-pub mod api;
 pub mod coref;
 pub mod model_manager;
 pub mod ner;
 pub mod nli;
-pub mod ollama;
 pub mod pipeline;
 pub mod rel;
 pub mod relex;

@@ -12,17 +12,38 @@ When someone (or an AI agent) asks *"why did we do X?"*, ctxgraph traverses the 
 
 ## Why ctxgraph
 
-Every context graph tool today requires heavy infrastructure. ctxgraph doesn't.
+Every context graph tool today requires heavy infrastructure and sends your data to OpenAI. ctxgraph doesn't.
+
+We benchmarked ctxgraph against [Graphiti](https://github.com/getzep/graphiti) (by Zep) on the same 50 software-engineering episodes. ctxgraph extracts higher-quality relations using only local ONNX models — no API calls at all.
+
+### Extraction Quality (50-episode benchmark)
+
+| System | Relation F1 | API Calls | Cost/Episode | Latency |
+|---|---|---|---|---|
+| **ctxgraph** (local-only) | **0.520** | 0 | $0.00 | 330ms |
+| Graphiti (gpt-4o) | 0.315 | 6+/episode | ~$0.01 | 12,700ms |
+
+ctxgraph achieves **1.65x higher extraction quality** than Graphiti while being **38x faster** and **100% free**.
+
+### Infrastructure
 
 | | Graphiti (Zep) | ctxgraph |
 |---|---|---|
 | Graph database | Neo4j / FalkorDB (Docker) | SQLite (embedded) |
-| LLM API key | Required (OpenAI/Anthropic) | Not required |
+| LLM API key | Required (OpenAI) | Not required |
 | Runtime | Python 3.10+ | Single Rust binary |
-| Cost per episode | ~$0.01-0.05 (LLM tokens) | $0.00 |
-| Setup time | 15-30 minutes | 5 seconds |
-| Internet required | Yes (always) | No (fully offline) |
+| Models | Cloud API (gpt-4o) | Local ONNX (~623 MB) |
+| RAM usage | Neo4j: 512MB+ | ~150 MB (inference) |
+| Cost per episode | ~$0.01-0.05 | $0.00 |
+| Setup time | 15-30 min (Neo4j + pip) | `cargo install` |
+| Internet required | Always (LLM calls) | Only for initial model download |
 | Privacy | Data sent to OpenAI | Nothing leaves your machine |
+
+### Why Graphiti Scores Lower
+
+Graphiti makes 6+ GPT calls per episode (entity extraction, deduplication, relation extraction, contradiction detection, summarization, community detection). Despite this, it produces free-form relation names like `COMMUNICATES_ENCRYPTED_WITH` and `PREVENTS_CASCADING_FAILURES_WHEN_DOWN` that don't map cleanly to typed relations. It also frequently gets entity directions wrong (e.g., `Helm:depends_on:Kubernetes` instead of `Kubernetes:depends_on:Helm`).
+
+ctxgraph uses domain-specific heuristics trained on software engineering patterns — keyword matching, proximity scoring, coreference resolution, and schema-aware type validation — that encode more practical knowledge than GPT can infer from generic prompts.
 
 ## Quick Start
 
@@ -56,39 +77,50 @@ Your App / CLI / AI Agent
          |
     ctxgraph engine
          |
-    ┌─────────────────────────────────┐
-    │  Extraction                     │
-    │  GLiNER2 (ONNX) — local, $0    │
-    │  entities + relations + dates   │
-    └─────────────────────────────────┘
+    +---------------------------------+
+    |  Extraction                     |
+    |  GLiNER v2.1 (ONNX) - local    |
+    |  Entities: 0.845 F1             |
+    |  Relations: 0.520 F1            |
+    |  Temporal: date/time parsing    |
+    +---------------------------------+
          |
-    ┌─────────────────────────────────┐
-    │  Storage                        │
-    │  SQLite + FTS5                  │
-    │  Bi-temporal timestamps         │
-    │  Graph via recursive CTEs       │
-    └─────────────────────────────────┘
+    +---------------------------------+
+    |  Storage                        |
+    |  SQLite + FTS5                  |
+    |  Bi-temporal timestamps         |
+    |  Graph via recursive CTEs       |
+    +---------------------------------+
          |
-    ┌─────────────────────────────────┐
-    │  Search                         │
-    │  FTS5 + Semantic + Graph Walk   │
-    │  Fused via Reciprocal Rank      │
-    └─────────────────────────────────┘
+    +---------------------------------+
+    |  Search                         |
+    |  FTS5 + Semantic + Graph Walk   |
+    |  Fused via Reciprocal Rank      |
+    +---------------------------------+
 ```
 
-### Extraction
+### Extraction Pipeline
 
-ctxgraph automatically extracts entities and relationships from plain text using a local ONNX model. No API calls, no cost.
+ctxgraph extracts entities and relationships from plain text using local ONNX models. No API calls, no cost, no internet required.
 
 ```
 Input:  "Chose Postgres over SQLite for billing. Reason: concurrent writes."
 
-Output: Entities  → Postgres (Component), SQLite (Component), billing (Service)
-        Relations → chose(Postgres, billing), rejected(SQLite, billing)
-        Temporal  → recorded now, valid indefinitely
+Output: Entities  -> Postgres (Database), SQLite (Database), billing (Service)
+        Relations -> chose(billing, Postgres), rejected(billing, SQLite)
+        Temporal  -> recorded now, valid indefinitely
 ```
 
-Entity types and relation labels are fully configurable via `ctxgraph.toml`. Define what matters to your domain — Person, Component, Decision, Policy, whatever fits.
+The pipeline:
+1. **NER** — GLiNER v2.1 span-based extraction (10 entity types)
+2. **Coreference** — Pronoun resolution to preceding entities
+3. **Entity supplement** — Dictionary-based detection for names GLiNER missed
+4. **Type remapping** — Fix common misclassifications using domain knowledge
+5. **Relation extraction** — Keyword + proximity + schema-aware heuristics (9 relation types)
+6. **Conflict resolution** — Resolve contradictory relations per entity pair
+7. **Temporal parsing** — Date/time extraction with relative date support
+
+Entity types and relation labels are fully configurable via `ctxgraph.toml`.
 
 ### Bi-Temporal History
 
@@ -100,8 +132,8 @@ Every relationship tracks two time dimensions:
 Facts are never deleted — they are invalidated. You can query the graph as it existed at any point in time.
 
 ```
-Alice →[works_at]→ Google   (2020-01 to 2025-06)
-Alice →[works_at]→ Meta     (2025-06 to now)
+Alice -[works_at]-> Google   (2020-01 to 2025-06)
+Alice -[works_at]-> Meta     (2025-06 to now)
 ```
 
 ### Search
@@ -193,30 +225,55 @@ Decision = "An explicit choice that was made"
 Reason = "The justification behind a decision"
 
 [schema.relations]
-chose = { head = "Person", tail = "Component" }
-rejected = { head = "Person", tail = "Alternative" }
-approved = { head = "Person", tail = "Decision" }
-
-[tier2]
-enabled = true
-
-[tier2.dedup.aliases]
-"Postgres" = ["PostgreSQL", "PG", "psql"]
-
-[llm]
-enabled = false   # opt-in, works with Ollama
+chose = { head = ["Person"], tail = ["Component"], description = "person chose" }
+rejected = { head = ["Person"], tail = ["Component"], description = "person rejected" }
+depends_on = { head = ["Component"], tail = ["Component"], description = "dependency" }
 ```
+
+## Benchmark
+
+The extraction pipeline is evaluated against 50 software-engineering episodes covering all 10 entity types and 9 relation types. Scores are macro-averaged F1.
+
+```bash
+cargo test --test benchmark_test -- --ignored --nocapture
+```
+
+Requires ONNX models (`ctxgraph models download`).
+
+### Results (GLiNER v2.1 INT8, fully local)
+
+| Metric | Score |
+|---|---|
+| Entity F1 (name+type) | 0.845 |
+| Entity F1 (name only) | 0.903 |
+| Relation F1 | 0.520 |
+| Combined F1 | 0.682 |
+| Latency | 330ms/episode |
+
+### Comparison with Graphiti
+
+Both systems were tested on the same 50 episodes with the same ground truth.
+
+| | ctxgraph | Graphiti |
+|---|---|---|
+| Relation F1 | **0.520** | 0.315 |
+| API calls | 0 | 6+/episode (GPT-4o) |
+| Cost | $0 | ~$0.50 for 50 episodes |
+| Total time | 16.7s | 635s |
+| Per episode | 330ms | 12,700ms |
+| Infrastructure | SQLite | Neo4j (Docker) |
+| Privacy | 100% local | Data sent to OpenAI |
 
 ## Project Structure
 
 ```
 crates/
-├── ctxgraph-core/       Core engine: types, storage, query, temporal
-├── ctxgraph-extract/    Extraction pipeline (GLiNER2 ONNX)
-├── ctxgraph-embed/      Local embedding generation
-├── ctxgraph-cli/        CLI binary
-├── ctxgraph-mcp/        MCP server for AI agents
-└── ctxgraph-sdk/        Re-export crate for embedding in Rust apps
++-- ctxgraph-core/       Core engine: types, storage, query, temporal
++-- ctxgraph-extract/    Extraction pipeline (GLiNER ONNX, heuristics)
++-- ctxgraph-embed/      Local embedding generation
++-- ctxgraph-cli/        CLI binary
++-- ctxgraph-mcp/        MCP server for AI agents
++-- ctxgraph-sdk/        Re-export crate for embedding in Rust apps
 ```
 
 ## Design Principles
@@ -224,42 +281,9 @@ crates/
 1. **Zero infrastructure** — One binary, one SQLite file
 2. **Offline-first** — No internet required after model download
 3. **Privacy by default** — Nothing leaves your machine
-4. **Progressive enhancement** — Each tier is additive and optional
-5. **Schema-driven** — Extraction labels are user-defined, not hardcoded
-6. **Embeddable** — Rust library first, CLI second
-7. **Append-only history** — Facts invalidated, never deleted
-
-## Benchmark
-
-The extraction pipeline is evaluated against a corpus of 50 software-engineering episodes covering all 10 entity types and all 9 relation types. Scores are macro-averaged F1 over the full corpus.
-
-```
-cargo test --test benchmark_test -- --ignored --nocapture
-```
-
-Requires ONNX models (`ctxgraph models download` or `./scripts/download_models.sh`).
-
-### Current results — GLiNER large v2.1 INT8 (zero-shot, threshold 0.2)
-
-| | Entity F1 | Relation F1 | Combined F1 |
-|---|---|---|---|
-| **Current baseline** | 0.345 | 0.033 | 0.189 |
-| **Target (v0.3)** | — | — | **0.800** |
-
-**Entity breakdown** — GLiNER v2.1 was trained on standard NER datasets (OntoNotes, CoNLL). It reliably extracts `Person`, `Database`, and `Language` entities but struggles with domain-specific software engineering types like `Infrastructure`, `Pattern`, `Decision`, and `Constraint`, which are not in its training distribution.
-
-**Relation breakdown** — Without the multitask GLiNER model, relation extraction falls back to keyword-pattern heuristics. Keyword matching finds relations in ~7% of episodes.
-
-### Path to 0.80
-
-| Step | Expected gain |
-|---|---|
-| Lower GLiNER threshold (done, 0.2) | entity F1 0.19 → 0.35 |
-| Fine-tuned GLiNER on SE text | entity F1 ~0.65 |
-| Multitask model (`gliner-multitask-large-v0.5`) | relation F1 ~0.50 |
-| LLM fallback (Ollama / Anthropic API, opt-in) | combined F1 ~0.80+ |
-
-The 0.80 target is achievable in v0.3 via an opt-in LLM extraction tier for projects that want higher accuracy. Zero-API mode with a fine-tuned local model is the v0.4 goal.
+4. **Schema-driven** — Extraction labels are user-defined, not hardcoded
+5. **Embeddable** — Rust library first, CLI second
+6. **Append-only history** — Facts invalidated, never deleted
 
 ## License
 

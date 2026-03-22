@@ -108,14 +108,16 @@ impl ExtractionPipeline {
         // using domain knowledge lookup tables (Database, Infrastructure, Pattern, etc.)
         remap::remap_entity_types(&mut entities);
 
-        // Step 1e: Ollama entity cleanup — DISABLED after full benchmark showed
-        // net-negative results (entity F1 0.845 → 0.823, combined 0.678 → 0.630).
-        // The 3b model over-corrects on the majority of episodes where GLiNER is
-        // already correct (e.g., "Cloudflare Workers" → "Cloudflare", "saga pattern"
-        // → "saga"). Only helps on ~5 hard cases but hurts ~15 others.
-        // TODO: revisit with a smarter strategy (only rename when cleaned is a
-        // strict prefix/suffix of original, never remove entities).
-        // crate::ollama::cleanup_entities(text, &mut entities);
+        // Step 1e: LLM entity cleanup — DISABLED.
+        // Tested both local Ollama (qwen2.5:3b) and GPT-4.1-mini for cleaning
+        // up GLiNER entity names. Both hurt full benchmark F1:
+        //   - Ollama: entity 0.845→0.787, combined 0.678→0.630
+        //   - GPT:    entity 0.845→0.811, combined 0.700→0.659
+        // Root cause: most entities are already correct; cleanup removes/renames
+        // valid multi-word entities like "saga pattern", "Cloudflare Workers".
+        // The approach helps ~5 hard cases but hurts ~15 others.
+        // Future: try full LLM entity extraction (Graphiti-style) instead of
+        // cleanup, or only apply cleanup to entities with low confidence.
 
         // Step 2: Relation extraction
         let mut relations = self

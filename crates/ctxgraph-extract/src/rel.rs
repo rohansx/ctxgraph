@@ -12,9 +12,7 @@ use orp::model::Model;
 use orp::params::RuntimeParameters;
 use orp::pipeline::Pipeline;
 
-use crate::api::ApiRelEngine;
 use crate::ner::ExtractedEntity;
-use crate::ollama::OllamaRelEngine;
 use crate::relex::RelexEngine;
 use crate::schema::ExtractionSchema;
 
@@ -27,16 +25,14 @@ pub struct ExtractedRelation {
     pub confidence: f64,
 }
 
-/// Relation extraction engine.
+/// Relation extraction engine — fully local, no external API calls.
 ///
-/// Supports four tiers (falls through automatically):
-/// - **Tier 2 (API)**: OpenAI/compatible API for highest quality (~0.85-0.90 F1).
-/// - **Tier 1a (NLI)**: DeBERTa cross-encoder via entailment scoring (~87MB ONNX).
-/// - **Tier 1b (Ollama)**: Local LLM for zero-shot RE (~0.70-0.78 F1).
-/// - **Tier 1c (Heuristic)**: Pattern-based extraction (always available, ~0.49 F1).
+/// Extraction tiers:
+/// - **Model-based**: GLiNER multitask ONNX model for typed relation extraction.
+/// - **Heuristic**: Pattern-based keyword + proximity extraction (~0.51 F1).
 ///
 /// Experimental (opt-in via `CTXGRAPH_RELEX=1`):
-/// - **Relex**: gliner-relex ONNX model — preprocessing mismatch not yet resolved.
+/// - **Relex**: gliner-relex ONNX model (joint NER + relation extraction).
 pub enum RelEngine {
     /// Has both multitask model and optionally relex model.
     ModelBased(ModelBasedRelEngine),
@@ -45,9 +41,6 @@ pub enum RelEngine {
 
 /// Cached relex engine (loaded once per process).
 static RELEX_ENGINE: std::sync::OnceLock<Option<RelexEngine>> = std::sync::OnceLock::new();
-
-/// Cached Ollama availability check (per-engine lifetime).
-static OLLAMA_AVAILABLE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
 
 /// Model-based relation extraction using gline-rs.
 ///
@@ -160,24 +153,11 @@ impl RelEngine {
         }
     }
 
-    /// Extract relations between entities.
+    /// Extract relations between entities — fully local, no API calls.
     ///
-    /// Hybrid architecture — heuristic baseline + optional LLM augmentation:
-    /// 1. **Heuristic** (always runs) — keyword + proximity baseline (~0.51 F1)
-    /// 2. **API augmentation** (if `CTXGRAPH_API_KEY` set) — fills gaps (~0.75+ F1)
-    /// 3. **Ollama augmentation** (if running locally) — fills gaps (~0.65+ F1)
-    ///
-    /// Each LLM tier adds only relations not already found by the heuristic,
-    /// avoiding duplicate entity pairs.
+    /// Uses heuristic keyword + proximity extraction (~0.51 F1).
     ///
     /// Environment variables:
-    /// - `CTXGRAPH_API_KEY`: API key (OpenAI or Anthropic, enables API tier)
-    /// - `CTXGRAPH_API_URL`: Custom API endpoint (default: OpenAI)
-    /// - `CTXGRAPH_API_MODEL`: API model (default: gpt-4.1-mini; claude-haiku-4-5-20251001 for Anthropic)
-    /// - `CTXGRAPH_OLLAMA_URL`: Ollama endpoint (default: localhost:11434)
-    /// - `CTXGRAPH_OLLAMA_MODEL`: Ollama model (default: qwen2.5:7b)
-    /// - `CTXGRAPH_NO_OLLAMA=1`: Skip Ollama tier
-    /// - `CTXGRAPH_NO_API=1`: Skip API tier
     /// - `CTXGRAPH_RELEX=1`: Enable experimental relex ONNX tier
     pub fn extract(
         &self,
@@ -185,97 +165,9 @@ impl RelEngine {
         entities: &[ExtractedEntity],
         schema: &ExtractionSchema,
     ) -> Result<Vec<ExtractedRelation>, RelError> {
-        // Architecture: Heuristic extraction + API verification + API gap-fill.
-        //
-        // 1. Heuristic extracts relations (~0.51 F1, good conventions but noisy).
-        // 2. API independently extracts relations.
-        // 3. Keep heuristic relations confirmed by API (high precision).
-        // 4. Add API-only relations not in heuristic (fills coverage gaps).
-        // 5. If no API available, use heuristic alone.
+        let mut relations = heuristic_relations(text, entities, schema);
 
-        let heuristic = heuristic_relations(text, entities, schema);
-
-        let mut relations = if std::env::var("CTXGRAPH_NO_API").is_err() {
-            if let Some(engine) = ApiRelEngine::from_env() {
-                let known_entities: std::collections::HashSet<&str> = entities
-                    .iter()
-                    .map(|e| e.text.as_str())
-                    .collect();
-
-                match engine.extract(text, entities, schema) {
-                    Ok(api_relations) if !api_relations.is_empty() => {
-                        let api_filtered: Vec<ExtractedRelation> = api_relations
-                            .into_iter()
-                            .filter(|r| {
-                                known_entities.contains(r.head.as_str())
-                                    && known_entities.contains(r.tail.as_str())
-                            })
-                            .collect();
-
-                        // Build sets of API entity pairs for quick lookup
-                        let api_pairs: std::collections::HashSet<(&str, &str)> = api_filtered
-                            .iter()
-                            .map(|r| (r.head.as_str(), r.tail.as_str()))
-                            .collect();
-
-                        let mut result = Vec::new();
-
-                        // Keep heuristic relations confirmed by API (same entity pair)
-                        for r in &heuristic {
-                            let confirmed = api_pairs.contains(&(r.head.as_str(), r.tail.as_str()))
-                                || api_pairs.contains(&(r.tail.as_str(), r.head.as_str()));
-                            if confirmed {
-                                result.push(r.clone());
-                            }
-                        }
-
-                        // Add API-only relations for uncovered entity pairs.
-                        // Skip depends_on gap-fill — it generates too many false
-                        // positives (17 spurious in benchmarks). Other types
-                        // (caused, constrained_by, etc.) are kept as gap-fill
-                        // true positives outweigh false positives.
-                        let heuristic_pairs: std::collections::HashSet<(&str, &str)> = heuristic
-                            .iter()
-                            .map(|r| (r.head.as_str(), r.tail.as_str()))
-                            .collect();
-
-                        for r in &api_filtered {
-                            if r.relation == "depends_on" {
-                                continue;
-                            }
-                            let covered = heuristic_pairs.contains(&(r.head.as_str(), r.tail.as_str()))
-                                || heuristic_pairs.contains(&(r.tail.as_str(), r.head.as_str()));
-                            let in_result = result.iter().any(|existing| {
-                                (existing.head == r.head && existing.tail == r.tail)
-                                || (existing.head == r.tail && existing.tail == r.head)
-                            });
-                            if !covered && !in_result {
-                                result.push(r.clone());
-                            }
-                        }
-
-                        // If intersection is empty, fall back to API
-                        if result.is_empty() && !api_filtered.is_empty() {
-                            api_filtered
-                        } else {
-                            result
-                        }
-                    }
-                    _ => heuristic,
-                }
-            } else {
-                heuristic
-            }
-        } else {
-            heuristic
-        };
-
-        // Tier 1a: NLI cross-encoder (disabled — produces too many false positives
-        // even at high thresholds; DeBERTa-v3-small gives high entailment scores
-        // for incorrect relations, dropping F1 from 0.490 to 0.395-0.408).
-
-        // Tier 1b: Relex ONNX model (experimental — opt-in via CTXGRAPH_RELEX=1)
-        // Preprocessing mismatch causes Reshape_27 errors; disabled by default.
+        // Relex ONNX model (experimental — opt-in via CTXGRAPH_RELEX=1)
         if std::env::var("CTXGRAPH_RELEX").is_ok() {
             let relex = RELEX_ENGINE.get_or_init(|| {
                 let mgr = crate::model_manager::ModelManager::new().ok()?;
@@ -312,33 +204,6 @@ impl RelEngine {
                                     confidence: rel.confidence,
                                 });
                             }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Tier 1b: Ollama LLM augmentation (adds relations the heuristic missed)
-        // Only augments — does NOT replace heuristic results.
-        if std::env::var("CTXGRAPH_NO_OLLAMA").is_err() {
-            let available = *OLLAMA_AVAILABLE.get_or_init(|| {
-                let engine = OllamaRelEngine::new();
-                engine.is_available()
-            });
-
-            if available {
-                let engine = OllamaRelEngine::new();
-                if let Ok(llm_relations) = engine.extract(text, entities, schema) {
-                    let existing: std::collections::HashSet<(String, String)> = relations
-                        .iter()
-                        .map(|r| (r.head.clone(), r.tail.clone()))
-                        .collect();
-
-                    for r in llm_relations {
-                        if !existing.contains(&(r.head.clone(), r.tail.clone()))
-                            && !existing.contains(&(r.tail.clone(), r.head.clone()))
-                        {
-                            relations.push(r);
                         }
                     }
                 }
@@ -412,6 +277,8 @@ fn heuristic_relations(
             "is down",
             // Language/runtime patterns
             "goroutine",
+            // Monitoring dependencies
+            "scraped by", "dashboards",
         ]),
         ("fixed", &[
             "fixed", "fixing", "resolv", "patched", "repaired",
@@ -438,8 +305,8 @@ fn heuristic_relations(
         ("caused", &[
             "caused", "causing", "resulted in", "led to", "trigger",
             "contributed to",
-            "improv", "reduc", "increas", "decreas",
-            "degrad", "impact", "affect",
+            "dropped to", "reduced to", "improved to", "decreased to",
+            "reduced by", "improved by", "increased by", "decreased by",
             "spiked", "spike",
         ]),
         ("constrained_by", &[
@@ -635,6 +502,23 @@ fn heuristic_relations(
             }
         }
     }
+
+    // Post-processing: filter out common false positive patterns.
+    relations.retain(|r| {
+        // Remove version-to-version "replaced" (e.g., "Java 21:replaced:Java 11").
+        // Version upgrades are not replacements of different technologies.
+        if r.relation == "replaced" {
+            let h = r.head.to_lowercase();
+            let t = r.tail.to_lowercase();
+            // Same base name with version numbers → version upgrade, not replacement
+            let h_base = h.trim_end_matches(|c: char| c.is_ascii_digit() || c == '.' || c == ' ');
+            let t_base = t.trim_end_matches(|c: char| c.is_ascii_digit() || c == '.' || c == ' ');
+            if !h_base.is_empty() && h_base == t_base {
+                return false;
+            }
+        }
+        true
+    });
 
     // Post-processing: resolve conflicting relation types for the same entity pair.
     // E.g., if both "chose" and "rejected" match for (X, Y), keep only one based
