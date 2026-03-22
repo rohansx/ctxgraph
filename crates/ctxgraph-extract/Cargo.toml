@@ -23,6 +23,7 @@ orp = "0.9"
 composable = "0.9"
 ndarray = { workspace = true }
 tokenizers = "0.22"
+fastembed = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3"

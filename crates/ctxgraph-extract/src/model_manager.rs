@@ -308,6 +308,23 @@ impl ModelManager {
         }
     }
 
+    /// Check for a locally available fine-tuned relation classifier model.
+    ///
+    /// Looks for `relation_classifier/model_int8.onnx` (or `model.onnx`) and
+    /// `relation_classifier/tokenizer.json` in the cache directory.
+    ///
+    /// Returns `Some((model_path, tokenizer_path))` if found, `None` otherwise.
+    pub fn find_relation_classifier(&self) -> Option<std::path::PathBuf> {
+        let base = self.cache_dir.join("relation_classifier");
+
+        [
+            base.join("model_int8.onnx"),
+            base.join("model.onnx"),
+        ]
+        .into_iter()
+        .find(|p| p.exists())
+    }
+
     /// Check for locally exported gliner-relex ONNX model.
     ///
     /// The relex model must be exported manually using:

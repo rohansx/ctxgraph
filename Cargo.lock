@@ -585,6 +585,7 @@ dependencies = [
  "chrono",
  "composable",
  "dirs",
+ "fastembed",
  "gline-rs",
  "indicatif 0.17.11",
  "ndarray",

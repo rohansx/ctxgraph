@@ -13,6 +13,7 @@ use orp::params::RuntimeParameters;
 use orp::pipeline::Pipeline;
 
 use crate::ner::ExtractedEntity;
+use crate::relclf::RelationClassifier;
 use crate::relex::RelexEngine;
 use crate::schema::ExtractionSchema;
 
@@ -41,6 +42,9 @@ pub enum RelEngine {
 
 /// Cached relex engine (loaded once per process).
 static RELEX_ENGINE: std::sync::OnceLock<Option<RelexEngine>> = std::sync::OnceLock::new();
+
+/// Cached relation classifier (loaded once per process).
+static RELCLF_ENGINE: std::sync::OnceLock<Option<RelationClassifier>> = std::sync::OnceLock::new();
 
 /// Model-based relation extraction using gline-rs.
 ///
@@ -185,7 +189,7 @@ impl RelEngine {
                         .collect();
 
                     for rel in &result.relations {
-                        if rel.confidence < 0.7 {
+                        if rel.confidence < 0.80 {
                             continue;
                         }
 
@@ -204,6 +208,57 @@ impl RelEngine {
                                     confidence: rel.confidence,
                                 });
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Relation classifier (embedding-based) — auto-enabled if model found.
+        let relclf = RELCLF_ENGINE.get_or_init(|| {
+            let mgr = crate::model_manager::ModelManager::new().ok()?;
+            let model_path = mgr.find_relation_classifier()?;
+            RelationClassifier::new(&model_path).ok()
+        });
+
+        if let Some(classifier) = relclf {
+            // Use fastembed for generating embeddings (same model as ctxgraph-embed).
+            static EMBED_ENGINE: std::sync::OnceLock<
+                Option<fastembed::TextEmbedding>,
+            > = std::sync::OnceLock::new();
+            let embed = EMBED_ENGINE.get_or_init(|| {
+                fastembed::TextEmbedding::try_new(
+                    fastembed::InitOptions::new(fastembed::EmbeddingModel::AllMiniLML6V2),
+                )
+                .ok()
+            });
+
+            if let Some(embed_model) = embed {
+                let embed_fn = |text: &str| -> Result<Vec<f32>, RelError> {
+                    let mut vecs = embed_model
+                        .embed(vec![text], None)
+                        .map_err(|e| RelError::Inference(e.to_string()))?;
+                    vecs.pop()
+                        .ok_or_else(|| RelError::Inference("empty embedding".into()))
+                };
+
+                if let Ok(clf_relations) =
+                    classifier.classify_batch(text, entities, &embed_fn)
+                {
+                    let existing: std::collections::HashSet<(String, String)> = relations
+                        .iter()
+                        .map(|r| (r.head.clone(), r.tail.clone()))
+                        .collect();
+
+                    for rel in clf_relations {
+                        if rel.confidence < 0.76 {
+                            continue;
+                        }
+                        // Only add relations for pairs not already covered
+                        if !existing.contains(&(rel.head.clone(), rel.tail.clone()))
+                            && !existing.contains(&(rel.tail.clone(), rel.head.clone()))
+                        {
+                            relations.push(rel);
                         }
                     }
                 }
