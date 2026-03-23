@@ -67,6 +67,17 @@ enum Commands {
     /// Show graph statistics
     Stats,
 
+    /// Manage ONNX models
+    Models {
+        #[command(subcommand)]
+        action: ModelsAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum ModelsAction {
+    /// Download ONNX models required for extraction
+    Download,
 }
 
 #[derive(Subcommand)]
@@ -141,6 +152,9 @@ fn main() {
             DecisionsAction::Show { id } => commands::decisions::show(id),
         },
         Commands::Stats => commands::stats::run(),
+        Commands::Models { action } => match action {
+            ModelsAction::Download => commands::models::download(),
+        },
     };
 
     if let Err(e) = result {

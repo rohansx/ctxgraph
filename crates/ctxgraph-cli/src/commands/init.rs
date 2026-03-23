@@ -17,6 +17,7 @@ pub fn run(name: Option<String>) -> ctxgraph::Result<()> {
     println!("  Database: .ctxgraph/graph.db");
     println!();
     println!("Get started:");
+    println!("  ctxgraph models download    Download ONNX models for extraction");
     println!("  ctxgraph log \"Your first decision or event\"");
     println!("  ctxgraph query \"search for something\"");
 

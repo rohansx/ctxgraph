@@ -566,6 +566,7 @@ dependencies = [
  "clap",
  "colored",
  "ctxgraph",
+ "ctxgraph-extract",
  "dotenvy",
  "serde_json",
 ]

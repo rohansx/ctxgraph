@@ -6,6 +6,10 @@ Zero infrastructure. Zero API cost. Single Rust binary.
 
 ---
 
+### What is a context graph?
+
+A **context graph** is a knowledge graph of decisions. Every time your team (or an AI agent) makes a choice — picking a database, approving a discount, switching architectures — ctxgraph records it along with the who, why, when, and what alternatives were considered. Over time, you build a searchable, traversable history of institutional knowledge that answers "why did we do X?" in seconds.
+
 ctxgraph stores decision traces — the full story behind every choice — and makes them searchable. It runs entirely on your machine. No Neo4j. No OpenAI API key. No Docker. No Python. One binary, one SQLite file, instant startup.
 
 When someone (or an AI agent) asks *"why did we do X?"*, ctxgraph traverses the graph of past decisions, finds relevant precedents, and returns the full context — who decided, when, what alternatives were considered, and what the outcome was.
@@ -49,7 +53,17 @@ ctxgraph uses domain-specific heuristics trained on software engineering pattern
 
 ```bash
 # Install
+# Via cargo (requires Rust toolchain)
 cargo install ctxgraph
+
+# Via Homebrew (macOS / Linux)
+brew install rohansx/tap/ctxgraph
+
+# Or download a prebuilt binary from GitHub Releases
+# https://github.com/rohansx/ctxgraph/releases
+
+# Download ONNX models (~600 MB, one-time)
+ctxgraph models download
 
 # Initialize in your project
 ctxgraph init
@@ -63,12 +77,67 @@ ctxgraph log --tags "architecture,database" "Switched from REST to gRPC"
 ctxgraph query "why Postgres?"
 ctxgraph query "discount precedents" --limit 5
 
-# Auto-capture git commits
-ctxgraph watch --git --last 50
-
 # Stats
 ctxgraph stats
 ```
+
+## What It Looks Like
+
+```
+$ ctxgraph log "Chose Postgres over SQLite for billing. Reason: concurrent writes."
+Episode stored: a1b2c3d4
+  Extracted 3 entities
+  Created 2 edges
+```
+
+```
+$ ctxgraph query "why Postgres?"
+Found 2 result(s) for 'why Postgres?':
+
+  [a1b2c3d4] (cli, 2025-03-23 14:05) score=0.92
+    Chose Postgres over SQLite for billing. Reason: concurrent writes.
+
+  [e5f6a7b8] (slack, 2025-03-20 09:12) score=0.71
+    Priya confirmed Postgres handles our write volume — benchmarked at 10k TPS.
+```
+
+```
+$ ctxgraph entities show Postgres
+Entity: Postgres (Database)
+ID: 9f8e7d6c-...
+Created: 2025-03-23 14:05
+
+Relationships:
+  --[chose]--> billing
+  --[rejected]--> SQLite (invalidated)
+  <--[depends_on]-- payment-service
+
+Neighbors:
+  billing (Service)
+  SQLite (Database)
+  payment-service (Component)
+```
+
+```
+$ ctxgraph stats
+ctxgraph stats
+------------------------------
+Episodes:  127
+Entities:  89
+Edges:     214
+Sources:   cli (45), git (72), slack (10)
+DB size:   2.4 MB
+```
+
+### Real-World Scenario
+
+Your team has been logging decisions for three months — architecture choices, vendor evaluations, incident responses. A new engineer joins and asks: "Why are we using Postgres instead of MongoDB for the billing service?"
+
+```bash
+$ ctxgraph query "why Postgres for billing?"
+```
+
+ctxgraph returns the original decision episode, the benchmark data that supported it, and the Slack discussion where the team evaluated MongoDB and rejected it for lack of ACID transactions. The new engineer gets the full context in seconds instead of asking three people and reading old Slack threads.
 
 ## How It Works
 
@@ -154,12 +223,13 @@ ctxgraph runs as an MCP server for AI agents (Claude Desktop, Cursor, Claude Cod
 {
   "mcpServers": {
     "ctxgraph": {
-      "command": "ctxgraph",
-      "args": ["mcp", "start"]
+      "command": "ctxgraph-mcp"
     }
   }
 }
 ```
+
+Install the MCP server separately: `cargo install ctxgraph-mcp`
 
 | Tool | Description |
 |---|---|
@@ -204,10 +274,10 @@ ctxgraph entities show <id>                           Show entity with relations
 ctxgraph decisions list                               List episodes
 ctxgraph decisions show <id>                          Show full decision trace
 ctxgraph stats                                        Graph statistics
-ctxgraph watch --git [--last <n>]                     Auto-capture git commits
 ctxgraph models download                              Download ONNX models
-ctxgraph export --format json|csv                     Export graph data
-ctxgraph mcp start                                    Run as MCP server
+ctxgraph watch --git [--last <n>]                     Auto-capture git commits (planned)
+ctxgraph export --format json|csv                     Export graph data (planned)
+ctxgraph-mcp                                           Run as MCP server (separate binary)
 ```
 
 ## Configuration
@@ -233,6 +303,8 @@ depends_on = { head = ["Component"], tail = ["Component"], description = "depend
 ## Benchmark
 
 The extraction pipeline is evaluated against 50 software-engineering episodes covering all 10 entity types and 9 relation types. Scores are macro-averaged F1.
+
+The full benchmark corpus of 50 episodes and ground-truth annotations is [available in the repository](crates/ctxgraph-extract/tests/fixtures/benchmark_episodes.json) for inspection and reproduction. The corpus was authored by us — not cherry-picked to favor our heuristics, but we're transparent about this. If you find cases where ctxgraph gets it wrong, [open an issue](https://github.com/rohansx/ctxgraph/issues) or submit new episodes to make the benchmark more robust.
 
 ```bash
 cargo test --test benchmark_test -- --ignored --nocapture
