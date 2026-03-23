@@ -13,7 +13,10 @@ fn test_model_spec_creation() {
     assert!(spec.size_bytes > 0);
 
     let spec2 = gliner_multitask_large();
-    assert_eq!(spec2.name, "gliner-multitask-large-v0.5/onnx/model_int8.onnx");
+    assert_eq!(
+        spec2.name,
+        "gliner-multitask-large-v0.5/onnx/model_int8.onnx"
+    );
 
     let spec3 = minilm_l6_v2();
     assert_eq!(spec3.name, "minilm-l6-v2.onnx");
@@ -30,7 +33,10 @@ fn test_cache_dir_creation() {
     // model_path should be inside the cache dir
     let spec = gliner_large_v21_int8();
     let path = mgr.model_path(&spec);
-    assert_eq!(path, cache_dir.join("gliner_large-v2.1/onnx/model_int8.onnx"));
+    assert_eq!(
+        path,
+        cache_dir.join("gliner_large-v2.1/onnx/model_int8.onnx")
+    );
 }
 
 #[test]

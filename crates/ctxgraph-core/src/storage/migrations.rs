@@ -3,9 +3,9 @@ use rusqlite::Connection;
 use crate::error::Result;
 
 const MIGRATIONS: &[(&str, &str)] = &[
-(
-    "001_initial",
-    r#"
+    (
+        "001_initial",
+        r#"
     -- Episodes: raw events
     CREATE TABLE IF NOT EXISTS episodes (
         id          TEXT PRIMARY KEY,
@@ -145,14 +145,15 @@ const MIGRATIONS: &[(&str, &str)] = &[
         VALUES (new.rowid, new.fact, new.relation);
     END;
     "#,
-),
-(
-    "002_entity_embeddings",
-    r#"
+    ),
+    (
+        "002_entity_embeddings",
+        r#"
     -- Add embedding column to entities table (episodes already has it from 001)
     -- We use a Rust-side check since SQLite ALTER TABLE ADD COLUMN is not idempotent
     "#,
-)];
+    ),
+];
 
 pub fn run_migrations(conn: &Connection) -> Result<()> {
     conn.execute_batch(
@@ -176,7 +177,9 @@ pub fn run_migrations(conn: &Connection) -> Result<()> {
                     let mut col_stmt = conn.prepare(
                         "SELECT COUNT(*) FROM pragma_table_info('entities') WHERE name = 'embedding'",
                     )?;
-                    col_stmt.query_row([], |row| row.get::<_, i64>(0)).map(|n| n > 0)?
+                    col_stmt
+                        .query_row([], |row| row.get::<_, i64>(0))
+                        .map(|n| n > 0)?
                 };
                 if !has_col {
                     conn.execute_batch("ALTER TABLE entities ADD COLUMN embedding BLOB;")?;

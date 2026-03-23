@@ -1,5 +1,5 @@
-use ctxgraph_extract::ner::ExtractedEntity;
 use ctxgraph_extract::CorefResolver;
+use ctxgraph_extract::ner::ExtractedEntity;
 
 fn make_entity(text: &str, entity_type: &str, start: usize, end: usize) -> ExtractedEntity {
     ExtractedEntity {
@@ -71,7 +71,10 @@ fn test_plural_persons_he_resolves_to_most_recent() {
     let he_pos = text.find(" He ").unwrap() + 1;
     let he_coref: Vec<_> = coref.iter().filter(|e| e.span_start == he_pos).collect();
     assert_eq!(he_coref.len(), 1, "Expected 1 coref for 'He'");
-    assert_eq!(he_coref[0].text, "Carol", "He should resolve to Carol (most recent Person)");
+    assert_eq!(
+        he_coref[0].text, "Carol",
+        "He should resolve to Carol (most recent Person)"
+    );
 }
 
 /// No entities → no coref output (must not crash).
@@ -79,7 +82,10 @@ fn test_plural_persons_he_resolves_to_most_recent() {
 fn test_no_entities_returns_empty() {
     let text = "She said it was faster.";
     let result = CorefResolver::resolve(text, &[]);
-    assert!(result.is_empty(), "Expected no corefs when entities list is empty");
+    assert!(
+        result.is_empty(),
+        "Expected no corefs when entities list is empty"
+    );
 }
 
 /// Pronoun before entity → should NOT be resolved (no forward reference).

@@ -34,9 +34,7 @@ impl CorefResolver {
             let candidate = sorted_entities
                 .iter()
                 .rev()
-                .find(|e| {
-                    e.span_start < *pron_start && is_compatible(pron_type, &e.entity_type)
-                });
+                .find(|e| e.span_start < *pron_start && is_compatible(pron_type, &e.entity_type));
 
             if let Some(entity) = candidate {
                 result.push(ExtractedEntity {

@@ -66,10 +66,10 @@ impl Graph {
     /// if they do not exist, making it suitable for explicit `--db <path>` usage
     /// where the caller controls the full path.
     pub fn open_or_create(db_path: &Path) -> Result<Self> {
-        if let Some(parent) = db_path.parent() {
-            if !parent.as_os_str().is_empty() {
-                fs::create_dir_all(parent)?;
-            }
+        if let Some(parent) = db_path.parent()
+            && !parent.as_os_str().is_empty()
+        {
+            fs::create_dir_all(parent)?;
         }
         let storage = Storage::open(db_path)?;
         Ok(Self {
@@ -96,10 +96,7 @@ impl Graph {
     /// Once loaded, `add_episode()` will automatically extract entities and relations.
     /// Call this after `open()` or `init()` to enable extraction.
     #[cfg(feature = "extract")]
-    pub fn load_extraction_pipeline(
-        &mut self,
-        models_dir: &Path,
-    ) -> Result<()> {
+    pub fn load_extraction_pipeline(&mut self, models_dir: &Path) -> Result<()> {
         let pipeline = ExtractionPipeline::with_defaults(models_dir)
             .map_err(|e| CtxGraphError::Extraction(e.to_string()))?;
         self.pipeline = Some(pipeline);
@@ -236,11 +233,7 @@ impl Graph {
     /// Otherwise creates a new entity.
     ///
     /// Returns (entity_id, was_merged: bool).
-    pub fn add_entity_deduped(
-        &self,
-        entity: Entity,
-        threshold: f64,
-    ) -> Result<(String, bool)> {
+    pub fn add_entity_deduped(&self, entity: Entity, threshold: f64) -> Result<(String, bool)> {
         // 1. Check alias table first (exact alias match)
         if let Some(canonical_id) = self.storage.find_by_alias(&entity.name)? {
             return Ok((canonical_id, true));
@@ -254,10 +247,8 @@ impl Graph {
         let mut best: Option<(String, f64)> = None;
         for (existing_id, existing_name) in &existing {
             let sim = strsim::jaro_winkler(&name_lower, &existing_name.to_lowercase());
-            if sim >= threshold {
-                if best.as_ref().map_or(true, |(_, best_sim)| sim > *best_sim) {
-                    best = Some((existing_id.clone(), sim));
-                }
+            if sim >= threshold && best.as_ref().is_none_or(|(_, best_sim)| sim > *best_sim) {
+                best = Some((existing_id.clone(), sim));
             }
         }
 
@@ -320,19 +311,13 @@ impl Graph {
     /// Store an embedding for an episode. The embedding is serialized as
     /// little-endian f32 bytes.
     pub fn store_embedding(&self, episode_id: &str, embedding: &[f32]) -> Result<()> {
-        let bytes: Vec<u8> = embedding
-            .iter()
-            .flat_map(|f| f.to_le_bytes())
-            .collect();
+        let bytes: Vec<u8> = embedding.iter().flat_map(|f| f.to_le_bytes()).collect();
         self.storage.store_episode_embedding(episode_id, &bytes)
     }
 
     /// Store an embedding for an entity.
     pub fn store_entity_embedding(&self, entity_id: &str, embedding: &[f32]) -> Result<()> {
-        let bytes: Vec<u8> = embedding
-            .iter()
-            .flat_map(|f| f.to_le_bytes())
-            .collect();
+        let bytes: Vec<u8> = embedding.iter().flat_map(|f| f.to_le_bytes()).collect();
         self.storage.store_entity_embedding(entity_id, &bytes)
     }
 
@@ -399,10 +384,10 @@ impl Graph {
                 let rrf = 1.0 / (K + rank as f64 + 1.0);
                 *scores.entry(ep_id.clone()).or_insert(0.0) += rrf;
                 // Fetch episode if not already cached
-                if !episodes_map.contains_key(&ep_id) {
-                    if let Ok(Some(ep)) = self.storage.get_episode(&ep_id) {
-                        episodes_map.insert(ep_id, ep);
-                    }
+                if let std::collections::hash_map::Entry::Vacant(e) = episodes_map.entry(ep_id)
+                    && let Ok(Some(ep)) = self.storage.get_episode(e.key())
+                {
+                    e.insert(ep);
                 }
             }
         }
@@ -415,7 +400,9 @@ impl Graph {
             .into_iter()
             .take(limit)
             .filter_map(|(id, score)| {
-                episodes_map.remove(&id).map(|episode| FusedEpisodeResult { episode, score })
+                episodes_map
+                    .remove(&id)
+                    .map(|episode| FusedEpisodeResult { episode, score })
             })
             .collect();
 

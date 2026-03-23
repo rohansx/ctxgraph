@@ -38,8 +38,11 @@ impl EpisodeBuilder {
 
     pub fn build(mut self) -> Episode {
         if !self.tags.is_empty() {
-            let tags: Vec<serde_json::Value> =
-                self.tags.into_iter().map(serde_json::Value::String).collect();
+            let tags: Vec<serde_json::Value> = self
+                .tags
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect();
             self.metadata
                 .insert("tags".to_string(), serde_json::Value::Array(tags));
         }

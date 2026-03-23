@@ -37,8 +37,7 @@ pub enum TemporalResult {
 static ISO_FULL: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\b(\d{4})-(\d{2})-(\d{2})\b").unwrap());
 
-static ISO_MONTH: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b(\d{4})-(\d{2})\b").unwrap());
+static ISO_MONTH: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b(\d{4})-(\d{2})\b").unwrap());
 
 // "March 11, 2026" or "Mar 11, 2026"
 static WRITTEN_MDY: LazyLock<Regex> = LazyLock::new(|| {
@@ -56,14 +55,11 @@ static WRITTEN_MY: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 // Layer 3 — relative expressions
-static REL_YESTERDAY: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)\byesterday\b").unwrap());
+static REL_YESTERDAY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\byesterday\b").unwrap());
 
-static REL_TODAY: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)\btoday\b").unwrap());
+static REL_TODAY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\btoday\b").unwrap());
 
-static REL_TOMORROW: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)\btomorrow\b").unwrap());
+static REL_TOMORROW: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\btomorrow\b").unwrap());
 
 static REL_N_DAYS_AGO: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)\b(\d+)\s+days?\s+ago\b").unwrap());
@@ -167,10 +163,10 @@ fn layer2_written(text: &str, out: &mut Vec<TemporalResult>) {
         if let (Some(m), Some(date)) = (month, None::<NaiveDate>) {
             let _ = (m, date); // satisfy compiler
         }
-        if let Some(m) = month {
-            if let Some(date) = NaiveDate::from_ymd_opt(year, m, day) {
-                out.push(TemporalResult::ExactDate(date));
-            }
+        if let Some(m) = month
+            && let Some(date) = NaiveDate::from_ymd_opt(year, m, day)
+        {
+            out.push(TemporalResult::ExactDate(date));
         }
     }
 
@@ -179,10 +175,10 @@ fn layer2_written(text: &str, out: &mut Vec<TemporalResult>) {
         let day: u32 = cap[1].parse().unwrap();
         let month = parse_month_name(&cap[2]);
         let year: i32 = cap[3].parse().unwrap();
-        if let Some(m) = month {
-            if let Some(date) = NaiveDate::from_ymd_opt(year, m, day) {
-                out.push(TemporalResult::ExactDate(date));
-            }
+        if let Some(m) = month
+            && let Some(date) = NaiveDate::from_ymd_opt(year, m, day)
+        {
+            out.push(TemporalResult::ExactDate(date));
         }
     }
 
@@ -212,10 +208,10 @@ fn layer2_written(text: &str, out: &mut Vec<TemporalResult>) {
         }
         let month = parse_month_name(&cap[1]);
         let year: i32 = cap[2].parse().unwrap();
-        if let Some(mo) = month {
-            if let Some(date) = NaiveDate::from_ymd_opt(year, mo, 1) {
-                out.push(TemporalResult::ExactDate(date));
-            }
+        if let Some(mo) = month
+            && let Some(date) = NaiveDate::from_ymd_opt(year, mo, 1)
+        {
+            out.push(TemporalResult::ExactDate(date));
         }
     }
 }

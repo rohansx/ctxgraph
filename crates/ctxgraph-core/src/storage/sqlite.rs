@@ -158,11 +158,7 @@ impl Storage {
         Ok(result)
     }
 
-    pub fn list_entities(
-        &self,
-        entity_type: Option<&str>,
-        limit: usize,
-    ) -> Result<Vec<Entity>> {
+    pub fn list_entities(&self, entity_type: Option<&str>, limit: usize) -> Result<Vec<Entity>> {
         let (sql, type_param);
         if let Some(et) = entity_type {
             sql = "SELECT id, name, entity_type, summary, created_at, metadata
@@ -218,9 +214,9 @@ impl Storage {
 
     /// Get all entity (id, name) pairs for a given entity type (for fuzzy matching).
     pub fn get_entity_names_by_type(&self, entity_type: &str) -> Result<Vec<(String, String)>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT id, name FROM entities WHERE entity_type = ?1",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, name FROM entities WHERE entity_type = ?1")?;
 
         let rows = stmt
             .query_map(params![entity_type], |row| {
@@ -232,12 +228,7 @@ impl Storage {
     }
 
     /// Insert an alias mapping alias_name → canonical_id.
-    pub fn add_alias(
-        &self,
-        canonical_id: &str,
-        alias_name: &str,
-        similarity: f64,
-    ) -> Result<()> {
+    pub fn add_alias(&self, canonical_id: &str, alias_name: &str, similarity: f64) -> Result<()> {
         self.conn.execute(
             "INSERT OR IGNORE INTO aliases (canonical_id, alias_name, similarity)
              VALUES (?1, ?2, ?3)",
@@ -248,9 +239,9 @@ impl Storage {
 
     /// Look up the canonical entity ID for an alias name (case-insensitive).
     pub fn find_by_alias(&self, name: &str) -> Result<Option<String>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT canonical_id FROM aliases WHERE alias_name = ?1 COLLATE NOCASE",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT canonical_id FROM aliases WHERE alias_name = ?1 COLLATE NOCASE")?;
 
         let result = stmt
             .query_row(params![name], |row| row.get::<_, String>(0))
@@ -290,9 +281,7 @@ impl Storage {
              FROM edges WHERE id = ?1",
         )?;
 
-        let result = stmt
-            .query_row(params![id], map_edge_row)
-            .optional()?;
+        let result = stmt.query_row(params![id], map_edge_row).optional()?;
 
         Ok(result)
     }
@@ -450,9 +439,9 @@ impl Storage {
 
     /// Load all episode embeddings as (id, raw bytes) pairs.
     pub fn get_all_episode_embeddings(&self) -> Result<Vec<(String, Vec<u8>)>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT id, embedding FROM episodes WHERE embedding IS NOT NULL",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, embedding FROM episodes WHERE embedding IS NOT NULL")?;
         let rows = stmt
             .query_map([], |row| {
                 Ok((row.get::<_, String>(0)?, row.get::<_, Vec<u8>>(1)?))
@@ -464,12 +453,12 @@ impl Storage {
     // ── Stats ──
 
     pub fn stats(&self) -> Result<GraphStats> {
-        let episode_count: usize = self
-            .conn
-            .query_row("SELECT COUNT(*) FROM episodes", [], |row| row.get(0))?;
-        let entity_count: usize = self
-            .conn
-            .query_row("SELECT COUNT(*) FROM entities", [], |row| row.get(0))?;
+        let episode_count: usize =
+            self.conn
+                .query_row("SELECT COUNT(*) FROM episodes", [], |row| row.get(0))?;
+        let entity_count: usize =
+            self.conn
+                .query_row("SELECT COUNT(*) FROM entities", [], |row| row.get(0))?;
         let edge_count: usize = self
             .conn
             .query_row("SELECT COUNT(*) FROM edges", [], |row| row.get(0))?;
@@ -593,7 +582,8 @@ impl Storage {
             all_params.push(Box::new(id.clone()));
         }
 
-        let param_refs: Vec<&dyn rusqlite::types::ToSql> = all_params.iter().map(|p| p.as_ref()).collect();
+        let param_refs: Vec<&dyn rusqlite::types::ToSql> =
+            all_params.iter().map(|p| p.as_ref()).collect();
 
         let edges = stmt
             .query_map(&*param_refs, map_edge_row)?
@@ -631,12 +621,8 @@ fn map_edge_row(row: &rusqlite::Row) -> rusqlite::Result<Edge> {
         target_id: row.get(2)?,
         relation: row.get(3)?,
         fact: row.get(4)?,
-        valid_from: row
-            .get::<_, Option<String>>(5)?
-            .map(|s| parse_datetime(&s)),
-        valid_until: row
-            .get::<_, Option<String>>(6)?
-            .map(|s| parse_datetime(&s)),
+        valid_from: row.get::<_, Option<String>>(5)?.map(|s| parse_datetime(&s)),
+        valid_until: row.get::<_, Option<String>>(6)?.map(|s| parse_datetime(&s)),
         recorded_at: parse_datetime(&row.get::<_, String>(7)?),
         confidence: row.get(8)?,
         episode_id: row.get(9)?,

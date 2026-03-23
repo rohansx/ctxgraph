@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
-use ctxgraph_extract::temporal::{parse_temporal, TemporalResult};
+use ctxgraph_extract::temporal::{TemporalResult, parse_temporal};
 
 fn utc(y: i32, m: u32, d: u32) -> DateTime<Utc> {
     NaiveDate::from_ymd_opt(y, m, d)
@@ -266,8 +266,14 @@ fn multi_layer_mixed() {
     let r = parse_temporal(text, utc(2026, 3, 11));
     // Should contain: ExactDate, DateRange (Q1), Duration
     assert!(r.iter().any(|t| matches!(t, TemporalResult::ExactDate(_))));
-    assert!(r.iter().any(|t| matches!(t, TemporalResult::DateRange { .. })));
-    assert!(r.iter().any(|t| matches!(t, TemporalResult::Duration { .. })));
+    assert!(
+        r.iter()
+            .any(|t| matches!(t, TemporalResult::DateRange { .. }))
+    );
+    assert!(
+        r.iter()
+            .any(|t| matches!(t, TemporalResult::Duration { .. }))
+    );
 }
 
 #[test]

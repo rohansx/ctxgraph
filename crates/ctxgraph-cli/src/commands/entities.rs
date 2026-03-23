@@ -28,14 +28,10 @@ pub fn show(id: String) -> ctxgraph::Result<()> {
     let graph = open_graph()?;
 
     // Try by ID first, then by name
-    let entity = graph
-        .get_entity(&id)?
-        .or(graph.get_entity_by_name(&id)?);
+    let entity = graph.get_entity(&id)?.or(graph.get_entity_by_name(&id)?);
 
     let Some(entity) = entity else {
-        return Err(ctxgraph::CtxGraphError::NotFound(format!(
-            "entity '{id}'"
-        )));
+        return Err(ctxgraph::CtxGraphError::NotFound(format!("entity '{id}'")));
     };
 
     let context = graph.get_entity_context(&entity.id)?;

@@ -2,11 +2,7 @@ use crate::display;
 
 use super::open_graph;
 
-pub fn list(
-    _after: Option<String>,
-    _source: Option<String>,
-    limit: usize,
-) -> ctxgraph::Result<()> {
+pub fn list(_after: Option<String>, _source: Option<String>, limit: usize) -> ctxgraph::Result<()> {
     let graph = open_graph()?;
     let episodes = graph.list_episodes(limit, 0)?;
 
@@ -33,9 +29,7 @@ pub fn show(id: String) -> ctxgraph::Result<()> {
 
     let episode = graph.get_episode(&id)?;
     let Some(episode) = episode else {
-        return Err(ctxgraph::CtxGraphError::NotFound(format!(
-            "episode '{id}'"
-        )));
+        return Err(ctxgraph::CtxGraphError::NotFound(format!("episode '{id}'")));
     };
 
     display::print_episode(&episode, None);

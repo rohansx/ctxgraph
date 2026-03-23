@@ -53,11 +53,8 @@ impl ExtractionPipeline {
         let rel_model = find_rel_model(models_dir);
         let rel_tokenizer = find_tokenizer(models_dir, "multitask").ok();
 
-        let rel = RelEngine::new(
-            rel_model.as_deref(),
-            rel_tokenizer.as_deref(),
-        )
-        .map_err(PipelineError::Rel)?;
+        let rel = RelEngine::new(rel_model.as_deref(), rel_tokenizer.as_deref())
+            .map_err(PipelineError::Rel)?;
 
         Ok(Self {
             schema,
@@ -108,7 +105,16 @@ impl ExtractionPipeline {
         // using domain knowledge lookup tables (Database, Infrastructure, Pattern, etc.)
         remap::remap_entity_types(&mut entities);
 
-        // Step 1e: LLM entity cleanup — DISABLED.
+        // Step 1e: Canonicalize entity names — strip generic suffixes like
+        // " pattern", " framework", " modules" when the base name is a known
+        // entity or a proper noun (e.g., "CQRS pattern" → "CQRS").
+        remap::canonicalize_entities(&mut entities);
+
+        // Step 1f: Deduplicate overlapping spans — when the model extracts both
+        // "CQRS" and "CQRS pattern" at overlapping positions, keep the best one.
+        remap::deduplicate_overlapping(&mut entities);
+
+        // Step 1g: LLM entity cleanup — DISABLED.
         // Tested both local Ollama (qwen2.5:3b) and GPT-4.1-mini for cleaning
         // up GLiNER entity names. Both hurt full benchmark F1:
         //   - Ollama: entity 0.845→0.787, combined 0.678→0.630
@@ -218,7 +224,7 @@ fn find_tokenizer(models_dir: &Path, prefix: &str) -> Result<PathBuf, PipelineEr
     }
 
     Err(PipelineError::ModelNotFound {
-        model: format!("{prefix} tokenizer").into(),
+        model: format!("{prefix} tokenizer"),
         searched: candidates.iter().map(|p| p.display().to_string()).collect(),
     })
 }

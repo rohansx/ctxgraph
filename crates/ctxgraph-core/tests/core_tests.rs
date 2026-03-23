@@ -116,8 +116,12 @@ fn test_entity_by_name() {
 fn test_list_entities_with_type_filter() {
     let graph = test_graph();
 
-    graph.add_entity(Entity::new("Postgres", "Component")).unwrap();
-    graph.add_entity(Entity::new("SQLite", "Component")).unwrap();
+    graph
+        .add_entity(Entity::new("Postgres", "Component"))
+        .unwrap();
+    graph
+        .add_entity(Entity::new("SQLite", "Component"))
+        .unwrap();
     graph.add_entity(Entity::new("Priya", "Person")).unwrap();
     graph.add_entity(Entity::new("billing", "Service")).unwrap();
 
@@ -229,10 +233,14 @@ fn test_episode_entity_link() {
     let ent_id = entity.id.clone();
     graph.add_entity(entity).unwrap();
 
-    graph.link_episode_entity(&ep_id, &ent_id, Some(6), Some(14)).unwrap();
+    graph
+        .link_episode_entity(&ep_id, &ent_id, Some(6), Some(14))
+        .unwrap();
 
     // Link should be idempotent (INSERT OR IGNORE)
-    graph.link_episode_entity(&ep_id, &ent_id, Some(6), Some(14)).unwrap();
+    graph
+        .link_episode_entity(&ep_id, &ent_id, Some(6), Some(14))
+        .unwrap();
 }
 
 // ── FTS5 Search ──
@@ -241,9 +249,15 @@ fn test_episode_entity_link() {
 fn test_fts5_search_episodes() {
     let graph = test_graph();
 
-    graph.add_episode(Episode::builder("Chose Postgres over SQLite for billing").build()).unwrap();
-    graph.add_episode(Episode::builder("Switched from REST to gRPC for internal services").build()).unwrap();
-    graph.add_episode(Episode::builder("Priya approved the discount for Reliance").build()).unwrap();
+    graph
+        .add_episode(Episode::builder("Chose Postgres over SQLite for billing").build())
+        .unwrap();
+    graph
+        .add_episode(Episode::builder("Switched from REST to gRPC for internal services").build())
+        .unwrap();
+    graph
+        .add_episode(Episode::builder("Priya approved the discount for Reliance").build())
+        .unwrap();
 
     let results = graph.search("Postgres", 10).unwrap();
     assert_eq!(results.len(), 1);
@@ -256,7 +270,9 @@ fn test_fts5_search_episodes() {
 #[test]
 fn test_fts5_search_empty_results() {
     let graph = test_graph();
-    graph.add_episode(Episode::builder("Chose Postgres").build()).unwrap();
+    graph
+        .add_episode(Episode::builder("Chose Postgres").build())
+        .unwrap();
 
     let results = graph.search("nonexistent_term_xyz", 10).unwrap();
     assert!(results.is_empty());
@@ -266,8 +282,12 @@ fn test_fts5_search_empty_results() {
 fn test_fts5_search_entities() {
     let graph = test_graph();
 
-    graph.add_entity(Entity::new("Postgres", "Component")).unwrap();
-    graph.add_entity(Entity::new("SQLite", "Component")).unwrap();
+    graph
+        .add_entity(Entity::new("Postgres", "Component"))
+        .unwrap();
+    graph
+        .add_entity(Entity::new("SQLite", "Component"))
+        .unwrap();
     graph.add_entity(Entity::new("Priya", "Person")).unwrap();
 
     let results = graph.search_entities("Postgres", 10).unwrap();
@@ -295,8 +315,12 @@ fn test_entity_context() {
     graph.add_entity(billing).unwrap();
     graph.add_entity(rohan).unwrap();
 
-    graph.add_edge(Edge::new(&pg_id, &billing_id, "chosen_for")).unwrap();
-    graph.add_edge(Edge::new(&rohan_id, &pg_id, "chose")).unwrap();
+    graph
+        .add_edge(Edge::new(&pg_id, &billing_id, "chosen_for"))
+        .unwrap();
+    graph
+        .add_edge(Edge::new(&rohan_id, &pg_id, "chose"))
+        .unwrap();
 
     let context = graph.get_entity_context(&pg_id).unwrap();
     assert_eq!(context.entity.name, "Postgres");
@@ -310,9 +334,15 @@ fn test_entity_context() {
 fn test_stats() {
     let graph = test_graph();
 
-    graph.add_episode(Episode::builder("Decision 1").source("manual").build()).unwrap();
-    graph.add_episode(Episode::builder("Decision 2").source("manual").build()).unwrap();
-    graph.add_episode(Episode::builder("Slack message").source("slack").build()).unwrap();
+    graph
+        .add_episode(Episode::builder("Decision 1").source("manual").build())
+        .unwrap();
+    graph
+        .add_episode(Episode::builder("Decision 2").source("manual").build())
+        .unwrap();
+    graph
+        .add_episode(Episode::builder("Slack message").source("slack").build())
+        .unwrap();
 
     let pg = Entity::new("Postgres", "Component");
     let pg_id = pg.id.clone();
@@ -321,7 +351,9 @@ fn test_stats() {
     let billing_id = billing.id.clone();
     graph.add_entity(billing).unwrap();
 
-    graph.add_edge(Edge::new(&pg_id, &billing_id, "chosen_for")).unwrap();
+    graph
+        .add_edge(Edge::new(&pg_id, &billing_id, "chosen_for"))
+        .unwrap();
 
     let stats = graph.stats().unwrap();
     assert_eq!(stats.episode_count, 3);
@@ -451,7 +483,10 @@ fn test_uuid_v7_is_time_sortable() {
     std::thread::sleep(std::time::Duration::from_millis(2));
     let id2 = uuid::Uuid::now_v7().to_string();
 
-    assert!(id1 < id2, "UUID v7 should be lexicographically time-sortable");
+    assert!(
+        id1 < id2,
+        "UUID v7 should be lexicographically time-sortable"
+    );
 }
 
 // ── Migrations Idempotent ──
@@ -482,11 +517,18 @@ fn test_entity_dedup_merges_similar() {
     let postgres = Entity::new("Postgres", "Component");
     let (deduped_id, was_merged) = graph.add_entity_deduped(postgres, 0.85).unwrap();
     assert!(was_merged, "Postgres should be merged into PostgreSQL");
-    assert_eq!(deduped_id, pg_id, "Should return canonical PostgreSQL entity id");
+    assert_eq!(
+        deduped_id, pg_id,
+        "Should return canonical PostgreSQL entity id"
+    );
 
     // Only one entity should exist
     let all = graph.list_entities(Some("Component"), 100).unwrap();
-    assert_eq!(all.len(), 1, "Only one Component entity should exist after merge");
+    assert_eq!(
+        all.len(),
+        1,
+        "Only one Component entity should exist after merge"
+    );
     assert_eq!(all[0].name, "PostgreSQL");
 }
 
@@ -503,7 +545,11 @@ fn test_entity_dedup_preserves_different() {
     assert!(!was_merged, "Redis should not be merged with PostgreSQL");
 
     let all = graph.list_entities(Some("Component"), 100).unwrap();
-    assert_eq!(all.len(), 2, "Both PostgreSQL and Redis should exist as separate entities");
+    assert_eq!(
+        all.len(),
+        2,
+        "Both PostgreSQL and Redis should exist as separate entities"
+    );
 }
 
 #[test]

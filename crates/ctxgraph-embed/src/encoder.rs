@@ -11,10 +11,8 @@ pub struct EmbedEngine {
 impl EmbedEngine {
     /// Initialize with default cache directory (~/.cache/fastembed).
     pub fn new() -> Result<Self, EmbedError> {
-        let model = TextEmbedding::try_new(
-            InitOptions::new(EmbeddingModel::AllMiniLML6V2),
-        )
-        .map_err(|e| EmbedError::ModelInit(e.to_string()))?;
+        let model = TextEmbedding::try_new(InitOptions::new(EmbeddingModel::AllMiniLML6V2))
+            .map_err(|e| EmbedError::ModelInit(e.to_string()))?;
         Ok(Self { model })
     }
 

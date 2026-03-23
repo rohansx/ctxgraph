@@ -2,7 +2,14 @@
 """Generate training data for fine-tuning a DeBERTa-v3-small entity-pair relation classifier.
 
 Reads gold benchmark episodes, generates positive/negative examples with entity markers,
-augments via paraphrasing templates, and outputs a train/val split JSON file.
+augments via paraphrasing templates (including informal/natural patterns), and outputs
+a train/val split JSON file.
+
+Improvements over v1:
+- Harder negatives: confusing co-occurrence, direction-reversed, near-miss
+- More natural augmentation: informal patterns (commit msgs, Slack, ADRs, sentence fragments)
+- Cross-episode entity mixing for diverse entity-relation combinations
+- Direction-aware negatives for replaced/depends_on
 """
 
 import json
@@ -23,12 +30,14 @@ RELATION_TYPES = [
     "introduced", "deprecated", "caused", "constrained_by",
 ]
 
+# Directional relations where head↔tail swap changes meaning
+DIRECTIONAL_RELATIONS = {"replaced", "depends_on", "chose", "rejected", "fixed",
+                         "introduced", "deprecated", "caused", "constrained_by"}
+
 SEED = 42
 
 # ---------------------------------------------------------------------------
-# Paraphrase templates per relation type.
-# Each template is a callable (head, tail) -> str producing marked-up text.
-# Entity markers [E1]/[/E1] and [E2]/[/E2] are embedded in the output.
+# Entity marker helpers
 # ---------------------------------------------------------------------------
 
 def _h(name: str) -> str:
@@ -37,6 +46,11 @@ def _h(name: str) -> str:
 def _t(name: str) -> str:
     return f"[E2]{name}[/E2]"
 
+
+# ---------------------------------------------------------------------------
+# Paraphrase templates per relation type.
+# Split into "formal" (original style) and "informal" (natural text patterns).
+# ---------------------------------------------------------------------------
 
 PARAPHRASE_TEMPLATES: dict[str, list] = {
     "chose": [
@@ -249,9 +263,126 @@ PARAPHRASE_TEMPLATES: dict[str, list] = {
 }
 
 # ---------------------------------------------------------------------------
-# "none" templates: generic sentences mentioning two entities without a relation.
+# Informal / natural-language positive templates.
+# These mimic commit messages, Slack messages, ADR snippets, code comments,
+# sentence fragments, and other real-world text patterns.
 # ---------------------------------------------------------------------------
-NONE_TEMPLATES = [
+
+INFORMAL_TEMPLATES: dict[str, list] = {
+    "chose": [
+        lambda h, t: f"Went with {_t(t)} for {_h(h)}. Reason: better community support.",
+        lambda h, t: f"ADR-042: {_h(h)} will use {_t(t)}. Decision: accepted.",
+        lambda h, t: f"{_h(h)}: chose {_t(t)} over the alternatives after benchmarking",
+        lambda h, t: f"decided on {_t(t)} for {_h(h)} - simpler API, less boilerplate",
+        lambda h, t: f"@team {_h(h)} is going with {_t(t)}, lmk if concerns",
+        lambda h, t: f"feat({_h(h)}): switch to {_t(t)} for data layer",
+        lambda h, t: f"After comparing options, {_t(t)} wins for {_h(h)}. Closing this spike.",
+        lambda h, t: f"Summary: evaluated 3 options for {_h(h)}, picked {_t(t)}",
+        lambda h, t: f"cc @eng - {_h(h)} adopting {_t(t)} per RFC discussion",
+        lambda h, t: f"spike result: {_t(t)} is the best fit for {_h(h)}, merging",
+    ],
+    "rejected": [
+        lambda h, t: f"Ruled out {_t(t)} for {_h(h)} - too many breaking changes.",
+        lambda h, t: f"ADR-042: {_h(h)} will NOT use {_t(t)}. Too immature.",
+        lambda h, t: f"{_h(h)}: tried {_t(t)}, doesn't work for our scale",
+        lambda h, t: f"nope, {_t(t)} is a no-go for {_h(h)}. Missing auth support.",
+        lambda h, t: f"@team dropping {_t(t)} from {_h(h)} shortlist, perf too low",
+        lambda h, t: f"Spike conclusion: {_t(t)} rejected for {_h(h)} due to licensing",
+        lambda h, t: f"Benchmarks show {_t(t)} can't handle {_h(h)} throughput. Moving on.",
+        lambda h, t: f"Not going with {_t(t)} for {_h(h)}. See thread for details.",
+        lambda h, t: f"wontfix: {_t(t)} integration with {_h(h)} has too many edge cases",
+        lambda h, t: f"killed the {_t(t)} PoC for {_h(h)}, back to drawing board",
+    ],
+    "replaced": [
+        lambda h, t: f"Migrated from {_t(t)} to {_h(h)}. All tests pass.",
+        lambda h, t: f"chore: swap {_t(t)} for {_h(h)} in production",
+        lambda h, t: f"Ripped out {_t(t)}, now using {_h(h)} instead.",
+        lambda h, t: f"{_h(h)} replaces {_t(t)} effective this release.",
+        lambda h, t: f"bye bye {_t(t)}, hello {_h(h)}!",
+        lambda h, t: f"refactor: replace {_t(t)} with {_h(h)} across all services",
+        lambda h, t: f"Cut over from {_t(t)} to {_h(h)} last night, zero downtime.",
+        lambda h, t: f"Migration complete: {_t(t)} -> {_h(h)}. Decommissioning old infra.",
+        lambda h, t: f"@ops {_t(t)} is deprecated, {_h(h)} is live now",
+        lambda h, t: f"Swapped {_t(t)} out for {_h(h)}. 3x throughput improvement.",
+    ],
+    "depends_on": [
+        lambda h, t: f"{_h(h)} needs {_t(t)} running or it won't start.",
+        lambda h, t: f"Note: {_h(h)} requires {_t(t)} >= v3.2",
+        lambda h, t: f"{_h(h)} calls {_t(t)} on the hot path",
+        lambda h, t: f"can't deploy {_h(h)} without {_t(t)} - hard dependency",
+        lambda h, t: f"docker-compose: {_h(h)} depends_on {_t(t)}",
+        lambda h, t: f"FYI {_h(h)} is blocked on {_t(t)} being healthy",
+        lambda h, t: f"{_h(h)} reads from {_t(t)} on every request",
+        lambda h, t: f"Outage root cause: {_t(t)} went down, took {_h(h)} with it",
+        lambda h, t: f"Added {_t(t)} as explicit dependency of {_h(h)} in the manifest",
+        lambda h, t: f"{_h(h)} imports {_t(t)} client SDK for auth flow",
+    ],
+    "fixed": [
+        lambda h, t: f"fix({_h(h)}): resolve {_t(t)} connection timeout",
+        lambda h, t: f"Hotfix: {_h(h)} patch fixes the {_t(t)} crash",
+        lambda h, t: f"Fixed the {_t(t)} bug in {_h(h)}. Root cause: null check.",
+        lambda h, t: f"{_h(h)} update resolves {_t(t)} issue reported in #1234",
+        lambda h, t: f"Patched {_h(h)} to fix {_t(t)} data corruption",
+        lambda h, t: f"bugfix: {_h(h)} now handles {_t(t)} edge case correctly",
+        lambda h, t: f"The {_t(t)} errors are gone after the {_h(h)} fix",
+        lambda h, t: f"@oncall {_h(h)} fix deployed, {_t(t)} should be stable now",
+        lambda h, t: f"cherry-pick: {_h(h)} fix for {_t(t)} regression",
+        lambda h, t: f"Root cause found in {_h(h)}, {_t(t)} failures resolved.",
+    ],
+    "introduced": [
+        lambda h, t: f"feat({_h(h)}): add {_t(t)} support",
+        lambda h, t: f"Added {_t(t)} to {_h(h)} for better observability.",
+        lambda h, t: f"{_h(h)} now includes {_t(t)} - see updated docs",
+        lambda h, t: f"Wired up {_t(t)} in {_h(h)} this sprint",
+        lambda h, t: f"New: {_h(h)} ships with {_t(t)} enabled",
+        lambda h, t: f"PR #456: introduce {_t(t)} into {_h(h)}",
+        lambda h, t: f"@team {_h(h)} now has {_t(t)} integration, please test",
+        lambda h, t: f"Set up {_t(t)} for {_h(h)} in staging first",
+        lambda h, t: f"chore({_h(h)}): bootstrap {_t(t)} module",
+        lambda h, t: f"Rolled out {_t(t)} as part of the {_h(h)} overhaul",
+    ],
+    "deprecated": [
+        lambda h, t: f"deprecation({_h(h)}): {_t(t)} is EOL as of this release",
+        lambda h, t: f"{_h(h)} deprecated {_t(t)}. Migration guide in docs/.",
+        lambda h, t: f"Sunsetting {_t(t)} from {_h(h)} - use v2 API instead",
+        lambda h, t: f"@team {_h(h)} is dropping {_t(t)} support next quarter",
+        lambda h, t: f"DEPRECATION: {_t(t)} will be removed from {_h(h)} in v3",
+        lambda h, t: f"Notice: {_h(h)} no longer maintains {_t(t)}. Please migrate.",
+        lambda h, t: f"chore: mark {_t(t)} as deprecated in {_h(h)}",
+        lambda h, t: f"{_t(t)} is legacy now, {_h(h)} is phasing it out",
+        lambda h, t: f"Cleanup: {_h(h)} removing {_t(t)} refs, 90 day sunset",
+        lambda h, t: f"FYI {_h(h)} flagged {_t(t)} for decommission",
+    ],
+    "caused": [
+        lambda h, t: f"Deploying {_h(h)} improved {_t(t)} by 3x.",
+        lambda h, t: f"After enabling {_h(h)}, {_t(t)} dropped to normal levels.",
+        lambda h, t: f"Root cause: {_h(h)} rollout impacted {_t(t)}",
+        lambda h, t: f"{_h(h)} change caused {_t(t)} regression - investigating",
+        lambda h, t: f"Postmortem: {_h(h)} deployment led to {_t(t)} spike",
+        lambda h, t: f"Dashboard shows {_h(h)} directly affecting {_t(t)}",
+        lambda h, t: f"Confirmed: {_h(h)} is driving the {_t(t)} improvement",
+        lambda h, t: f"A/B test: {_h(h)} group shows {_t(t)} delta of -40%",
+        lambda h, t: f"Canary data: {_h(h)} moved {_t(t)} metrics significantly",
+        lambda h, t: f"The {_t(t)} change correlates with {_h(h)} release",
+    ],
+    "constrained_by": [
+        lambda h, t: f"{_h(h)} must stay within {_t(t)} limits.",
+        lambda h, t: f"Note: {_h(h)} is gated on {_t(t)} compliance",
+        lambda h, t: f"Can't ship {_h(h)} without passing {_t(t)} checks",
+        lambda h, t: f"{_h(h)} SLA is dictated by {_t(t)}",
+        lambda h, t: f"Blocked: {_h(h)} needs {_t(t)} sign-off before deploy",
+        lambda h, t: f"Constraint: {_h(h)} throughput capped by {_t(t)}",
+        lambda h, t: f"Design doc: {_h(h)} limited by {_t(t)} policy",
+        lambda h, t: f"{_h(h)} config enforces {_t(t)} at runtime",
+        lambda h, t: f"Audit: {_h(h)} validated against {_t(t)} rules",
+        lambda h, t: f"@security {_h(h)} must satisfy {_t(t)} before GA",
+    ],
+}
+
+# ---------------------------------------------------------------------------
+# "none" templates (easy + hard negatives)
+# ---------------------------------------------------------------------------
+NONE_TEMPLATES_EASY = [
     lambda h, t: f"The codebase includes both {_h(h)} and {_t(t)} in separate modules.",
     lambda h, t: f"{_h(h)} and {_t(t)} are both used in the project but serve different purposes.",
     lambda h, t: f"The documentation mentions {_h(h)} alongside {_t(t)} in the overview section.",
@@ -264,15 +395,106 @@ NONE_TEMPLATES = [
     lambda h, t: f"The oncall runbook covers both {_h(h)} and {_t(t)} procedures.",
 ]
 
+# Hard negatives: entities co-occur with relation-like keywords but no real relation
+NONE_TEMPLATES_HARD = [
+    # Looks like "replaced" but isn't
+    lambda h, t: f"{_h(h)} and {_t(t)} are both databases, each serving a different workload.",
+    lambda h, t: f"The team evaluated migrating from {_h(h)} but kept it alongside {_t(t)}.",
+    lambda h, t: f"While {_h(h)} and {_t(t)} overlap in capabilities, neither replaces the other.",
+    lambda h, t: f"Both {_h(h)} and {_t(t)} handle storage but for completely different domains.",
+    # Looks like "depends_on" but isn't
+    lambda h, t: f"{_h(h)} and {_t(t)} are on the same network but never communicate.",
+    lambda h, t: f"Although {_h(h)} runs next to {_t(t)}, there is no runtime dependency.",
+    lambda h, t: f"{_h(h)} and {_t(t)} share a config file but are otherwise independent.",
+    lambda h, t: f"The service mesh routes traffic for both {_h(h)} and {_t(t)} independently.",
+    # Looks like "chose" but isn't
+    lambda h, t: f"The team discussed using {_t(t)} for {_h(h)} but no decision was reached.",
+    lambda h, t: f"{_h(h)} and {_t(t)} were both on the shortlist but the decision is pending.",
+    lambda h, t: f"Spike: evaluating {_t(t)} and others for {_h(h)} - TBD",
+    lambda h, t: f"Comparing {_h(h)} with {_t(t)} to determine the best approach.",
+    # Looks like "fixed" but isn't
+    lambda h, t: f"{_h(h)} and {_t(t)} both had issues this week but they are unrelated.",
+    lambda h, t: f"The {_h(h)} crash happened around the same time as {_t(t)} errors, coincidence.",
+    lambda h, t: f"Debugging both {_h(h)} and {_t(t)} but the bugs are independent.",
+    # Looks like "caused" but isn't
+    lambda h, t: f"{_h(h)} and {_t(t)} metrics both spiked, but root causes differ.",
+    lambda h, t: f"Correlation between {_h(h)} and {_t(t)} is not causal.",
+    lambda h, t: f"Both {_h(h)} and {_t(t)} changed this sprint, but independently.",
+    # Looks like "introduced" but isn't
+    lambda h, t: f"The PR mentions {_h(h)} and {_t(t)} but only refactors existing code.",
+    lambda h, t: f"{_h(h)} and {_t(t)} were both in the changelog for cleanup reasons.",
+    # Looks like "deprecated" but isn't
+    lambda h, t: f"The team considered deprecating {_t(t)} in {_h(h)} but decided to keep it.",
+    lambda h, t: f"Despite the review, {_h(h)} and {_t(t)} are both still active.",
+    # Informal hard negatives
+    lambda h, t: f"standup: worked on {_h(h)} and {_t(t)} today, separate tasks",
+    lambda h, t: f"JIRA-1234: {_h(h)} and {_t(t)} mentioned in different subtasks",
+    lambda h, t: f"Retro: {_h(h)} and {_t(t)} both came up but not related",
+    lambda h, t: f"TIL: {_h(h)} is similar to {_t(t)} in some ways but we use them separately",
+    lambda h, t: f"docs: updated pages for both {_h(h)} and {_t(t)}",
+    lambda h, t: f"@team FYI: {_h(h)} and {_t(t)} are both getting upgrades next sprint",
+
+    # --- Sequential/list context (entities in same list but no relation) ---
+    lambda h, t: f"The stack includes {_h(h)}, {_t(t)}, and several other components.",
+    lambda h, t: f"Our tech radar lists {_h(h)}, {_t(t)}, Kubernetes, and Terraform.",
+    lambda h, t: f"Services currently running: {_h(h)}, {_t(t)}, auth-proxy, gateway.",
+    lambda h, t: f"The monorepo contains packages for {_h(h)}, {_t(t)}, and shared-utils.",
+    lambda h, t: f"Dependencies in the lockfile: {_h(h)}, {_t(t)}, lodash, express.",
+
+    # --- Comparison/evaluation without decision ---
+    lambda h, t: f"Comparing {_h(h)} vs {_t(t)} for latency characteristics. No conclusion yet.",
+    lambda h, t: f"Benchmark results for {_h(h)} and {_t(t)} are still being analyzed.",
+    lambda h, t: f"We looked at both {_h(h)} and {_t(t)} in the spike but deferred the decision.",
+    lambda h, t: f"Pros and cons of {_h(h)} vs {_t(t)} documented in the RFC, awaiting review.",
+    lambda h, t: f"The evaluation of {_h(h)} and {_t(t)} is ongoing, no winner declared.",
+
+    # --- Past-tense discussion without action ---
+    lambda h, t: f"Last quarter we discussed {_h(h)} and {_t(t)} but took no action.",
+    lambda h, t: f"The topic of {_h(h)} and {_t(t)} came up in the offsite but was tabled.",
+    lambda h, t: f"Previously, {_h(h)} and {_t(t)} were mentioned in passing during planning.",
+    lambda h, t: f"In Q3 retrospective, someone brought up {_h(h)} and {_t(t)} as areas to watch.",
+    lambda h, t: f"Historical note: {_h(h)} and {_t(t)} were both considered years ago.",
+
+    # --- Documentation/reference context ---
+    lambda h, t: f"See the wiki pages for {_h(h)} and {_t(t)} for more details.",
+    lambda h, t: f"The runbook has separate sections covering {_h(h)} and {_t(t)}.",
+    lambda h, t: f"Confluence page links to docs for {_h(h)} and {_t(t)} in the appendix.",
+    lambda h, t: f"README mentions {_h(h)} and {_t(t)} as part of the ecosystem overview.",
+    lambda h, t: f"The glossary defines {_h(h)} and {_t(t)} as distinct concepts.",
+
+    # --- Independent actions applied to both entities ---
+    lambda h, t: f"Updated {_h(h)}, also updated {_t(t)} - separate PRs.",
+    lambda h, t: f"Deployed new versions of both {_h(h)} and {_t(t)} this week, unrelated changes.",
+    lambda h, t: f"Ran load tests on {_h(h)} and {_t(t)} independently, results vary.",
+    lambda h, t: f"Upgraded {_h(h)} to v3 and {_t(t)} to v2, no connection between the upgrades.",
+    lambda h, t: f"Refactored {_h(h)} and {_t(t)} in the same sprint but different stories.",
+
+    # --- Meeting/standup notes mentioning unrelated entities ---
+    lambda h, t: f"Standup notes: Alice is on {_h(h)}, Bob is on {_t(t)}. No blockers.",
+    lambda h, t: f"Sprint review: {_h(h)} shipped on time. {_t(t)} delayed due to QA.",
+    lambda h, t: f"Weekly sync: {_h(h)} team presented demo. {_t(t)} team discussed roadmap.",
+    lambda h, t: f"All-hands: leadership mentioned {_h(h)} and {_t(t)} as key investments.",
+    lambda h, t: f"1:1 notes: discussed workload across {_h(h)} and {_t(t)} projects.",
+
+    # --- PR descriptions mentioning entities in different sections ---
+    lambda h, t: f"PR #789 changes: updated {_h(h)} logging. Unrelated: bumped {_t(t)} version.",
+    lambda h, t: f"This PR touches {_h(h)} config and {_t(t)} tests, separate concerns.",
+    lambda h, t: f"Changelog: {_h(h)} - improved caching. {_t(t)} - fixed typo in docs.",
+    lambda h, t: f"Release notes: {_h(h)} gets new API endpoint. {_t(t)} gets minor UI fix.",
+    lambda h, t: f"Diff includes files from both {_h(h)} and {_t(t)} modules but changes are independent.",
+
+    # --- Monitoring/observability co-mention without causation ---
+    lambda h, t: f"Dashboard shows metrics for {_h(h)} and {_t(t)} side by side for comparison.",
+    lambda h, t: f"Alerts fired for both {_h(h)} and {_t(t)} during the outage, but unrelated root causes.",
+    lambda h, t: f"Grafana panel includes {_h(h)} and {_t(t)} latency charts on the same row.",
+    lambda h, t: f"Tracing shows requests hitting {_h(h)} and {_t(t)} in different code paths.",
+    lambda h, t: f"SLO report covers {_h(h)} at 99.9% and {_t(t)} at 99.5%, measured independently.",
+]
+
 
 def find_entity_spans(text: str, entity_name: str, expected_entities: list[dict]) -> list[tuple[int, int]]:
-    """Find all (start, end) character spans where entity_name appears in text.
-
-    Prefers span_start/span_end from expected_entities when available and matching.
-    Falls back to string search.
-    """
+    """Find all (start, end) character spans where entity_name appears in text."""
     spans = []
-    # Check expected_entities for pre-annotated spans
     for ent in expected_entities:
         if ent["name"] == entity_name:
             s, e = ent["span_start"], ent["span_end"]
@@ -281,7 +503,6 @@ def find_entity_spans(text: str, entity_name: str, expected_entities: list[dict]
     if spans:
         return spans
 
-    # Fallback: find by string matching
     start = 0
     while True:
         idx = text.find(entity_name, start)
@@ -293,28 +514,20 @@ def find_entity_spans(text: str, entity_name: str, expected_entities: list[dict]
 
 
 def insert_entity_markers(text: str, head: str, tail: str, expected_entities: list[dict]) -> str | None:
-    """Insert [E1]/[/E1] around head and [E2]/[/E2] around tail in text.
-
-    Returns None if either entity cannot be located.
-    Uses span positions from expected_entities when available.
-    Handles overlapping/nested spans by choosing non-overlapping occurrences.
-    """
+    """Insert [E1]/[/E1] around head and [E2]/[/E2] around tail in text."""
     head_spans = find_entity_spans(text, head, expected_entities)
     tail_spans = find_entity_spans(text, tail, expected_entities)
 
     if not head_spans or not tail_spans:
         return None
 
-    # Pick the first non-overlapping pair
     h_span = head_spans[0]
     t_span = None
     for ts in tail_spans:
-        # No overlap: one ends before the other starts
         if ts[1] <= h_span[0] or ts[0] >= h_span[1]:
             t_span = ts
             break
     if t_span is None:
-        # If all tail spans overlap with head, try alternate head spans
         for hs in head_spans[1:]:
             for ts in tail_spans:
                 if ts[1] <= hs[0] or ts[0] >= hs[1]:
@@ -327,13 +540,12 @@ def insert_entity_markers(text: str, head: str, tail: str, expected_entities: li
     if t_span is None:
         return None
 
-    # Build the marked text — insert markers from right to left to preserve indices
     insertions = sorted([
-        (h_span[0], "[E1]", 0),   # 0 = opening
-        (h_span[1], "[/E1]", 1),  # 1 = closing
+        (h_span[0], "[E1]", 0),
+        (h_span[1], "[/E1]", 1),
         (t_span[0], "[E2]", 0),
         (t_span[1], "[/E2]", 1),
-    ], key=lambda x: (-x[0], -x[2]))  # right-to-left, closings before openings at same pos
+    ], key=lambda x: (-x[0], -x[2]))
 
     result = text
     for pos, marker, _ in insertions:
@@ -347,7 +559,6 @@ def load_episodes(path: Path) -> list[dict]:
 
 
 def build_entity_index(episode: dict) -> dict[str, dict]:
-    """Map entity name -> entity dict for an episode."""
     return {ent["name"]: ent for ent in episode.get("expected_entities", [])}
 
 
@@ -375,7 +586,7 @@ def generate_positive_examples(episodes: list[dict]) -> list[dict]:
 def generate_negative_examples(episodes: list[dict], target_count: int, rng: random.Random) -> list[dict]:
     """Generate negative (label='none') examples from entity pairs without relations.
 
-    Also generates some using NONE_TEMPLATES for variety.
+    Also generates using both easy and hard NONE_TEMPLATES for variety.
     """
     examples = []
     for ep in episodes:
@@ -383,20 +594,17 @@ def generate_negative_examples(episodes: list[dict], target_count: int, rng: ran
         entities = ep.get("expected_entities", [])
         entity_names = [ent["name"] for ent in entities]
 
-        # Build set of positive pairs
         positive_pairs = set()
         for rel in ep.get("expected_relations", []):
             positive_pairs.add((rel["head"], rel["tail"]))
-            positive_pairs.add((rel["tail"], rel["head"]))  # bidirectional exclusion
+            positive_pairs.add((rel["tail"], rel["head"]))
 
-        # All ordered entity pairs that are NOT in a relation
         negative_pairs = []
         for h, t in combinations(entity_names, 2):
             if (h, t) not in positive_pairs and (t, h) not in positive_pairs:
                 negative_pairs.append((h, t))
 
         for h, t in negative_pairs:
-            # Use original text with markers
             marked = insert_entity_markers(text, h, t, entities)
             if marked is not None:
                 examples.append({
@@ -406,16 +614,17 @@ def generate_negative_examples(episodes: list[dict], target_count: int, rng: ran
                     "label": "none",
                 })
 
-    # If we need more negatives, generate from templates
     all_entity_names = []
     for ep in episodes:
         for ent in ep.get("expected_entities", []):
             all_entity_names.append(ent["name"])
     unique_entities = list(set(all_entity_names))
 
+    # Fill remaining with mix of easy and hard templates
+    all_none_templates = NONE_TEMPLATES_EASY + NONE_TEMPLATES_HARD
     while len(examples) < target_count and len(unique_entities) >= 2:
         h, t = rng.sample(unique_entities, 2)
-        tmpl = rng.choice(NONE_TEMPLATES)
+        tmpl = rng.choice(all_none_templates)
         examples.append({
             "text": tmpl(h, t),
             "head": h,
@@ -423,7 +632,6 @@ def generate_negative_examples(episodes: list[dict], target_count: int, rng: ran
             "label": "none",
         })
 
-    # Trim to target
     if len(examples) > target_count:
         rng.shuffle(examples)
         examples = examples[:target_count]
@@ -431,17 +639,250 @@ def generate_negative_examples(episodes: list[dict], target_count: int, rng: ran
     return examples
 
 
+def generate_hard_negatives_from_templates(
+    episodes: list[dict], target_count: int, rng: random.Random
+) -> list[dict]:
+    """Generate hard negatives using NONE_TEMPLATES_HARD with entity pairs from episodes."""
+    all_entity_names = list({
+        ent["name"] for ep in episodes for ent in ep.get("expected_entities", [])
+    })
+    examples = []
+    for _ in range(target_count):
+        if len(all_entity_names) < 2:
+            break
+        h, t = rng.sample(all_entity_names, 2)
+        tmpl = rng.choice(NONE_TEMPLATES_HARD)
+        examples.append({
+            "text": tmpl(h, t),
+            "head": h,
+            "tail": t,
+            "label": "none",
+        })
+    return examples
+
+
+def generate_direction_reversed_negatives(
+    episodes: list[dict], rng: random.Random
+) -> list[dict]:
+    """For directional relations, create reversed-direction examples as 'none'.
+
+    E.g., if A replaced B is gold, then B replaced A is a hard negative labeled 'none'.
+    These are generated using paraphrase templates with head/tail swapped.
+    """
+    examples = []
+    for ep in episodes:
+        for rel in ep.get("expected_relations", []):
+            label = rel["relation"]
+            if label not in DIRECTIONAL_RELATIONS:
+                continue
+            # Swap head and tail — the text now describes a wrong direction
+            orig_head, orig_tail = rel["head"], rel["tail"]
+            # Use the original relation's templates but with swapped entities
+            templates = PARAPHRASE_TEMPLATES.get(label, [])
+            if not templates:
+                continue
+            # Pick 1-2 templates for the reversed pair
+            k = min(2, len(templates))
+            selected = rng.sample(templates, k)
+            for tmpl in selected:
+                # Generate text with SWAPPED head/tail to create direction confusion
+                # The text says "orig_tail <relation> orig_head" but the correct relation
+                # would be "orig_head <relation> orig_tail", so this reversed text is "none"
+                examples.append({
+                    "text": tmpl(orig_tail, orig_head),
+                    "head": orig_tail,
+                    "tail": orig_head,
+                    "label": "none",
+                })
+    return examples
+
+
+def generate_near_miss_negatives(
+    episodes: list[dict], rng: random.Random
+) -> list[dict]:
+    """Generate near-miss negatives: entities from one relation type used in
+    templates of a DIFFERENT relation type, labeled 'none'.
+
+    E.g., a 'depends_on' entity pair used in a 'replaced' template.
+    """
+    examples = []
+    all_relations = []
+    for ep in episodes:
+        for rel in ep.get("expected_relations", []):
+            all_relations.append(rel)
+
+    if not all_relations:
+        return examples
+
+    for rel in all_relations:
+        correct_label = rel["relation"]
+        head, tail = rel["head"], rel["tail"]
+
+        # Pick a WRONG relation type's templates
+        wrong_labels = [l for l in RELATION_TYPES if l != correct_label]
+        if not wrong_labels:
+            continue
+        wrong_label = rng.choice(wrong_labels)
+        templates = PARAPHRASE_TEMPLATES.get(wrong_label, [])
+        if not templates:
+            continue
+
+        # Generate text using wrong relation template
+        tmpl = rng.choice(templates)
+        examples.append({
+            "text": tmpl(head, tail),
+            "head": head,
+            "tail": tail,
+            "label": "none",
+        })
+
+    return examples
+
+
+def generate_same_episode_unrelated_negatives(
+    episodes: list[dict], rng: random.Random
+) -> list[dict]:
+    """Generate negatives from entity pairs that appear in the same episode text
+    but in different sentences and have no gold relation.
+
+    These are the most realistic negatives because they use real episode text
+    where entities co-occur but don't have a relation.
+    """
+    examples = []
+    sentence_split_re = re.compile(r'(?<=[.!?])\s+|(?<=\n)\s*')
+
+    for ep in episodes:
+        text = ep["text"]
+        entities = ep.get("expected_entities", [])
+        entity_names = [ent["name"] for ent in entities]
+
+        if len(entity_names) < 2:
+            continue
+
+        # Build set of positive pairs to exclude
+        positive_pairs = set()
+        for rel in ep.get("expected_relations", []):
+            positive_pairs.add((rel["head"], rel["tail"]))
+            positive_pairs.add((rel["tail"], rel["head"]))
+
+        # Split text into sentences and find which entities appear in each
+        sentences = sentence_split_re.split(text)
+        sentences = [s.strip() for s in sentences if s.strip()]
+
+        entity_to_sentences: dict[str, list[int]] = defaultdict(list)
+        for i, sent in enumerate(sentences):
+            for ent_name in entity_names:
+                if ent_name in sent:
+                    entity_to_sentences[ent_name].append(i)
+
+        # Find entity pairs that appear in DIFFERENT sentences (no shared sentence)
+        entities_with_sentences = [
+            name for name in entity_names if entity_to_sentences[name]
+        ]
+
+        for h, t in combinations(entities_with_sentences, 2):
+            if (h, t) in positive_pairs or (t, h) in positive_pairs:
+                continue
+
+            h_sents = set(entity_to_sentences[h])
+            t_sents = set(entity_to_sentences[t])
+
+            # Only use pairs where entities appear in different sentences
+            # (co-occurrence without direct relation context)
+            if h_sents & t_sents:
+                continue
+
+            # Use the full episode text with entity markers as a negative
+            marked = insert_entity_markers(text, h, t, entities)
+            if marked is not None:
+                examples.append({
+                    "text": marked,
+                    "head": h,
+                    "tail": t,
+                    "label": "none",
+                })
+
+    return examples
+
+
+def generate_cross_episode_examples(
+    episodes: list[dict], target_per_class: int, rng: random.Random
+) -> list[dict]:
+    """Cross-episode entity mixing: take entities from one episode and place them
+    in templates from another episode's relation type.
+
+    Creates more diverse entity-relation combinations as real positives.
+    """
+    # Collect all (entity_name, entity_type) pairs
+    all_entities_by_type: dict[str, list[str]] = defaultdict(list)
+    for ep in episodes:
+        for ent in ep.get("expected_entities", []):
+            all_entities_by_type[ent["entity_type"]].append(ent["name"])
+
+    # Deduplicate
+    for k in all_entities_by_type:
+        all_entities_by_type[k] = list(set(all_entities_by_type[k]))
+
+    # Collect (head_type, tail_type) pairs for each relation
+    relation_entity_types: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    entity_type_map: dict[str, str] = {}
+    for ep in episodes:
+        for ent in ep.get("expected_entities", []):
+            entity_type_map[ent["name"]] = ent["entity_type"]
+        for rel in ep.get("expected_relations", []):
+            h_type = entity_type_map.get(rel["head"], "Unknown")
+            t_type = entity_type_map.get(rel["tail"], "Unknown")
+            relation_entity_types[rel["relation"]].append((h_type, t_type))
+
+    examples = []
+    all_templates = {**PARAPHRASE_TEMPLATES}
+    # Merge informal templates
+    for label, tmpls in INFORMAL_TEMPLATES.items():
+        all_templates.setdefault(label, []).extend(tmpls)
+
+    for label, type_pairs in relation_entity_types.items():
+        templates = all_templates.get(label, [])
+        if not templates:
+            continue
+
+        # For each type pair, generate cross-episode examples
+        seen_pairs = set()
+        for h_type, t_type in type_pairs:
+            h_candidates = all_entities_by_type.get(h_type, [])
+            t_candidates = all_entities_by_type.get(t_type, [])
+            if not h_candidates or not t_candidates:
+                continue
+
+            # Generate some examples with random entity combinations
+            for _ in range(3):
+                h = rng.choice(h_candidates)
+                t = rng.choice(t_candidates)
+                if h == t or (h, t, label) in seen_pairs:
+                    continue
+                seen_pairs.add((h, t, label))
+                tmpl = rng.choice(templates)
+                examples.append({
+                    "text": tmpl(h, t),
+                    "head": h,
+                    "tail": t,
+                    "label": label,
+                })
+
+    return examples
+
+
 def generate_augmented_examples(positives: list[dict], aug_per_example: int, rng: random.Random) -> list[dict]:
-    """Create paraphrased variants for each positive example using templates."""
+    """Create paraphrased variants using both formal and informal templates."""
     augmented = []
     for ex in positives:
         label = ex["label"]
         head = ex["head"]
         tail = ex["tail"]
-        templates = PARAPHRASE_TEMPLATES.get(label, [])
+        # Combine formal + informal templates
+        templates = list(PARAPHRASE_TEMPLATES.get(label, []))
+        templates.extend(INFORMAL_TEMPLATES.get(label, []))
         if not templates:
             continue
-        # Sample aug_per_example templates without replacement if possible
         k = min(aug_per_example, len(templates))
         selected = rng.sample(templates, k)
         for tmpl in selected:
@@ -504,44 +945,98 @@ def main() -> None:
 
     # Step 1: Positive examples from gold annotations
     positives = generate_positive_examples(episodes)
-    print(f"Generated {len(positives)} positive examples")
+    print(f"Generated {len(positives)} gold positive examples")
 
     # Step 2: Augment — oversample minority classes to ~100 examples each
-    # Count per-class positives
     pos_counts = Counter(ex["label"] for ex in positives)
     target_per_class = 100
     augmented = []
-    for label, templates in PARAPHRASE_TEMPLATES.items():
+    for label in PARAPHRASE_TEMPLATES:
         gold_for_label = [ex for ex in positives if ex["label"] == label]
         current = len(gold_for_label)
         needed = max(0, target_per_class - current)
         if needed > 0 and gold_for_label:
-            # Generate enough augmented examples to reach target_per_class
             aug_per = max(1, needed // len(gold_for_label) + 1)
             aug = generate_augmented_examples(gold_for_label, aug_per_example=aug_per, rng=rng)
-            # Trim to exactly what's needed
             rng.shuffle(aug)
             augmented.extend(aug[:needed])
     print(f"Generated {len(augmented)} augmented examples (oversampled minority classes)")
 
-    # Step 3: Negative examples — match per-class count (~100 per class)
+    # Step 3: Cross-episode entity mixing
+    cross_episode = generate_cross_episode_examples(episodes, target_per_class, rng)
+    print(f"Generated {len(cross_episode)} cross-episode examples")
+
+    # Step 4: Standard negative examples (mix of easy + hard templates)
     target_negative_count = target_per_class
     negatives = generate_negative_examples(episodes, target_negative_count, rng)
-    print(f"Generated {len(negatives)} negative examples")
+    print(f"Generated {len(negatives)} standard negative examples")
 
-    # Combine all
-    all_examples = positives + augmented + negatives
+    # Step 5: Additional hard negatives from templates
+    hard_negatives = generate_hard_negatives_from_templates(episodes, target_count=150, rng=rng)
+    print(f"Generated {len(hard_negatives)} hard negative examples (confusing co-occurrence)")
 
-    # Step 4: Stratified train/val split
+    # Step 6: Direction-reversed negatives
+    reversed_negatives = generate_direction_reversed_negatives(episodes, rng)
+    print(f"Generated {len(reversed_negatives)} direction-reversed negative examples")
+
+    # Step 7: Near-miss negatives (wrong relation templates)
+    near_miss = generate_near_miss_negatives(episodes, rng)
+    print(f"Generated {len(near_miss)} near-miss negative examples")
+
+    # Step 7b: Same-episode unrelated entity pair negatives
+    episode_unrelated = generate_same_episode_unrelated_negatives(episodes, rng)
+    print(f"Generated {len(episode_unrelated)} same-episode unrelated negative examples")
+
+    # Combine all positives
+    all_positives = positives + augmented + cross_episode
+
+    # Combine all negatives, then cap to match average positive class size
+    all_negatives = negatives + hard_negatives + reversed_negatives + near_miss + episode_unrelated
+    pos_class_counts = Counter(ex["label"] for ex in all_positives)
+    avg_pos_count = int(sum(pos_class_counts.values()) / max(len(pos_class_counts), 1))
+    # Cap "none" at 2.5x the average positive class count — at inference time
+    # most entity pairs will NOT have a relation, so none must dominate
+    target_none = int(avg_pos_count * 2.5)
+    if len(all_negatives) > target_none:
+        # Prioritize realistic/hard negatives over easy ones
+        # Reorder: episode-unrelated first (most realistic), then hard, reversed, near-miss, standard
+        prioritized_negatives = episode_unrelated + hard_negatives + reversed_negatives + near_miss + negatives
+        # Deduplicate within negatives
+        neg_seen = set()
+        unique_negatives = []
+        for ex in prioritized_negatives:
+            key = (ex["head"], ex["tail"], ex["text"][:100])
+            if key not in neg_seen:
+                neg_seen.add(key)
+                unique_negatives.append(ex)
+        rng.shuffle(unique_negatives)
+        all_negatives = unique_negatives[:target_none]
+        print(f"Capped negatives from {len(prioritized_negatives)} to {len(all_negatives)} (target_none={target_none})")
+
+    all_examples = all_positives + all_negatives
+    print(f"\nTotal before dedup: {len(all_examples)}")
+
+    # Deduplicate by (head, tail, label, text[:100])
+    seen = set()
+    deduped = []
+    for ex in all_examples:
+        key = (ex["head"], ex["tail"], ex["label"], ex["text"][:100])
+        if key not in seen:
+            seen.add(key)
+            deduped.append(ex)
+    all_examples = deduped
+    print(f"Total after dedup:  {len(all_examples)}")
+
+    # Step 8: Stratified train/val split
     all_examples = stratified_split(all_examples, val_ratio=0.2, rng=rng)
 
-    # Step 5: Output
+    # Step 9: Output
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_PATH, "w") as f:
         json.dump(all_examples, f, indent=2, ensure_ascii=False)
     print(f"\nWrote {len(all_examples)} examples to {OUTPUT_PATH}")
 
-    # Step 6: Statistics
+    # Step 10: Statistics
     print()
     print_statistics(all_examples)
 

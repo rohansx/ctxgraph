@@ -233,12 +233,18 @@ impl RelexEngine {
             .map_err(|e| RelexError::Inference(e.to_string()))?;
 
         // Convert to ort Values
-        let v_ids = Tensor::from_array(input_ids_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
-        let v_attn = Tensor::from_array(attention_mask_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
-        let v_wmask = Tensor::from_array(words_mask_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
-        let v_tlen = Tensor::from_array(text_lengths_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
-        let v_sidx = Tensor::from_array(span_idx_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
-        let v_smask = Tensor::from_array(span_mask_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
+        let v_ids =
+            Tensor::from_array(input_ids_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
+        let v_attn = Tensor::from_array(attention_mask_arr)
+            .map_err(|e| RelexError::Inference(e.to_string()))?;
+        let v_wmask =
+            Tensor::from_array(words_mask_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
+        let v_tlen = Tensor::from_array(text_lengths_arr)
+            .map_err(|e| RelexError::Inference(e.to_string()))?;
+        let v_sidx =
+            Tensor::from_array(span_idx_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
+        let v_smask =
+            Tensor::from_array(span_mask_arr).map_err(|e| RelexError::Inference(e.to_string()))?;
 
         let inputs = ort::inputs![
             "input_ids" => v_ids,
@@ -272,17 +278,15 @@ impl RelexEngine {
             .and_then(|v| v.try_extract_tensor::<f32>().ok())
             .map(|t| t.into_owned());
         // rel_mask is output as bool by the ONNX model; convert to f32 for decode.
-        let rel_mask = outputs
-            .get("rel_mask")
-            .and_then(|v| {
-                // Try bool first (matches ONNX export), fall back to f32
-                if let Ok(t) = v.try_extract_tensor::<bool>() {
-                    let converted: ArrayD<f32> = t.mapv(|b| if b { 1.0f32 } else { 0.0 });
-                    Some(converted)
-                } else {
-                    v.try_extract_tensor::<f32>().ok().map(|t| t.into_owned())
-                }
-            });
+        let rel_mask = outputs.get("rel_mask").and_then(|v| {
+            // Try bool first (matches ONNX export), fall back to f32
+            if let Ok(t) = v.try_extract_tensor::<bool>() {
+                let converted: ArrayD<f32> = t.mapv(|b| if b { 1.0f32 } else { 0.0 });
+                Some(converted)
+            } else {
+                v.try_extract_tensor::<f32>().ok().map(|t| t.into_owned())
+            }
+        });
 
         let owned_words: Vec<(usize, usize, String)> = words
             .iter()

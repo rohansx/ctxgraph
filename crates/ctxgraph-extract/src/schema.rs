@@ -136,16 +136,16 @@ impl Default for ExtractionSchema {
         // budget alongside the input text. They are used as the actual label
         // strings passed to the model for zero-shot extraction, and are more
         // semantically precise than the bare key names.
-        entity_types.insert("Person".into(),         "person or engineer".into());
-        entity_types.insert("Component".into(),      "software library or framework".into());
-        entity_types.insert("Service".into(),        "cloud service or API".into());
-        entity_types.insert("Language".into(),       "programming language".into());
-        entity_types.insert("Database".into(),       "database or data store".into());
+        entity_types.insert("Person".into(), "person or engineer".into());
+        entity_types.insert("Component".into(), "software library or framework".into());
+        entity_types.insert("Service".into(), "cloud service or API".into());
+        entity_types.insert("Language".into(), "programming language".into());
+        entity_types.insert("Database".into(), "database or data store".into());
         entity_types.insert("Infrastructure".into(), "server or cloud platform".into());
-        entity_types.insert("Decision".into(),       "architectural decision".into());
-        entity_types.insert("Constraint".into(),     "technical constraint".into());
-        entity_types.insert("Metric".into(),         "performance metric".into());
-        entity_types.insert("Pattern".into(),        "design pattern".into());
+        entity_types.insert("Decision".into(), "architectural decision".into());
+        entity_types.insert("Constraint".into(), "technical constraint".into());
+        entity_types.insert("Metric".into(), "performance metric".into());
+        entity_types.insert("Pattern".into(), "design pattern".into());
 
         let mut relation_types = BTreeMap::new();
         relation_types.insert(
@@ -200,8 +200,12 @@ impl Default for ExtractionSchema {
             "depends_on".into(),
             RelationSpec {
                 head: vec![
-                    "Service".into(), "Component".into(), "Infrastructure".into(),
-                    "Language".into(), "Pattern".into(), "Decision".into(),
+                    "Service".into(),
+                    "Component".into(),
+                    "Infrastructure".into(),
+                    "Language".into(),
+                    "Pattern".into(),
+                    "Decision".into(),
                 ],
                 tail: vec![
                     "Service".into(),
@@ -217,12 +221,20 @@ impl Default for ExtractionSchema {
         relation_types.insert(
             "fixed".into(),
             RelationSpec {
-                head: vec!["Person".into(), "Component".into(), "Service".into()],
+                head: vec![
+                    "Person".into(),
+                    "Component".into(),
+                    "Service".into(),
+                    "Language".into(),
+                    "Infrastructure".into(),
+                ],
                 tail: vec![
                     "Component".into(),
                     "Service".into(),
                     "Database".into(),
                     "Pattern".into(),
+                    "Metric".into(),
+                    "Constraint".into(),
                 ],
                 description: "something fixed an issue".into(),
             },
@@ -230,7 +242,13 @@ impl Default for ExtractionSchema {
         relation_types.insert(
             "introduced".into(),
             RelationSpec {
-                head: vec!["Person".into(), "Service".into(), "Infrastructure".into(), "Component".into(), "Language".into()],
+                head: vec![
+                    "Person".into(),
+                    "Service".into(),
+                    "Infrastructure".into(),
+                    "Component".into(),
+                    "Language".into(),
+                ],
                 tail: vec![
                     "Component".into(),
                     "Pattern".into(),
@@ -246,8 +264,12 @@ impl Default for ExtractionSchema {
             "deprecated".into(),
             RelationSpec {
                 head: vec![
-                    "Person".into(), "Decision".into(), "Service".into(),
-                    "Component".into(), "Infrastructure".into(), "Pattern".into(),
+                    "Person".into(),
+                    "Decision".into(),
+                    "Service".into(),
+                    "Component".into(),
+                    "Infrastructure".into(),
+                    "Pattern".into(),
                 ],
                 tail: vec![
                     "Component".into(),
@@ -263,8 +285,12 @@ impl Default for ExtractionSchema {
             "caused".into(),
             RelationSpec {
                 head: vec![
-                    "Component".into(), "Decision".into(), "Service".into(),
-                    "Infrastructure".into(), "Language".into(), "Pattern".into(),
+                    "Component".into(),
+                    "Decision".into(),
+                    "Service".into(),
+                    "Infrastructure".into(),
+                    "Language".into(),
+                    "Pattern".into(),
                     "Database".into(),
                 ],
                 tail: vec!["Metric".into(), "Constraint".into(), "Pattern".into()],
@@ -275,10 +301,19 @@ impl Default for ExtractionSchema {
             "constrained_by".into(),
             RelationSpec {
                 head: vec![
-                    "Decision".into(), "Component".into(), "Service".into(),
-                    "Infrastructure".into(), "Database".into(), "Pattern".into(),
+                    "Decision".into(),
+                    "Component".into(),
+                    "Service".into(),
+                    "Infrastructure".into(),
+                    "Database".into(),
+                    "Pattern".into(),
                 ],
-                tail: vec!["Constraint".into(), "Pattern".into(), "Infrastructure".into(), "Metric".into()],
+                tail: vec![
+                    "Constraint".into(),
+                    "Pattern".into(),
+                    "Infrastructure".into(),
+                    "Metric".into(),
+                ],
                 description: "decision constrained by".into(),
             },
         );

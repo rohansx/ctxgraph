@@ -100,12 +100,11 @@ impl ModelManager {
     pub fn download(&self, spec: &ModelSpec) -> Result<PathBuf, ModelManagerError> {
         let dest = self.model_path(spec);
 
-        let response = reqwest::blocking::get(&spec.url).map_err(|e| {
-            ModelManagerError::Download {
+        let response =
+            reqwest::blocking::get(&spec.url).map_err(|e| ModelManagerError::Download {
                 url: spec.url.clone(),
                 source: e,
-            }
-        })?;
+            })?;
 
         if !response.status().is_success() {
             return Err(ModelManagerError::HttpStatus {
@@ -140,10 +139,11 @@ impl ModelManager {
             if n == 0 {
                 break;
             }
-            file.write_all(&buf[..n]).map_err(|e| ModelManagerError::Io {
-                context: "writing model file".into(),
-                source: e,
-            })?;
+            file.write_all(&buf[..n])
+                .map_err(|e| ModelManagerError::Io {
+                    context: "writing model file".into(),
+                    source: e,
+                })?;
             downloaded += n as u64;
             pb.set_position(downloaded);
         }
@@ -194,7 +194,8 @@ pub fn gliner_large_v21_int8() -> ModelSpec {
 pub fn gliner_large_v21_tokenizer() -> ModelSpec {
     ModelSpec {
         name: "gliner_large-v2.1/tokenizer.json".into(),
-        url: "https://huggingface.co/onnx-community/gliner_large-v2.1/resolve/main/tokenizer.json".into(),
+        url: "https://huggingface.co/onnx-community/gliner_large-v2.1/resolve/main/tokenizer.json"
+            .into(),
         sha256: "pending_verification".into(),
         size_bytes: 17_000_000,
     }
@@ -239,7 +240,9 @@ pub fn gliner_multitask_tokenizer() -> ModelSpec {
 pub fn nli_deberta_v3_small() -> ModelSpec {
     ModelSpec {
         name: "nli-deberta-v3-small/onnx/model.onnx".into(),
-        url: "https://huggingface.co/cross-encoder/nli-deberta-v3-small/resolve/main/onnx/model.onnx".into(),
+        url:
+            "https://huggingface.co/cross-encoder/nli-deberta-v3-small/resolve/main/onnx/model.onnx"
+                .into(),
         sha256: "pending_verification".into(),
         size_bytes: 541_700_000,
     }
@@ -249,7 +252,9 @@ pub fn nli_deberta_v3_small() -> ModelSpec {
 pub fn nli_deberta_v3_small_tokenizer() -> ModelSpec {
     ModelSpec {
         name: "nli-deberta-v3-small/tokenizer.json".into(),
-        url: "https://huggingface.co/cross-encoder/nli-deberta-v3-small/resolve/main/tokenizer.json".into(),
+        url:
+            "https://huggingface.co/cross-encoder/nli-deberta-v3-small/resolve/main/tokenizer.json"
+                .into(),
         sha256: "pending_verification".into(),
         size_bytes: 8_250_000,
     }
@@ -317,12 +322,42 @@ impl ModelManager {
     pub fn find_relation_classifier(&self) -> Option<std::path::PathBuf> {
         let base = self.cache_dir.join("relation_classifier");
 
-        [
-            base.join("model_int8.onnx"),
-            base.join("model.onnx"),
-        ]
-        .into_iter()
-        .find(|p| p.exists())
+        [base.join("model_int8.onnx"), base.join("model.onnx")]
+            .into_iter()
+            .find(|p| p.exists())
+    }
+
+    /// Check for a locally available DeBERTa cross-encoder relation classifier.
+    ///
+    /// Looks for `relation_classifier_deberta/model_int8.onnx` (or `model.onnx`)
+    /// and `relation_classifier_deberta/tokenizer.json`.
+    ///
+    /// Searches in: 1) cache dir, 2) project `models/` dir, 3) current dir.
+    pub fn find_deberta_classifier(&self) -> Option<(std::path::PathBuf, std::path::PathBuf)> {
+        // Search in cache dir, workspace root (via CARGO_MANIFEST_DIR), and cwd
+        let mut candidates = vec![self.cache_dir.join("relation_classifier_deberta")];
+        // Workspace root: go up from crate manifest dir to find models/
+        if let Ok(manifest) = std::env::var("CARGO_MANIFEST_DIR") {
+            let crate_dir = PathBuf::from(manifest);
+            if let Some(workspace) = crate_dir.parent().and_then(|p| p.parent()) {
+                candidates.push(workspace.join("models/relation_classifier_deberta"));
+            }
+        }
+        candidates.push(PathBuf::from("models/relation_classifier_deberta"));
+
+        for base in &candidates {
+            let model = [base.join("model_int8.onnx"), base.join("model.onnx")]
+                .into_iter()
+                .find(|p| p.exists());
+
+            let tokenizer = base.join("tokenizer.json");
+            if let Some(m) = model
+                && tokenizer.exists()
+            {
+                return Some((m, tokenizer));
+            }
+        }
+        None
     }
 
     /// Check for locally exported gliner-relex ONNX model.
@@ -369,10 +404,7 @@ pub enum ModelManagerError {
     },
 
     #[error("download failed for {url}: {source}")]
-    Download {
-        url: String,
-        source: reqwest::Error,
-    },
+    Download { url: String, source: reqwest::Error },
 
     #[error("HTTP {status} for {url}")]
     HttpStatus { url: String, status: u16 },

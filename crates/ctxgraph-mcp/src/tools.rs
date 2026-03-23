@@ -79,10 +79,10 @@ impl ToolContext {
 
             // Insert into in-memory cache so find_precedents sees it immediately
             // without another SQLite round-trip.
-            if let Ok(mut cache) = self.embedding_cache.lock() {
-                if let Some(ref mut map) = *cache {
-                    map.insert(episode_id.clone(), embedding);
-                }
+            if let Ok(mut cache) = self.embedding_cache.lock()
+                && let Some(ref mut map) = *cache
+            {
+                map.insert(episode_id.clone(), embedding);
                 // If cache is None (never warmed), leave it — it will be populated
                 // from SQLite (including this episode) on the first find_precedents call.
             }
@@ -223,7 +223,9 @@ impl ToolContext {
         let embed = match self.embed {
             Some(ref e) => e,
             None => {
-                return Ok(json!({"error": "embedding not available, start with CTXGRAPH_NO_EMBED unset"}));
+                return Ok(
+                    json!({"error": "embedding not available, start with CTXGRAPH_NO_EMBED unset"}),
+                );
             }
         };
 

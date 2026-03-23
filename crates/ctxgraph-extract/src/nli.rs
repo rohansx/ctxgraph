@@ -19,42 +19,36 @@ use crate::schema::ExtractionSchema;
 /// Hypothesis templates for each relation type.
 /// Multiple templates per relation improve recall.
 const HYPOTHESIS_TEMPLATES: &[(&str, &[&str])] = &[
-    ("chose", &[
-        "{head} chose {tail}",
-        "{head} selected {tail}",
-    ]),
-    ("rejected", &[
-        "{head} rejected {tail}",
-        "{head} decided against {tail}",
-    ]),
-    ("replaced", &[
-        "{head} replaced {tail}",
-        "{tail} was replaced by {head}",
-    ]),
-    ("depends_on", &[
-        "{head} depends on {tail}",
-        "{head} uses {tail}",
-    ]),
-    ("fixed", &[
-        "{head} fixed {tail}",
-        "{head} resolved {tail}",
-    ]),
-    ("introduced", &[
-        "{head} introduced {tail}",
-        "{head} added {tail}",
-    ]),
-    ("deprecated", &[
-        "{head} deprecated {tail}",
-        "{head} removed {tail}",
-    ]),
-    ("caused", &[
-        "{head} caused {tail}",
-        "{head} led to {tail}",
-    ]),
-    ("constrained_by", &[
-        "{head} is constrained by {tail}",
-        "{head} must comply with {tail}",
-    ]),
+    ("chose", &["{head} chose {tail}", "{head} selected {tail}"]),
+    (
+        "rejected",
+        &["{head} rejected {tail}", "{head} decided against {tail}"],
+    ),
+    (
+        "replaced",
+        &["{head} replaced {tail}", "{tail} was replaced by {head}"],
+    ),
+    (
+        "depends_on",
+        &["{head} depends on {tail}", "{head} uses {tail}"],
+    ),
+    ("fixed", &["{head} fixed {tail}", "{head} resolved {tail}"]),
+    (
+        "introduced",
+        &["{head} introduced {tail}", "{head} added {tail}"],
+    ),
+    (
+        "deprecated",
+        &["{head} deprecated {tail}", "{head} removed {tail}"],
+    ),
+    ("caused", &["{head} caused {tail}", "{head} led to {tail}"]),
+    (
+        "constrained_by",
+        &[
+            "{head} is constrained by {tail}",
+            "{head} must comply with {tail}",
+        ],
+    ),
 ];
 
 /// NLI-based relation extraction engine.
@@ -74,8 +68,8 @@ impl NliEngine {
             .and_then(|b| b.commit_from_file(model_path))
             .map_err(|e| NliError::ModelLoad(e.to_string()))?;
 
-        let tokenizer = Tokenizer::from_file(tokenizer_path)
-            .map_err(|e| NliError::ModelLoad(e.to_string()))?;
+        let tokenizer =
+            Tokenizer::from_file(tokenizer_path).map_err(|e| NliError::ModelLoad(e.to_string()))?;
 
         Ok(Self { session, tokenizer })
     }
@@ -83,12 +77,17 @@ impl NliEngine {
     /// Score a single (premise, hypothesis) pair.
     /// Returns softmax probabilities [contradiction, entailment, neutral].
     fn score(&self, premise: &str, hypothesis: &str) -> Result<[f32; 3], NliError> {
-        let encoding = self.tokenizer
+        let encoding = self
+            .tokenizer
             .encode((premise, hypothesis), true)
             .map_err(|e| NliError::Inference(e.to_string()))?;
 
         let input_ids: Vec<i64> = encoding.get_ids().iter().map(|&id| id as i64).collect();
-        let attention_mask: Vec<i64> = encoding.get_attention_mask().iter().map(|&m| m as i64).collect();
+        let attention_mask: Vec<i64> = encoding
+            .get_attention_mask()
+            .iter()
+            .map(|&m| m as i64)
+            .collect();
 
         let seq_len = input_ids.len();
 
@@ -100,7 +99,9 @@ impl NliEngine {
         let inputs = ort::inputs![ids_tensor, mask_tensor]
             .map_err(|e| NliError::Inference(e.to_string()))?;
 
-        let outputs = self.session.run(inputs)
+        let outputs = self
+            .session
+            .run(inputs)
             .map_err(|e| NliError::Inference(e.to_string()))?;
 
         // Output shape: [1, 3] — logits for [contradiction, entailment, neutral]
@@ -108,11 +109,15 @@ impl NliEngine {
             .try_extract_tensor::<f32>()
             .map_err(|e| NliError::Inference(e.to_string()))?;
 
-        let logits = logits_view.as_slice()
+        let logits = logits_view
+            .as_slice()
             .ok_or_else(|| NliError::Inference("non-contiguous logits".into()))?;
 
         if logits.len() < 3 {
-            return Err(NliError::Inference(format!("expected 3 logits, got {}", logits.len())));
+            return Err(NliError::Inference(format!(
+                "expected 3 logits, got {}",
+                logits.len()
+            )));
         }
 
         // Softmax
@@ -162,10 +167,14 @@ impl NliEngine {
                     // Test both directions for each relation
                     for &(rel_name, templates) in HYPOTHESIS_TEMPLATES {
                         // Check schema validity
-                        let schema_valid = schema.relation_types.get(rel_name)
+                        let schema_valid = schema
+                            .relation_types
+                            .get(rel_name)
                             .map(|spec| {
-                                (spec.head.contains(&head.entity_type) && spec.tail.contains(&tail.entity_type))
-                                || (spec.head.contains(&tail.entity_type) && spec.tail.contains(&head.entity_type))
+                                (spec.head.contains(&head.entity_type)
+                                    && spec.tail.contains(&tail.entity_type))
+                                    || (spec.head.contains(&tail.entity_type)
+                                        && spec.tail.contains(&head.entity_type))
                             })
                             .unwrap_or(false);
 
@@ -196,14 +205,19 @@ impl NliEngine {
                         }
 
                         // Pick the best direction
-                        let (actual_head, actual_tail, score) = if best_score_fwd >= best_score_rev {
+                        let (actual_head, actual_tail, score) = if best_score_fwd >= best_score_rev
+                        {
                             (&head.text, &tail.text, best_score_fwd)
                         } else {
                             (&tail.text, &head.text, best_score_rev)
                         };
 
                         if score >= threshold {
-                            let key = (actual_head.clone(), rel_name.to_string(), actual_tail.clone());
+                            let key = (
+                                actual_head.clone(),
+                                rel_name.to_string(),
+                                actual_tail.clone(),
+                            );
                             if seen.insert(key) {
                                 relations.push(ExtractedRelation {
                                     head: actual_head.clone(),
@@ -227,14 +241,19 @@ impl NliEngine {
 
 /// Keep only the highest-confidence relation per (head, tail) pair.
 fn deduplicate_by_pair(relations: &mut Vec<ExtractedRelation>) {
-    let mut best: std::collections::HashMap<(String, String), usize> = std::collections::HashMap::new();
+    let mut best: std::collections::HashMap<(String, String), usize> =
+        std::collections::HashMap::new();
 
     for (i, rel) in relations.iter().enumerate() {
         let key = (rel.head.clone(), rel.tail.clone());
         let rev_key = (rel.tail.clone(), rel.head.clone());
-        let existing_key = if best.contains_key(&key) { Some(key.clone()) }
-            else if best.contains_key(&rev_key) { Some(rev_key) }
-            else { None };
+        let existing_key = if best.contains_key(&key) {
+            Some(key.clone())
+        } else if best.contains_key(&rev_key) {
+            Some(rev_key)
+        } else {
+            None
+        };
 
         if let Some(k) = existing_key {
             let prev_idx = best[&k];

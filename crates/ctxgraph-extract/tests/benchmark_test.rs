@@ -62,8 +62,8 @@ fn load_episodes() -> Vec<BenchmarkEpisode> {
         env!("CARGO_MANIFEST_DIR"),
         "/tests/fixtures/benchmark_episodes.json"
     );
-    let data = std::fs::read_to_string(fixture_path)
-        .expect("Failed to read benchmark_episodes.json");
+    let data =
+        std::fs::read_to_string(fixture_path).expect("Failed to read benchmark_episodes.json");
     serde_json::from_str(&data).expect("Failed to deserialize benchmark episodes")
 }
 
@@ -277,11 +277,10 @@ fn test_extraction_f1_against_benchmark() {
     use ctxgraph_extract::pipeline::ExtractionPipeline;
     use ctxgraph_extract::schema::ExtractionSchema;
 
-    let models_dir = std::env::var("CTXGRAPH_MODELS_DIR")
-        .unwrap_or_else(|_| {
-            let home = dirs::cache_dir().expect("no cache dir");
-            home.join("ctxgraph").join("models").display().to_string()
-        });
+    let models_dir = std::env::var("CTXGRAPH_MODELS_DIR").unwrap_or_else(|_| {
+        let home = dirs::cache_dir().expect("no cache dir");
+        home.join("ctxgraph").join("models").display().to_string()
+    });
 
     let pipeline = ExtractionPipeline::new(
         ExtractionSchema::default(),
@@ -381,4 +380,63 @@ fn test_extraction_f1_against_benchmark() {
         combined_f1 >= 0.80,
         "Combined F1 {combined_f1:.3} is below 0.80 target"
     );
+}
+
+/// Debug test: show extracted entities and relations for specific episodes.
+#[test]
+#[ignore]
+fn debug_extraction_for_episodes() {
+    use chrono::Utc;
+    use ctxgraph_extract::pipeline::ExtractionPipeline;
+    use ctxgraph_extract::schema::ExtractionSchema;
+
+    let models_dir = std::env::var("CTXGRAPH_MODELS_DIR").unwrap_or_else(|_| {
+        let home = dirs::cache_dir().expect("no cache dir");
+        home.join("ctxgraph").join("models").display().to_string()
+    });
+
+    let pipeline = ExtractionPipeline::new(
+        ExtractionSchema::default(),
+        std::path::Path::new(&models_dir),
+        0.2,
+    )
+    .expect("Failed to create pipeline");
+
+    let episodes = load_episodes();
+    let debug_indices: Vec<usize> = std::env::var("DEBUG_EPISODES")
+        .unwrap_or_else(|_| "1,5,7,10,13,14,15,19,24,26,29,49".to_string())
+        .split(',')
+        .filter_map(|s| s.trim().parse().ok())
+        .collect();
+
+    for &i in &debug_indices {
+        if i >= episodes.len() {
+            continue;
+        }
+        let ep = &episodes[i];
+        let result = pipeline.extract(&ep.text, Utc::now()).unwrap();
+
+        eprintln!("=== Episode {i} ===");
+        eprintln!("Text: {}", &ep.text[..ep.text.len().min(120)]);
+        eprintln!(
+            "Entities: {:?}",
+            result
+                .entities
+                .iter()
+                .map(|e| format!("{}:{}", e.text, e.entity_type))
+                .collect::<Vec<_>>()
+        );
+        eprintln!("Relations:");
+        for r in &result.relations {
+            eprintln!(
+                "  {}:{}:{} (conf={:.3})",
+                r.head, r.relation, r.tail, r.confidence
+            );
+        }
+        eprintln!("Expected relations:");
+        for r in &ep.expected_relations {
+            eprintln!("  {}:{}:{}", r.head, r.relation, r.tail);
+        }
+        eprintln!();
+    }
 }

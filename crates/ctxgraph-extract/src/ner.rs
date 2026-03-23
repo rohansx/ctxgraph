@@ -1,9 +1,9 @@
 use std::path::Path;
 
+use gliner::model::GLiNER;
 use gliner::model::input::text::TextInput;
 use gliner::model::params::Parameters;
 use gliner::model::pipeline::span::SpanMode;
-use gliner::model::GLiNER;
 use orp::params::RuntimeParameters;
 
 /// An entity extracted from text by the NER model.
@@ -38,9 +38,9 @@ impl NerEngine {
         let model = GLiNER::<SpanMode>::new(
             params,
             runtime_params,
-            tokenizer_path.to_str().ok_or(NerError::InvalidPath(
-                tokenizer_path.display().to_string(),
-            ))?,
+            tokenizer_path
+                .to_str()
+                .ok_or(NerError::InvalidPath(tokenizer_path.display().to_string()))?,
             model_path
                 .to_str()
                 .ok_or(NerError::InvalidPath(model_path.display().to_string()))?,
@@ -62,8 +62,8 @@ impl NerEngine {
         labels: &[&str],
         label_to_type: Option<&std::collections::HashMap<&str, &str>>,
     ) -> Result<Vec<ExtractedEntity>, NerError> {
-        let input = TextInput::from_str(&[text], labels)
-            .map_err(|e| NerError::Inference(e.to_string()))?;
+        let input =
+            TextInput::from_str(&[text], labels).map_err(|e| NerError::Inference(e.to_string()))?;
 
         let output = self
             .model

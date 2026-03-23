@@ -13,7 +13,6 @@ use orp::params::RuntimeParameters;
 use orp::pipeline::Pipeline;
 
 use crate::ner::ExtractedEntity;
-use crate::relclf::RelationClassifier;
 use crate::relex::RelexEngine;
 use crate::schema::ExtractionSchema;
 
@@ -44,7 +43,9 @@ pub enum RelEngine {
 static RELEX_ENGINE: std::sync::OnceLock<Option<RelexEngine>> = std::sync::OnceLock::new();
 
 /// Cached relation classifier (loaded once per process).
-static RELCLF_ENGINE: std::sync::OnceLock<Option<RelationClassifier>> = std::sync::OnceLock::new();
+#[allow(dead_code)]
+static RELCLF_ENGINE: std::sync::OnceLock<Option<crate::relclf::RelationClassifier>> =
+    std::sync::OnceLock::new();
 
 /// Model-based relation extraction using gline-rs.
 ///
@@ -71,9 +72,7 @@ impl ModelBasedRelEngine {
             params: Parameters::default(),
             tokenizer_path: tokenizer_path
                 .to_str()
-                .ok_or(RelError::InvalidPath(
-                    tokenizer_path.display().to_string(),
-                ))?
+                .ok_or(RelError::InvalidPath(tokenizer_path.display().to_string()))?
                 .to_string(),
         })
     }
@@ -92,8 +91,8 @@ impl ModelBasedRelEngine {
             relation_schema.push_with_allowed_labels(rel_name, &heads, &tails);
         }
 
-        let input = TextInput::from_str(&[text], labels)
-            .map_err(|e| RelError::Inference(e.to_string()))?;
+        let input =
+            TextInput::from_str(&[text], labels).map_err(|e| RelError::Inference(e.to_string()))?;
 
         // Step 1: Run NER via TokenPipeline
         let ner_pipeline = TokenPipeline::new(&self.tokenizer_path)
@@ -119,9 +118,8 @@ impl ModelBasedRelEngine {
         }
 
         // Step 2: Run relation extraction on top of NER output
-        let rel_pipeline =
-            RelationPipeline::default(&self.tokenizer_path, &relation_schema)
-                .map_err(|e| RelError::Inference(e.to_string()))?;
+        let rel_pipeline = RelationPipeline::default(&self.tokenizer_path, &relation_schema)
+            .map_err(|e| RelError::Inference(e.to_string()))?;
         let rel_composable = rel_pipeline.to_composable(&self.model, &self.params);
         let rel_output: RelationOutput = rel_composable
             .apply(ner_output)
@@ -182,7 +180,9 @@ impl RelEngine {
             if let Some(engine) = relex {
                 let entity_labels: Vec<&str> = schema.entity_labels();
                 let relation_labels: Vec<&str> = schema.relation_labels();
-                if let Ok(result) = engine.extract(text, &entity_labels, &relation_labels, 0.5, 0.5, schema) {
+                if let Ok(result) =
+                    engine.extract(text, &entity_labels, &relation_labels, 0.5, 0.5, schema)
+                {
                     let existing: std::collections::HashSet<(String, String)> = relations
                         .iter()
                         .map(|r| (r.head.clone(), r.tail.clone()))
@@ -196,73 +196,36 @@ impl RelEngine {
                         let mapped_head = map_span_to_entity(&rel.head, entities);
                         let mapped_tail = map_span_to_entity(&rel.tail, entities);
 
-                        if let (Some(head), Some(tail)) = (mapped_head, mapped_tail) {
-                            if head != tail
-                                && !existing.contains(&(head.clone(), tail.clone()))
-                                && !existing.contains(&(tail.clone(), head.clone()))
-                            {
-                                relations.push(ExtractedRelation {
-                                    head,
-                                    relation: rel.relation.clone(),
-                                    tail,
-                                    confidence: rel.confidence,
-                                });
-                            }
+                        if let (Some(head), Some(tail)) = (mapped_head, mapped_tail)
+                            && head != tail
+                            && !existing.contains(&(head.clone(), tail.clone()))
+                            && !existing.contains(&(tail.clone(), head.clone()))
+                        {
+                            relations.push(ExtractedRelation {
+                                head,
+                                relation: rel.relation.clone(),
+                                tail,
+                                confidence: rel.confidence,
+                            });
                         }
                     }
                 }
             }
         }
 
-        // Relation classifier (embedding-based) — auto-enabled if model found.
-        let relclf = RELCLF_ENGINE.get_or_init(|| {
+        // DeBERTa cross-encoder classifier — filters spurious heuristic relations.
+        // Auto-enabled if model found in cache or local models/ directory.
+        static DEBERTA_ENGINE: std::sync::OnceLock<Option<crate::deberta_clf::DebertaClassifier>> =
+            std::sync::OnceLock::new();
+        let deberta = DEBERTA_ENGINE.get_or_init(|| {
             let mgr = crate::model_manager::ModelManager::new().ok()?;
-            let model_path = mgr.find_relation_classifier()?;
-            RelationClassifier::new(&model_path).ok()
+            let (model_path, tokenizer_path) = mgr.find_deberta_classifier()?;
+            crate::deberta_clf::DebertaClassifier::new(&model_path, &tokenizer_path).ok()
         });
 
-        if let Some(classifier) = relclf {
-            // Use fastembed for generating embeddings (same model as ctxgraph-embed).
-            static EMBED_ENGINE: std::sync::OnceLock<
-                Option<fastembed::TextEmbedding>,
-            > = std::sync::OnceLock::new();
-            let embed = EMBED_ENGINE.get_or_init(|| {
-                fastembed::TextEmbedding::try_new(
-                    fastembed::InitOptions::new(fastembed::EmbeddingModel::AllMiniLML6V2),
-                )
-                .ok()
-            });
-
-            if let Some(embed_model) = embed {
-                let embed_fn = |text: &str| -> Result<Vec<f32>, RelError> {
-                    let mut vecs = embed_model
-                        .embed(vec![text], None)
-                        .map_err(|e| RelError::Inference(e.to_string()))?;
-                    vecs.pop()
-                        .ok_or_else(|| RelError::Inference("empty embedding".into()))
-                };
-
-                if let Ok(clf_relations) =
-                    classifier.classify_batch(text, entities, &embed_fn)
-                {
-                    let existing: std::collections::HashSet<(String, String)> = relations
-                        .iter()
-                        .map(|r| (r.head.clone(), r.tail.clone()))
-                        .collect();
-
-                    for rel in clf_relations {
-                        if rel.confidence < 0.76 {
-                            continue;
-                        }
-                        // Only add relations for pairs not already covered
-                        if !existing.contains(&(rel.head.clone(), rel.tail.clone()))
-                            && !existing.contains(&(rel.tail.clone(), rel.head.clone()))
-                        {
-                            relations.push(rel);
-                        }
-                    }
-                }
-            }
+        if let Some(clf) = deberta {
+            relations
+                .retain(|rel| !clf.should_filter(text, &rel.head, &rel.tail, &rel.relation, 0.85));
         }
 
         Ok(relations)
@@ -288,99 +251,255 @@ fn heuristic_relations(
     // false positives) and full words/phrases for common verbs.
     // Each keyword is checked via `sent_lower.contains(kw)`.
     let patterns: &[(&str, &[&str])] = &[
-        ("chose", &[
-            "chose", "choose", "select", "picked", "went with", "adopt",
-            "decided to use", "decided to add", "opted for", "settled on",
-            "standardiz", "switched to",
-            "decided that",
-        ]),
-        ("rejected", &[
-            "reject", "ruled out", "decided against", "dropped",
-            "abandon", "discard", "veto",
-        ]),
-        ("replaced", &[
-            // Core replacement verbs (broad keywords like "migrat", "switched",
-            // "transition" removed — they cause 5+ spurious replaced relations
-            // and real from/to migrations are caught by detect_from_to_pattern).
-            "replac", "swapped",
-            "in favor of", "instead of", "in place of",
-            "over the legacy", "over the old",
-        ]),
-        ("depends_on", &[
-            "depend", "relies on", "rely on", "built on",
-            " uses ", " use ", "using ",
-            "connect", "backed by", "powered by",
-            "running on", "runs on", "deployed on", "hosted on",
-            "integrat", "communicat",
-            "proxied by", "proxies", "in front of",
-            "managed by", "orchestrat",
-            "reads from", "writes to", "persist",
-            "publish", "subscrib", "consum",
-            "sends to", "receives from",
-            "queries", "fetches from",
-            "leverag", "switched to",
-            "scraped", "scrapes",
-            "flow through", "flows through",
-            "target", "written in", "implemented in",
-            "-based", "caching layer",
-            "counter in", "stored in", "cache to",
-            "stitched", "backed by",
-            "local cache", "sync when",
-            // Containment / composition patterns
-            "used by", "via ",
-            "package manager",
-            "is down",
-            // Language/runtime patterns
-            "goroutine",
-            // Monitoring dependencies
-            "scraped by", "dashboards",
-        ]),
-        ("fixed", &[
-            "fixed", "fixing", "resolv", "patched", "repaired",
-            "debugged", "addressed", "correct ",
-            "eliminat", "mitigat", "diagnos", "root-caus",
-            "identified", "found ",
-            "traced", "investigated",
-            "patch ",
-        ]),
-        ("introduced", &[
-            "introduc", " add ", "added", "implement", "created", "built",
-            "set up", "deploy", "enabl", "integrat", "install",
-            "configur", "establish", "rolled out", "launched",
-            "onboard", "provision", "stood up", "spun up",
-            "upgrad", "extract",
-            // Selection/adoption that introduces something
-            "chosen to enforc", "chosen to implement",
-        ]),
-        ("deprecated", &[
-            "deprecat", "removed", "removing", "phased out", "phase out",
-            "sunset", "decommission", "retired", "killed", "shut down",
-            "tore down", "ripped out", "turned off",
-        ]),
-        ("caused", &[
-            "caused", "causing", "resulted in", "led to", "trigger",
-            "contributed to",
-            "dropped to", "reduced to", "improved to", "decreased to",
-            "reduced by", "improved by", "increased by", "decreased by",
-            "spiked", "spike",
-        ]),
-        ("constrained_by", &[
-            "constrain", "blocked by", "due to",
-            "required to", "has to", "have to",
-            "cannot exceed", "comply", "enforc",
-            "subject to", "bound by", "governed by",
-            "mandated", "driven by", "must comply",
-            "guarantee", "accepted",
-            "rate limit", "forbidden", "must not",
-            "exceed", "scoped", "capped at", "cap at",
-            "broke", "break ", "breaking",
-            "zero-trust", "least privilege",
-            "cannot handle",
-            // Quality / constraint patterns
-            "exactly-once",
-            " sla ",
-            "memory safety",
-        ]),
+        (
+            "chose",
+            &[
+                "chose",
+                "choose",
+                "select",
+                "picked",
+                "went with",
+                "adopt",
+                "decided to use",
+                "decided to add",
+                "opted for",
+                "settled on",
+                "standardiz",
+                "switched to",
+                "decided that",
+            ],
+        ),
+        (
+            "rejected",
+            &[
+                "reject",
+                "ruled out",
+                "decided against",
+                "dropped",
+                "abandon",
+                "discard",
+                "veto",
+            ],
+        ),
+        (
+            "replaced",
+            &[
+                // Core replacement verbs (broad keywords like "migrat", "switched",
+                // "transition" removed — they cause 5+ spurious replaced relations
+                // and real from/to migrations are caught by detect_from_to_pattern).
+                "replac",
+                "swapped",
+                "in favor of",
+                "instead of",
+                "in place of",
+                "over the legacy",
+                "over the old",
+                // Fallback introduction implies replacement of the primary
+                "fallback",
+            ],
+        ),
+        (
+            "depends_on",
+            &[
+                "depend",
+                "relies on",
+                "rely on",
+                "built on",
+                " uses ",
+                " use ",
+                "using ",
+                "connect",
+                "backed by",
+                "powered by",
+                "running on",
+                "runs on",
+                "deployed on",
+                "hosted on",
+                "integrat",
+                "communicat",
+                "proxied by",
+                "proxies",
+                "in front of",
+                "managed by",
+                "orchestrat",
+                "reads from",
+                "writes to",
+                "persist",
+                "publish",
+                "subscrib",
+                "consum",
+                "sends to",
+                "receives from",
+                "queries",
+                "fetches from",
+                "leverag",
+                "switched to",
+                "scraped",
+                "scrapes",
+                "flow through",
+                "flows through",
+                "target",
+                "written in",
+                "implemented in",
+                "-based",
+                "caching layer",
+                "counter in",
+                "stored in",
+                "cache to",
+                "stitched",
+                "backed by",
+                "local cache",
+                "sync when",
+                // Containment / composition patterns
+                "used by",
+                "via ",
+                "package manager",
+                "is down",
+                // Language/runtime patterns
+                "goroutine",
+                " runtime",
+                // Monitoring dependencies
+                "scraped by",
+                "dashboards",
+            ],
+        ),
+        (
+            "fixed",
+            &[
+                "fixed",
+                "fixing",
+                "resolv",
+                "patched",
+                "repaired",
+                "debugged",
+                "addressed",
+                "correct ",
+                "eliminat",
+                "mitigat",
+                "diagnos",
+                "root-caus",
+                "identified",
+                "found ",
+                "traced",
+                "investigated",
+                "patch ",
+                // Commit-message prefixes: "fix: …" / "fix(scope): …"
+                "fix:",
+                "fix(",
+            ],
+        ),
+        (
+            "introduced",
+            &[
+                "introduc",
+                " add ",
+                "added",
+                "adding",
+                "implement",
+                "created",
+                "built",
+                "set up",
+                "enabl",
+                "integrat",
+                "install",
+                "configur",
+                "establish",
+                "rolled out",
+                "launched",
+                "onboard",
+                "provision",
+                "stood up",
+                "spun up",
+                "extract",
+                // Selection/adoption that introduces something
+                "chosen to enforc",
+                "chosen to implement",
+                // Adding features/capabilities to a service
+                "metrics to",
+                "support to",
+                "added to",
+                " wired ",
+                "bootstrap",
+            ],
+        ),
+        (
+            "deprecated",
+            &[
+                "deprecat",
+                "removed",
+                "removing",
+                "phased out",
+                "phase out",
+                "sunset",
+                "decommission",
+                "retired",
+                "killed",
+                "shut down",
+                "tore down",
+                "ripped out",
+                "turned off",
+            ],
+        ),
+        (
+            "caused",
+            &[
+                "caused",
+                "causing",
+                "resulted in",
+                "led to",
+                "trigger",
+                "contributed to",
+                "dropped to",
+                "reduced to",
+                "improved to",
+                "decreased to",
+                "reduced by",
+                "improved by",
+                "increased by",
+                "decreased by",
+                "spiked",
+                "spike",
+            ],
+        ),
+        (
+            "constrained_by",
+            &[
+                "constrain",
+                "blocked by",
+                "due to",
+                "required to",
+                "has to",
+                "have to",
+                "cannot exceed",
+                "comply",
+                "enforc",
+                "subject to",
+                "bound by",
+                "governed by",
+                "mandated",
+                "driven by",
+                "must comply",
+                "guarantee",
+                "accepted",
+                "rate limit",
+                "forbidden",
+                "must not",
+                "exceed",
+                "scoped",
+                "capped at",
+                "cap at",
+                "broke",
+                "break ",
+                "breaking",
+                "zero-trust",
+                "least privilege",
+                "cannot handle",
+                // Quality / constraint patterns
+                "exactly-once",
+                " sla ",
+                "memory safety",
+            ],
+        ),
     ];
 
     let sentence_ranges = split_sentences(text);
@@ -395,7 +514,8 @@ fn heuristic_relations(
 
     for (sent_idx, &(sent_start, sent_end)) in sentence_ranges.iter().enumerate() {
         let sent_text = &text[sent_start..sent_end];
-        let sent_lower = sent_text.to_lowercase();
+        // Pad with space so keywords like " add " match at sentence start
+        let sent_lower = format!(" {} ", sent_text.to_lowercase());
 
         // Entities in this sentence
         let sent_entities: Vec<&ExtractedEntity> = entities
@@ -409,7 +529,11 @@ fn heuristic_relations(
         }
 
         // Expanded window: this sentence ± 1 adjacent sentence
-        let window_start = if sent_idx > 0 { sentence_ranges[sent_idx - 1].0 } else { sent_start };
+        let window_start = if sent_idx > 0 {
+            sentence_ranges[sent_idx - 1].0
+        } else {
+            sent_start
+        };
         let window_end = if sent_idx + 1 < sentence_ranges.len() {
             sentence_ranges[sent_idx + 1].1
         } else {
@@ -429,9 +553,15 @@ fn heuristic_relations(
             // Try schema-valid pairs first, then relaxed matching
             let rel_spec = schema.relation_types.get(*relation);
 
-            // Find keyword position in sentence for proximity scoring
-            let kw_pos = keywords.iter()
-                .filter_map(|kw| sent_lower.find(kw).map(|p| p + kw.len() / 2))
+            // Find keyword position in sentence for proximity scoring.
+            // sent_lower has a 1-char pad at the start, so subtract 1 for real position.
+            let kw_pos = keywords
+                .iter()
+                .filter_map(|kw| {
+                    sent_lower
+                        .find(kw)
+                        .map(|p| p.saturating_sub(1) + kw.len() / 2)
+                })
                 .min()
                 .unwrap_or(sent_lower.len() / 2);
             let kw_abs_pos = sent_start + kw_pos;
@@ -447,23 +577,25 @@ fn heuristic_relations(
 
                     // Skip reference-like entities (ADR-001, PR, Issue #N) as
                     // they're document labels, not domain entities for relations
-                    if is_reference_entity(&head.text)
-                        || is_reference_entity(&tail.text)
-                    {
+                    if is_reference_entity(&head.text) || is_reference_entity(&tail.text) {
                         continue;
                     }
 
-                    // Require strict schema validity
+                    // Schema validity as a scoring signal rather than hard filter.
+                    // NER often misassigns entity types, so we boost schema-valid
+                    // pairs but still consider others at lower confidence.
+                    // Check BOTH directions since determine_direction may swap
+                    // head/tail later — a valid reverse pair should not be penalized.
                     let schema_valid = rel_spec
                         .map(|spec| {
-                            spec.head.contains(&head.entity_type)
-                                && spec.tail.contains(&tail.entity_type)
+                            let fwd = spec.head.contains(&head.entity_type)
+                                && spec.tail.contains(&tail.entity_type);
+                            let rev = spec.head.contains(&tail.entity_type)
+                                && spec.tail.contains(&head.entity_type);
+                            fwd || rev
                         })
                         .unwrap_or(false);
-
-                    if !schema_valid {
-                        continue;
-                    }
+                    let schema_bonus: f64 = if schema_valid { 1.0 } else { 0.55 };
 
                     // Skip Person→Person for most relations
                     let both_person = head.entity_type == "Person" && tail.entity_type == "Person";
@@ -480,8 +612,14 @@ fn heuristic_relations(
                     let avg_dist = (head_dist + tail_dist) / 2.0;
                     let proximity = 1.0 / (1.0 + avg_dist / 50.0);
 
+                    // Entity quality bonus: prefer proper names (capitalized,
+                    // PascalCase, known suffixes) over generic phrases.
+                    let head_quality = entity_name_quality(&head.text);
+                    let tail_quality = entity_name_quality(&tail.text);
+                    let quality_bonus = (head_quality + tail_quality) / 2.0;
+
                     let base = if in_same_sentence { 0.65 } else { 0.45 };
-                    let confidence = base * proximity;
+                    let confidence = base * proximity * schema_bonus * quality_bonus;
 
                     candidates.push((confidence, head, tail));
                 }
@@ -492,19 +630,22 @@ fn heuristic_relations(
             candidates.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
 
             for (confidence, head, tail) in candidates.into_iter().take(1) {
-                    let (actual_head, actual_tail) = determine_direction(
-                        relation, head, tail, rel_spec, &sent_lower, sent_start,
-                    );
+                let (actual_head, actual_tail) =
+                    determine_direction(relation, head, tail, rel_spec, &sent_lower, sent_start);
 
-                    let key = (actual_head.clone(), relation.to_string(), actual_tail.clone());
-                    if seen.insert(key) {
-                        relations.push(ExtractedRelation {
-                            head: actual_head.clone(),
-                            relation: relation.to_string(),
-                            tail: actual_tail.clone(),
-                            confidence,
-                        });
-                    }
+                let key = (
+                    actual_head.clone(),
+                    relation.to_string(),
+                    actual_tail.clone(),
+                );
+                if seen.insert(key) {
+                    relations.push(ExtractedRelation {
+                        head: actual_head.clone(),
+                        relation: relation.to_string(),
+                        tail: actual_tail.clone(),
+                        confidence,
+                    });
+                }
             }
         }
 
@@ -532,26 +673,25 @@ fn heuristic_relations(
                 }
             }
 
-            if let (Some(rej), Some(ch)) = (rejected_entity, chooser) {
-                if rej.text != ch.text {
-                    // Check schema validity for rejected relation
-                    let schema_valid = rejected_spec
-                        .map(|spec| {
-                            spec.head.contains(&ch.entity_type)
-                                && spec.tail.contains(&rej.entity_type)
-                        })
-                        .unwrap_or(true);
+            if let (Some(rej), Some(ch)) = (rejected_entity, chooser)
+                && rej.text != ch.text
+            {
+                // Check schema validity for rejected relation
+                let schema_valid = rejected_spec
+                    .map(|spec| {
+                        spec.head.contains(&ch.entity_type) && spec.tail.contains(&rej.entity_type)
+                    })
+                    .unwrap_or(true);
 
-                    if schema_valid {
-                        let key = (ch.text.clone(), "rejected".to_string(), rej.text.clone());
-                        if seen.insert(key) {
-                            relations.push(ExtractedRelation {
-                                head: ch.text.clone(),
-                                relation: "rejected".to_string(),
-                                tail: rej.text.clone(),
-                                confidence: 0.60,
-                            });
-                        }
+                if schema_valid {
+                    let key = (ch.text.clone(), "rejected".to_string(), rej.text.clone());
+                    if seen.insert(key) {
+                        relations.push(ExtractedRelation {
+                            head: ch.text.clone(),
+                            relation: "rejected".to_string(),
+                            tail: rej.text.clone(),
+                            confidence: 0.60,
+                        });
                     }
                 }
             }
@@ -592,15 +732,18 @@ fn heuristic_relations(
     let mut to_remove = std::collections::HashSet::new();
     for (i, r1) in relations.iter().enumerate() {
         for (j, r2) in relations.iter().enumerate() {
-            if i >= j { continue; }
+            if i >= j {
+                continue;
+            }
             // Same head-tail pair with conflicting relations
             let same_pair = (r1.head == r2.head && r1.tail == r2.tail)
                 || (r1.head == r2.tail && r1.tail == r2.head);
-            if !same_pair { continue; }
+            if !same_pair {
+                continue;
+            }
 
             for &(a, b) in conflicts {
-                if (r1.relation == a && r2.relation == b)
-                    || (r1.relation == b && r2.relation == a)
+                if (r1.relation == a && r2.relation == b) || (r1.relation == b && r2.relation == a)
                 {
                     // Keep the higher confidence one, remove the lower
                     if r1.confidence >= r2.confidence {
@@ -645,10 +788,8 @@ fn map_span_to_entity(span_text: &str, entities: &[ExtractedEntity]) -> Option<S
         if ent_lower.contains(&span_lower) || span_lower.contains(&ent_lower) {
             let score = span_lower.len().min(ent_lower.len()) as f64
                 / span_lower.len().max(ent_lower.len()) as f64;
-            if score >= 0.3 {
-                if best.as_ref().is_none_or(|(_, s)| score > *s) {
-                    best = Some((ent, score));
-                }
+            if score >= 0.3 && best.as_ref().is_none_or(|(_, s)| score > *s) {
+                best = Some((ent, score));
             }
         }
     }
@@ -687,6 +828,23 @@ fn detect_from_to_pattern(
             if let Some(to_rel_pos) = text_lower[after_old..].find(" to ") {
                 let abs_to = after_old + to_rel_pos;
 
+                // Ensure "from X" and "to Y" are in the same sentence.
+                // A sentence boundary between them means unrelated from/to.
+                let between = &text_lower[after_old..abs_to];
+                if between.contains(". ") || between.contains(".\n") {
+                    continue;
+                }
+
+                // Version upgrade detection: "from Java 11 to Java 21" → same
+                // base technology, skip. Check if text after "to " starts with
+                // the same entity name (case-insensitive).
+                let after_to = &text_lower[abs_to + 4..];
+                let old_lower = old_ent.text.to_lowercase();
+                if after_to.starts_with(&old_lower) {
+                    // Same base name after "to" → version upgrade, not replacement
+                    continue;
+                }
+
                 // Find entity after "to" (the NEW entity)
                 for new_ent in entities.iter() {
                     if new_ent.span_start < abs_to + 3 || new_ent.span_start > abs_to + 40 {
@@ -704,8 +862,8 @@ fn detect_from_to_pattern(
                         .map(|spec| {
                             (spec.head.contains(&new_ent.entity_type)
                                 && spec.tail.contains(&old_ent.entity_type))
-                            || (spec.head.contains(&old_ent.entity_type)
-                                && spec.tail.contains(&new_ent.entity_type))
+                                || (spec.head.contains(&old_ent.entity_type)
+                                    && spec.tail.contains(&new_ent.entity_type))
                         })
                         .unwrap_or(true);
 
@@ -714,7 +872,11 @@ fn detect_from_to_pattern(
                     }
 
                     // NEW:replaced:OLD
-                    let key = (new_ent.text.clone(), "replaced".to_string(), old_ent.text.clone());
+                    let key = (
+                        new_ent.text.clone(),
+                        "replaced".to_string(),
+                        old_ent.text.clone(),
+                    );
                     if seen.insert(key) {
                         relations.push(ExtractedRelation {
                             head: new_ent.text.clone(),
@@ -733,6 +895,26 @@ fn detect_from_to_pattern(
 
 /// Returns true for entities that are document references (ADR-001, PR, Issue #N)
 /// rather than real domain entities. These generate spurious relations.
+/// Score entity name quality: proper names and known technology names get 1.0,
+/// generic lowercase phrases get a lower score (0.7-0.8).
+///
+/// This helps the proximity scoring prefer "Envoy" over "sidecar" and
+/// "RateLimiter" over "sliding window" when both are equidistant from a keyword.
+fn entity_name_quality(name: &str) -> f64 {
+    // Person names, PascalCase, or known suffixes → high quality
+    let first_char = name.chars().next().unwrap_or('a');
+    if first_char.is_uppercase() {
+        return 1.0;
+    }
+    // Entities starting with a digit (e.g., "100ms SLA", "10000 QPS") → decent quality
+    if first_char.is_ascii_digit() {
+        return 0.95;
+    }
+    // Lowercase multi-word entities (e.g., "race condition", "memory leak") → lower quality
+    // These are valid entities but shouldn't be preferred over proper names
+    0.75
+}
+
 fn is_reference_entity(text: &str) -> bool {
     // ADR-NNN, PR, Issue #N
     if text.starts_with("ADR-") || text.starts_with("ADR ") {
@@ -792,30 +974,30 @@ fn determine_direction(
         }
 
         // "fallback using Y" / "fallback to Y" → Y is the NEW replacement
-        if sent_lower.contains("fallback") {
-            if let Some(fb_pos) = sent_lower.find("fallback") {
-                let after_fb = &sent_lower[fb_pos..];
-                let first_in_fb = after_fb.find(&first_lower);
-                let second_in_fb = after_fb.find(&second_lower);
-                match (first_in_fb, second_in_fb) {
-                    (Some(_), None) => {
-                        // first entity near "fallback" → first is new replacement
+        if sent_lower.contains("fallback")
+            && let Some(fb_pos) = sent_lower.find("fallback")
+        {
+            let after_fb = &sent_lower[fb_pos..];
+            let first_in_fb = after_fb.find(&first_lower);
+            let second_in_fb = after_fb.find(&second_lower);
+            match (first_in_fb, second_in_fb) {
+                (Some(_), None) => {
+                    // first entity near "fallback" → first is new replacement
+                    return (first.text.clone(), second.text.clone());
+                }
+                (None, Some(_)) => {
+                    // second entity near "fallback" → second is new replacement
+                    return (second.text.clone(), first.text.clone());
+                }
+                (Some(fp), Some(sp)) => {
+                    // Entity closer to "fallback using/to" is the new thing
+                    if fp < sp {
                         return (first.text.clone(), second.text.clone());
-                    }
-                    (None, Some(_)) => {
-                        // second entity near "fallback" → second is new replacement
+                    } else {
                         return (second.text.clone(), first.text.clone());
                     }
-                    (Some(fp), Some(sp)) => {
-                        // Entity closer to "fallback using/to" is the new thing
-                        if fp < sp {
-                            return (first.text.clone(), second.text.clone());
-                        } else {
-                            return (second.text.clone(), first.text.clone());
-                        }
-                    }
-                    _ => {}
                 }
+                _ => {}
             }
         }
 
@@ -910,21 +1092,43 @@ fn determine_direction(
         let first_lower = first.text.to_lowercase();
         let second_lower = second.text.to_lowercase();
 
-        // Passive voice: "X <verb> by Y" → Y:depends_on:X
-        // "scraped by Grafana" → Grafana:depends_on:Prometheus
-        // "managed by Kubernetes" → Envoy:depends_on:Kubernetes
-        let passive_markers = ["used by", "scraped by", "managed by", "orchestrated by", "handled by"];
-        for marker in passive_markers {
+        // Passive voice: "X <verb> by Y"
+        // Two groups with opposite direction semantics:
+        //   "X used by Y" → Y uses X → Y:depends_on:X (consumer is after "by")
+        //   "X managed by Y" → Y manages X → X:depends_on:Y (managed thing before "by")
+        let consumer_passive = ["used by", "scraped by", "consumed by"];
+        for marker in consumer_passive {
             if let Some(pos) = sent_lower.find(marker) {
                 let first_pos = sent_lower.find(&first_lower);
                 let second_pos = sent_lower.find(&second_lower);
                 if let (Some(fp), Some(sp)) = (first_pos, second_pos) {
                     if fp < pos && sp > pos {
-                        // first is the provider, second is the consumer (after "by")
                         return (second.text.clone(), first.text.clone());
                     }
                     if sp < pos && fp > pos {
                         return (first.text.clone(), second.text.clone());
+                    }
+                }
+            }
+        }
+        let provider_passive = [
+            "managed by",
+            "orchestrated by",
+            "handled by",
+            "powered by",
+            "backed by",
+        ];
+        for marker in provider_passive {
+            if let Some(pos) = sent_lower.find(marker) {
+                let first_pos = sent_lower.find(&first_lower);
+                let second_pos = sent_lower.find(&second_lower);
+                if let (Some(fp), Some(sp)) = (first_pos, second_pos) {
+                    if fp < pos && sp > pos {
+                        // first is managed by second → first:depends_on:second
+                        return (first.text.clone(), second.text.clone());
+                    }
+                    if sp < pos && fp > pos {
+                        return (second.text.clone(), first.text.clone());
                     }
                 }
             }
@@ -954,14 +1158,34 @@ fn determine_direction(
         if sent_lower.contains("-based") {
             let first_pos = sent_lower.find(&first_lower);
             let second_pos = sent_lower.find(&second_lower);
-            if let Some(based_pos) = sent_lower.find("-based") {
-                if let (Some(fp), Some(sp)) = (first_pos, second_pos) {
-                    // Entity whose name appears right before "-based" is the provider
-                    if fp < based_pos && based_pos <= fp + first_lower.len() + 1 {
-                        // first is the technology (provider), second depends on it
+            if let Some(based_pos) = sent_lower.find("-based")
+                && let (Some(fp), Some(sp)) = (first_pos, second_pos)
+            {
+                // Entity whose name appears right before "-based" is the provider
+                if fp < based_pos && based_pos <= fp + first_lower.len() + 1 {
+                    // first is the technology (provider), second depends on it
+                    return (second.text.clone(), first.text.clone());
+                }
+                if sp < based_pos && based_pos <= sp + second_lower.len() + 1 {
+                    return (first.text.clone(), second.text.clone());
+                }
+            }
+        }
+
+        // "in X runtime" / "in X goroutines" → X is the language/runtime provider
+        let runtime_suffixes = [" runtime", " goroutine", " coroutine"];
+        for suffix in runtime_suffixes {
+            if let Some(suf_pos) = sent_lower.find(suffix) {
+                // Entity appearing right before the suffix is the provider
+                if let (Some(fp), Some(sp)) = (
+                    sent_lower.find(&first_lower),
+                    sent_lower.find(&second_lower),
+                ) {
+                    if fp < suf_pos && suf_pos <= fp + first_lower.len() + 4 {
+                        // first entity is the runtime/language → other depends on it
                         return (second.text.clone(), first.text.clone());
                     }
-                    if sp < based_pos && based_pos <= sp + second_lower.len() + 1 {
+                    if sp < suf_pos && suf_pos <= sp + second_lower.len() + 4 {
                         return (first.text.clone(), second.text.clone());
                     }
                 }
@@ -986,10 +1210,8 @@ fn determine_direction(
 
         // When both are same category, use naming convention:
         // *Service names are consumers (they depend on tools/libraries)
-        let first_is_service = first.entity_type == "Service"
-            || first.text.ends_with("Service");
-        let second_is_service = second.entity_type == "Service"
-            || second.text.ends_with("Service");
+        let first_is_service = first.entity_type == "Service" || first.text.ends_with("Service");
+        let second_is_service = second.entity_type == "Service" || second.text.ends_with("Service");
 
         if first_is_service && !second_is_service {
             return (first.text.clone(), second.text.clone());
@@ -1001,10 +1223,10 @@ fn determine_direction(
 
     // Schema role matching
     if let Some(spec) = rel_spec {
-        let fwd_valid = spec.head.contains(&head.entity_type)
-            && spec.tail.contains(&tail.entity_type);
-        let rev_valid = spec.head.contains(&tail.entity_type)
-            && spec.tail.contains(&head.entity_type);
+        let fwd_valid =
+            spec.head.contains(&head.entity_type) && spec.tail.contains(&tail.entity_type);
+        let rev_valid =
+            spec.head.contains(&tail.entity_type) && spec.tail.contains(&head.entity_type);
         match (fwd_valid, rev_valid) {
             (true, false) => return (head.text.clone(), tail.text.clone()),
             (false, true) => return (tail.text.clone(), head.text.clone()),

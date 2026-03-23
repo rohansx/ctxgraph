@@ -1,6 +1,6 @@
 use ctxgraph_extract::model_manager::{
-    gliner_large_v21_int8, gliner_large_v21_tokenizer, gliner_multitask_large,
-    gliner_multitask_tokenizer, ModelManager,
+    ModelManager, gliner_large_v21_int8, gliner_large_v21_tokenizer, gliner_multitask_large,
+    gliner_multitask_tokenizer,
 };
 
 pub fn download() -> ctxgraph::Result<()> {
@@ -10,7 +10,8 @@ pub fn download() -> ctxgraph::Result<()> {
 
     println!(
         "Downloading models to {}",
-        manager.model_path(&gliner_large_v21_int8())
+        manager
+            .model_path(&gliner_large_v21_int8())
             .parent()
             .and_then(|p| p.parent())
             .map(|p| p.display().to_string())
@@ -20,7 +21,10 @@ pub fn download() -> ctxgraph::Result<()> {
     let specs = [
         ("GLiNER v2.1 NER model (INT8)", gliner_large_v21_int8()),
         ("GLiNER v2.1 tokenizer", gliner_large_v21_tokenizer()),
-        ("GLiNER Multitask relation model (INT8)", gliner_multitask_large()),
+        (
+            "GLiNER Multitask relation model (INT8)",
+            gliner_multitask_large(),
+        ),
         ("GLiNER Multitask tokenizer", gliner_multitask_tokenizer()),
     ];
 

@@ -21,10 +21,10 @@ fn resolve_db_path() -> PathBuf {
     let args: Vec<String> = env::args().collect();
     let mut i = 1;
     while i < args.len() {
-        if args[i] == "--db" {
-            if let Some(path) = args.get(i + 1) {
-                return PathBuf::from(path);
-            }
+        if args[i] == "--db"
+            && let Some(path) = args.get(i + 1)
+        {
+            return PathBuf::from(path);
         }
         i += 1;
     }
@@ -67,7 +67,7 @@ async fn main() {
     // Load .env file if present (silently ignored if missing)
     dotenvy::dotenv().ok();
 
-    eprintln!("ctxgraph-mcp v0.3.0 starting on stdio");
+    eprintln!("ctxgraph-mcp v0.5.1 starting on stdio");
 
     let db_path = resolve_db_path();
     eprintln!("ctxgraph-mcp: using database at {}", db_path.display());
@@ -83,7 +83,10 @@ async fn main() {
 
     // Load extraction pipeline if models are available
     if let Some(models_dir) = find_models_dir(&db_path) {
-        eprintln!("ctxgraph-mcp: loading extraction pipeline from {}", models_dir.display());
+        eprintln!(
+            "ctxgraph-mcp: loading extraction pipeline from {}",
+            models_dir.display()
+        );
         match graph.load_extraction_pipeline(&models_dir) {
             Ok(()) => {
                 eprintln!("ctxgraph-mcp: extraction pipeline ready");

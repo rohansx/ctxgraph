@@ -1,6 +1,6 @@
+use serde_json::{Value, json};
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
-use serde_json::{Value, json};
 
 struct McpProcess {
     child: std::process::Child,
@@ -92,10 +92,7 @@ fn test_mcp_tools_list() {
     let resp = mcp.recv();
 
     let tools = resp["result"]["tools"].as_array().unwrap();
-    let names: Vec<&str> = tools
-        .iter()
-        .map(|t| t["name"].as_str().unwrap())
-        .collect();
+    let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
     assert!(names.contains(&"add_episode"));
     assert!(names.contains(&"search"));
     assert!(names.contains(&"get_decision"));

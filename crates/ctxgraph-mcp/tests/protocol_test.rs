@@ -101,7 +101,12 @@ fn test_traverse_batch_input_schema() {
     });
     let required = schema["required"].as_array().unwrap();
     assert!(required.iter().any(|v| v.as_str() == Some("entity_names")));
-    assert_eq!(schema["properties"]["entity_names"]["type"].as_str().unwrap(), "array");
+    assert_eq!(
+        schema["properties"]["entity_names"]["type"]
+            .as_str()
+            .unwrap(),
+        "array"
+    );
 }
 
 #[test]
@@ -109,7 +114,10 @@ fn test_traverse_batch_result_shape() {
     // Simulate the shape returned by traverse_batch: entities + edges arrays, deduped.
     let entity_ids = vec!["e1", "e2", "e1"]; // e1 duplicate
     let mut seen: HashSet<&str> = HashSet::new();
-    let deduped: Vec<&str> = entity_ids.into_iter().filter(|id| seen.insert(id)).collect();
+    let deduped: Vec<&str> = entity_ids
+        .into_iter()
+        .filter(|id| seen.insert(id))
+        .collect();
     assert_eq!(deduped.len(), 2);
     assert!(deduped.contains(&"e1"));
     assert!(deduped.contains(&"e2"));
@@ -118,9 +126,19 @@ fn test_traverse_batch_result_shape() {
 #[test]
 fn test_tools_list_includes_traverse_batch() {
     // Verify traverse_batch is advertised in the tools list.
-    let tool_names = ["add_episode", "search", "get_decision", "traverse", "traverse_batch", "find_precedents"];
+    let tool_names = [
+        "add_episode",
+        "search",
+        "get_decision",
+        "traverse",
+        "traverse_batch",
+        "find_precedents",
+    ];
     let has_traverse_batch = tool_names.contains(&"traverse_batch");
-    assert!(has_traverse_batch, "traverse_batch must be in the tools list");
+    assert!(
+        has_traverse_batch,
+        "traverse_batch must be in the tools list"
+    );
 }
 
 #[test]
@@ -132,13 +150,19 @@ fn test_embedding_cache_warm_once_semantics() {
     // First access: populate
     assert!(cache.is_none());
     cache = Some(std::collections::HashMap::new());
-    cache.as_mut().unwrap().insert("ep1".to_string(), vec![0.1, 0.2]);
+    cache
+        .as_mut()
+        .unwrap()
+        .insert("ep1".to_string(), vec![0.1, 0.2]);
 
     // Second access: already Some, no reload needed
     assert!(cache.is_some());
     assert_eq!(cache.as_ref().unwrap().len(), 1);
 
     // Inserting a new episode appends to the live map — no SQLite re-read
-    cache.as_mut().unwrap().insert("ep2".to_string(), vec![0.3, 0.4]);
+    cache
+        .as_mut()
+        .unwrap()
+        .insert("ep2".to_string(), vec![0.3, 0.4]);
     assert_eq!(cache.as_ref().unwrap().len(), 2);
 }

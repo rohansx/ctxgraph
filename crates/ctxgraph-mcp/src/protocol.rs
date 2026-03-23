@@ -4,6 +4,7 @@ use serde_json::Value;
 /// A JSON-RPC 2.0 request message.
 #[derive(Debug, Deserialize)]
 pub struct Request {
+    #[allow(dead_code)]
     pub jsonrpc: String,
     /// `null` for notifications (no response expected).
     pub id: Option<Value>,
@@ -62,8 +63,10 @@ impl Response {
 /// Standard JSON-RPC error codes.
 pub mod codes {
     pub const PARSE_ERROR: i64 = -32700;
+    #[allow(dead_code)]
     pub const INVALID_REQUEST: i64 = -32600;
     pub const METHOD_NOT_FOUND: i64 = -32601;
     pub const INVALID_PARAMS: i64 = -32602;
+    #[allow(dead_code)]
     pub const INTERNAL_ERROR: i64 = -32603;
 }

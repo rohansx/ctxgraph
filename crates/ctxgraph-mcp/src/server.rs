@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use ctxgraph::Graph;
 use ctxgraph_embed::EmbedEngine;
@@ -114,7 +114,11 @@ impl McpServer {
 
             other => {
                 eprintln!("ctxgraph-mcp: unknown method: {other}");
-                Response::error(id, codes::METHOD_NOT_FOUND, &format!("method not found: {other}"))
+                Response::error(
+                    id,
+                    codes::METHOD_NOT_FOUND,
+                    &format!("method not found: {other}"),
+                )
             }
         }
     }

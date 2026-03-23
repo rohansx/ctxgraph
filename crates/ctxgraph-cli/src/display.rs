@@ -1,4 +1,4 @@
-use ctxgraph::{EntityContext, Episode, Entity};
+use ctxgraph::{Entity, EntityContext, Episode};
 
 pub fn print_episode(episode: &Episode, score: Option<f64>) {
     let id_short = &episode.id[..8.min(episode.id.len())];
@@ -41,7 +41,10 @@ pub fn print_episode_row(episode: &Episode) {
 
 pub fn print_entity_row(entity: &Entity) {
     let id_short = &entity.id[..8.min(entity.id.len())];
-    println!("{:<12} {:<14} {}", id_short, entity.entity_type, entity.name);
+    println!(
+        "{:<12} {:<14} {}",
+        id_short, entity.entity_type, entity.name
+    );
 }
 
 pub fn print_entity_context(context: &EntityContext) {
@@ -58,11 +61,23 @@ pub fn print_entity_context(context: &EntityContext) {
         println!("\nRelationships:");
         for edge in &context.edges {
             let direction = if edge.source_id == e.id {
-                format!("--[{}]--> {}", edge.relation, find_name(&context.neighbors, &edge.target_id))
+                format!(
+                    "--[{}]--> {}",
+                    edge.relation,
+                    find_name(&context.neighbors, &edge.target_id)
+                )
             } else {
-                format!("<--[{}]-- {}", edge.relation, find_name(&context.neighbors, &edge.source_id))
+                format!(
+                    "<--[{}]-- {}",
+                    edge.relation,
+                    find_name(&context.neighbors, &edge.source_id)
+                )
             };
-            let status = if edge.is_current() { "" } else { " (invalidated)" };
+            let status = if edge.is_current() {
+                ""
+            } else {
+                " (invalidated)"
+            };
             println!("  {direction}{status}");
         }
     }
