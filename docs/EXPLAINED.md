@@ -84,7 +84,7 @@ Results are fused using Reciprocal Rank Fusion so items that appear in multiple 
 
 ## Core technical ideas in simple terms
 
-## 1) Why SQLite for a graph?
+### 1) Why SQLite for a graph?
 
 Instead of running a heavy graph database server, ctxgraph uses SQLite plus recursive SQL queries.
 
@@ -94,7 +94,7 @@ That gives:
 - portability (single file),
 - enough graph capability for small/medium team memory workloads.
 
-## 2) What "bi-temporal" really means
+### 2) What "bi-temporal" really means
 
 Normal systems store one timestamp.
 ctxgraph stores two time views:
@@ -104,7 +104,7 @@ ctxgraph stores two time views:
 
 So if someone logs a late update, history still remains accurate.
 
-## 3) Why multiple search methods?
+### 3) Why multiple search methods?
 
 No single search style is perfect:
 
@@ -114,7 +114,7 @@ No single search style is perfect:
 
 Combining them gives more reliable answers.
 
-## 4) Local-first model execution
+### 4) Local-first model execution
 
 Models run through ONNX Runtime on your machine.
 That means:
