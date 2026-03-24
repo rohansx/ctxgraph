@@ -18,16 +18,18 @@ When someone (or an AI agent) asks *"why did we do X?"*, ctxgraph traverses the 
 
 Every context graph tool today requires heavy infrastructure and sends your data to OpenAI. ctxgraph doesn't.
 
-We benchmarked ctxgraph against [Graphiti](https://github.com/getzep/graphiti) (by Zep) on the same 50 software-engineering episodes. ctxgraph extracts higher-quality relations using only local ONNX models — no API calls at all.
+We benchmarked ctxgraph against [Graphiti](https://github.com/getzep/graphiti) (by Zep) on the same 50 software-engineering episodes. ctxgraph extracts higher-quality entities and relations using only local ONNX models — no API calls at all.
 
 ### Extraction Quality (50-episode benchmark)
 
-| System | Relation F1 | API Calls | Cost/Episode | Latency |
-|---|---|---|---|---|
-| **ctxgraph** (local-only) | **0.520** | 0 | $0.00 | 330ms |
-| Graphiti (gpt-4o) | 0.315 | 6+/episode | ~$0.01 | 12,700ms |
+| System | Entity F1 | Relation F1 | Combined F1 | API Calls | Cost | Latency |
+|---|---|---|---|---|---|---|
+| **ctxgraph** (local-only) | **0.837** | **0.763** | **0.800** | 0 | $0.00 | ~40ms/ep |
+| Graphiti (gpt-4o) | 0.570 | 0.104\* | 0.337 | ~200+ | ~$2-5 | ~10s/ep |
 
-ctxgraph achieves **1.65x higher extraction quality** than Graphiti while being **38x faster** and **100% free**.
+\*Graphiti's free-form relations mapped to ctxgraph's taxonomy using generous keyword heuristics.
+
+ctxgraph achieves **2.4x higher combined F1** than Graphiti while being **250x faster** and **100% free**.
 
 ### Infrastructure
 
@@ -45,9 +47,15 @@ ctxgraph achieves **1.65x higher extraction quality** than Graphiti while being 
 
 ### Why Graphiti Scores Lower
 
-Graphiti makes 6+ GPT calls per episode (entity extraction, deduplication, relation extraction, contradiction detection, summarization, community detection). Despite this, it produces free-form relation names like `COMMUNICATES_ENCRYPTED_WITH` and `PREVENTS_CASCADING_FAILURES_WHEN_DOWN` that don't map cleanly to typed relations. It also frequently gets entity directions wrong (e.g., `Helm:depends_on:Kubernetes` instead of `Kubernetes:depends_on:Helm`).
+Graphiti makes 6+ GPT-4o calls per episode (entity extraction, deduplication, relation extraction, contradiction detection, summarization, community detection). Despite this:
 
-ctxgraph uses domain-specific heuristics trained on software engineering patterns — keyword matching, proximity scoring, coreference resolution, and schema-aware type validation — that encode more practical knowledge than GPT can infer from generic prompts.
+- **Entity names are verbose**: Graphiti extracts `"primary Postgres cluster"` instead of `"Postgres"`, `"legacy SOAP endpoint in UserService"` instead of `"SOAP endpoint"`. Semantically correct, but doesn't match canonical names.
+- **Relations are free-form**: Produces verbs like `COMMUNICATES_ENCRYPTED_WITH` and `PREVENTS_CASCADING_FAILURES_WHEN_DOWN` that don't map to a typed taxonomy. Even with generous keyword mapping, only 10/50 episodes produce any matching relations.
+- **Different decomposition**: "Migrate from Redis to Postgres" becomes `(AuthService, CONNECTS_TO, primary Postgres cluster)` instead of `(Postgres, replaced, Redis)` + `(AuthService, depends_on, Postgres)`.
+
+ctxgraph uses domain-specific heuristics for software engineering patterns — keyword matching, proximity scoring, coreference resolution, and schema-aware type validation — that produce structured, queryable knowledge without any API calls.
+
+See [docs/benchmark.md](docs/benchmark.md) for the full comparison methodology and per-episode results.
 
 ## Quick Start
 
@@ -149,8 +157,8 @@ Your App / CLI / AI Agent
     +---------------------------------+
     |  Extraction                     |
     |  GLiNER v2.1 (ONNX) - local    |
-    |  Entities: 0.845 F1             |
-    |  Relations: 0.520 F1            |
+    |  Entities: 0.837 F1             |
+    |  Relations: 0.763 F1            |
     |  Temporal: date/time parsing    |
     +---------------------------------+
          |
@@ -312,29 +320,31 @@ cargo test --test benchmark_test -- --ignored --nocapture
 
 Requires ONNX models (`ctxgraph models download`).
 
-### Results (GLiNER v2.1 INT8, fully local)
+### Results (v0.6.0 — GLiNER v2.1 INT8, fully local)
 
 | Metric | Score |
 |---|---|
-| Entity F1 (name+type) | 0.845 |
-| Entity F1 (name only) | 0.903 |
-| Relation F1 | 0.520 |
-| Combined F1 | 0.682 |
-| Latency | 330ms/episode |
+| Entity F1 | 0.837 |
+| Relation F1 | 0.763 |
+| **Combined F1** | **0.800** |
+| Latency | ~40ms/episode |
 
 ### Comparison with Graphiti
 
-Both systems were tested on the same 50 episodes with the same ground truth.
+Both systems were tested on the same 50 episodes with identical ground truth.
 
-| | ctxgraph | Graphiti |
+| | ctxgraph | Graphiti (gpt-4o) |
 |---|---|---|
-| Relation F1 | **0.520** | 0.315 |
-| API calls | 0 | 6+/episode (GPT-4o) |
-| Cost | $0 | ~$0.50 for 50 episodes |
-| Total time | 16.7s | 635s |
-| Per episode | 330ms | 12,700ms |
+| Entity F1 | **0.837** | 0.570 |
+| Relation F1 | **0.763** | 0.104\* |
+| Combined F1 | **0.800** | 0.337 |
+| API calls | 0 | ~200+ |
+| Cost | $0 | ~$2-5 |
+| Per episode | ~40ms | ~10s |
 | Infrastructure | SQLite | Neo4j (Docker) |
 | Privacy | 100% local | Data sent to OpenAI |
+
+\*With generous semantic mapping of Graphiti's free-form relations to ctxgraph's taxonomy.
 
 ## Project Structure
 
