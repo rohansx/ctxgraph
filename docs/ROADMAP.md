@@ -28,7 +28,7 @@
 
 ---
 
-## What Exists (v0.7.0 — Shipped)
+## What Exists (v0.8.0 — Shipped)
 
 | Component | Status | Notes |
 |---|---|---|

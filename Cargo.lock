@@ -530,7 +530,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "chrono",
  "ctxgraph-extract",
@@ -546,7 +546,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph-cli"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "chrono",
  "clap",
@@ -562,7 +562,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph-embed"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "fastembed",
  "thiserror",
@@ -570,7 +570,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph-extract"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "chrono",
  "composable",
@@ -595,7 +595,7 @@ dependencies = [
 
 [[package]]
 name = "ctxgraph-mcp"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "chrono",
  "ctxgraph",

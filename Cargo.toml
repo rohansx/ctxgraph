@@ -3,11 +3,11 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.7.0"
+version = "0.8.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/rohansx/ctxgraph"
-description = "Local-first context graph engine for AI agents and human teams"
+description = "Privacy-first knowledge graph engine for AI agents. Better quality, 6x cheaper than Graphiti."
 
 [workspace.dependencies]
 chrono = { version = "0.4", features = ["serde"] }

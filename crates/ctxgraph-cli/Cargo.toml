@@ -11,10 +11,10 @@ name = "ctxgraph"
 path = "src/main.rs"
 
 [dependencies]
-ctxgraph = { version = "0.7.0", path = "../ctxgraph-core" }
-ctxgraph-extract = { version = "0.7.0", path = "../ctxgraph-extract" }
-ctxgraph-mcp = { version = "0.7.0", path = "../ctxgraph-mcp" }
-ctxgraph-embed = { version = "0.7.0", path = "../ctxgraph-embed" }
+ctxgraph = { version = "0.8.0", path = "../ctxgraph-core" }
+ctxgraph-extract = { version = "0.8.0", path = "../ctxgraph-extract" }
+ctxgraph-mcp = { version = "0.8.0", path = "../ctxgraph-mcp" }
+ctxgraph-embed = { version = "0.8.0", path = "../ctxgraph-embed" }
 clap = { workspace = true }
 serde_json = { workspace = true }
 chrono = { workspace = true }

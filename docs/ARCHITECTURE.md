@@ -94,11 +94,11 @@ ctxgraph-sdk ──────┤
 
 | Crate | Purpose | Key deps | Status |
 |---|---|---|---|
-| `ctxgraph-core` | Engine: types, storage, query, temporal logic | rusqlite, chrono, uuid, serde | Shipped (v0.7.0) |
-| `ctxgraph-extract` | Three-tier extraction pipeline | ort, tokenizers, strsim, reqwest | Shipped (v0.7.0) |
-| `ctxgraph-embed` | Local embedding generation (384-dim) | fastembed | Shipped (v0.7.0) |
+| `ctxgraph-core` | Engine: types, storage, query, temporal logic | rusqlite, chrono, uuid, serde | Shipped (v0.8.0) |
+| `ctxgraph-extract` | Three-tier extraction pipeline | ort, tokenizers, strsim, reqwest | Shipped (v0.8.0) |
+| `ctxgraph-embed` | Local embedding generation (384-dim) | fastembed | Shipped (v0.8.0) |
 | `ctxgraph-ingest` | Connectors: git, shell, FS, browser, Screenpipe | git2, notify, rusqlite (browser) | **New — Phase 1** |
-| `ctxgraph-mcp` | MCP server for AI coding tools | tokio, serde_json | Shipped (v0.7.0) |
+| `ctxgraph-mcp` | MCP server for AI coding tools | tokio, serde_json | Shipped (v0.8.0) |
 | `ctxgraph-cli` | CLI + daemon mode + TUI dashboard | clap, colored, ratatui | Partial (CLI shipped, daemon + TUI in Phase 2) |
 | `ctxgraph-sdk` | Re-export crate for embedding in Rust apps | — | Shipped |
 | `ctxgraph-privacy` | PII detection and entity redaction (CloakPipe) | — | Phase 4 |

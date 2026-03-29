@@ -15,8 +15,8 @@ name = "ctxgraph-mcp"
 path = "src/main.rs"
 
 [dependencies]
-ctxgraph = { path = "../ctxgraph-core", version = "0.7.0" }
-ctxgraph-embed = { path = "../ctxgraph-embed", version = "0.7.0" }
+ctxgraph = { path = "../ctxgraph-core", version = "0.8.0" }
+ctxgraph-embed = { path = "../ctxgraph-embed", version = "0.8.0" }
 tokio = { workspace = true, features = ["full"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
