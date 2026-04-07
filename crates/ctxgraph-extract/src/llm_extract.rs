@@ -15,6 +15,16 @@ use crate::schema::ExtractionSchema;
 const DEFAULT_MODEL: &str = "gpt-4o-mini";
 const DEFAULT_URL: &str = "https://api.openai.com/v1/chat/completions";
 
+/// Preferred local models for Ollama auto-detection (tried in order).
+/// These are small models that run on 6-8GB VRAM GPUs.
+const OLLAMA_PREFERRED_MODELS: &[&str] = &[
+    "gemma3n:e4b",  // Gemma 3n E4B — best extraction quality at 6GB, native tool calling
+    "gemma4:e4b",   // Gemma 4 E4B — newer but may need more VRAM
+    "gemma3n:e2b",  // Gemma 3n E2B — lighter fallback, ~3GB
+    "gemma4:e2b",   // Gemma 4 E2B — lighter fallback, ~5GB
+    "llama3.2:3b",  // Llama 3.2 3B — widely available
+];
+
 /// LLM extraction engine — works with any OpenAI-compatible endpoint.
 ///
 /// Supports: nvidia-litellm-router (free), OpenRouter, Ollama, OpenAI, Anthropic.
@@ -190,7 +200,7 @@ impl LlmExtractor {
         } else {
             match config.provider.as_str() {
                 "nvidia" => "nvidia-auto".to_string(),
-                "ollama" => "qwen2.5:7b".to_string(),
+                "ollama" => "gemma3n:e4b".to_string(),
                 "openrouter" => "openai/gpt-4o-mini".to_string(),
                 "openai" => "gpt-4o-mini".to_string(),
                 "anthropic" => "claude-3-5-haiku-20241022".to_string(),
@@ -213,43 +223,78 @@ impl LlmExtractor {
 
     /// Create a new LLM extractor from environment variables.
     ///
-    /// Tries in order:
-    /// 1. `CTXGRAPH_LLM_KEY` + `CTXGRAPH_LLM_URL` (explicit config)
-    /// 2. `OPENAI_API_KEY` (OpenAI direct — default, best quality)
-    /// 3. `ANTHROPIC_API_KEY` (Anthropic direct)
-    /// 4. `OPENROUTER_API_KEY` (OpenRouter — multi-provider)
+    /// Tiered auto-detection (local-first):
+    /// 1. `CTXGRAPH_LLM_KEY` + `CTXGRAPH_LLM_URL` (explicit config — highest priority)
+    /// 2. **Ollama local** (auto-detected if running, zero cost, fully private)
+    /// 3. `OPENAI_API_KEY` (OpenAI direct)
+    /// 4. `ANTHROPIC_API_KEY` (Anthropic direct)
+    /// 5. `OPENROUTER_API_KEY` (OpenRouter — multi-provider)
     ///
-    /// Returns `None` if no API key is found.
+    /// Set `CTXGRAPH_NO_LLM=1` to disable LLM entirely.
+    /// Set `CTXGRAPH_NO_OLLAMA=1` to skip Ollama auto-detection.
+    ///
+    /// Returns `None` if no LLM backend is available.
     pub fn from_env() -> Option<Self> {
-        let (api_key, default_url) = if let Ok(key) = std::env::var("CTXGRAPH_LLM_KEY") {
-            if key.is_empty() {
+        // Respect explicit disable
+        if std::env::var("CTXGRAPH_NO_LLM").map_or(false, |v| v == "1" || v == "true") {
+            return None;
+        }
+
+        // Tier 0: Explicit config (overrides everything)
+        if let Ok(key) = std::env::var("CTXGRAPH_LLM_KEY") {
+            if !key.is_empty() {
+                let url = std::env::var("CTXGRAPH_LLM_URL")
+                    .unwrap_or_else(|_| DEFAULT_URL.to_string());
+                let model = std::env::var("CTXGRAPH_LLM_MODEL")
+                    .unwrap_or_else(|_| DEFAULT_MODEL.to_string());
+                let client = reqwest::blocking::Client::builder()
+                    .timeout(std::time::Duration::from_secs(60))
+                    .build()
+                    .ok()?;
+                return Some(Self {
+                    client,
+                    api_key: key,
+                    model,
+                    url,
+                });
+            }
+        }
+
+        // Tier 1: Ollama local (auto-detect — free, private, no API key needed)
+        if !std::env::var("CTXGRAPH_NO_OLLAMA").map_or(false, |v| v == "1" || v == "true") {
+            if let Some(extractor) = Self::detect_ollama() {
+                return Some(extractor);
+            }
+        }
+
+        // Tier 2: Cloud providers (need API keys)
+        let (api_key, default_url) = if let Ok(key) = std::env::var("OPENAI_API_KEY") {
+            if !key.is_empty() {
+                (
+                    key,
+                    "https://api.openai.com/v1/chat/completions".to_string(),
+                )
+            } else {
                 return None;
             }
-            (key, DEFAULT_URL.to_string())
-        } else if let Ok(key) = std::env::var("OPENAI_API_KEY") {
-            if key.is_empty() {
-                return None;
-            }
-            (
-                key,
-                "https://api.openai.com/v1/chat/completions".to_string(),
-            )
         } else if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
-            if key.is_empty() {
+            if !key.is_empty() {
+                (
+                    key,
+                    "https://api.anthropic.com/v1/chat/completions".to_string(),
+                )
+            } else {
                 return None;
             }
-            (
-                key,
-                "https://api.anthropic.com/v1/chat/completions".to_string(),
-            )
         } else if let Ok(key) = std::env::var("OPENROUTER_API_KEY") {
-            if key.is_empty() {
+            if !key.is_empty() {
+                (
+                    key,
+                    "https://openrouter.ai/api/v1/chat/completions".to_string(),
+                )
+            } else {
                 return None;
             }
-            (
-                key,
-                "https://openrouter.ai/api/v1/chat/completions".to_string(),
-            )
         } else {
             return None;
         };
@@ -268,6 +313,100 @@ impl LlmExtractor {
             api_key,
             model,
             url,
+        })
+    }
+
+    /// Auto-detect Ollama running locally and find the best available model.
+    ///
+    /// Probes `http://localhost:11434/api/tags` to list installed models,
+    /// then picks the best one from `OLLAMA_PREFERRED_MODELS` order.
+    fn detect_ollama() -> Option<Self> {
+        let client = reqwest::blocking::Client::builder()
+            .timeout(std::time::Duration::from_secs(3))
+            .build()
+            .ok()?;
+
+        // Probe Ollama API
+        let resp = client
+            .get("http://localhost:11434/api/tags")
+            .send()
+            .ok()?;
+
+        if !resp.status().is_success() {
+            return None;
+        }
+
+        // Parse available models
+        let body: serde_json::Value = resp.json().ok()?;
+        let models = body.get("models")?.as_array()?;
+        let available: Vec<String> = models
+            .iter()
+            .filter_map(|m| m.get("name")?.as_str().map(String::from))
+            .collect();
+
+        if available.is_empty() {
+            return None;
+        }
+
+        // Find the best model from our preferred list
+        let chosen = OLLAMA_PREFERRED_MODELS
+            .iter()
+            .find(|&&pref| {
+                available.iter().any(|a| {
+                    a == pref || a == &format!("{pref}:latest") || a.starts_with(&format!("{pref}:"))
+                })
+            })
+            .copied()
+            // Fall back to any available model
+            .unwrap_or_else(|| {
+                // Use the first available model (as &str via leak — acceptable for a one-time init)
+                // We can't return a reference to `available` so use a known fallback
+                "qwen2.5:3b"
+            });
+
+        // Check that chosen model is actually available
+        let model_available = available.iter().any(|a| {
+            a == chosen
+                || a == &format!("{chosen}:latest")
+                || a.starts_with(&format!("{chosen}:"))
+        });
+
+        if !model_available {
+            // None of our preferred models installed, use whatever is first
+            if let Some(first) = available.first() {
+                let client = reqwest::blocking::Client::builder()
+                    .timeout(std::time::Duration::from_secs(120))
+                    .build()
+                    .ok()?;
+                eprintln!(
+                    "[ctxgraph] Ollama detected with model '{}' (auto-selected)",
+                    first
+                );
+                return Some(Self {
+                    client,
+                    api_key: "ollama".to_string(),
+                    model: first.clone(),
+                    url: "http://localhost:11434/v1/chat/completions".to_string(),
+                });
+            }
+            return None;
+        }
+
+        let client = reqwest::blocking::Client::builder()
+            .timeout(std::time::Duration::from_secs(120))
+            .build()
+            .ok()?;
+
+        eprintln!(
+            "[ctxgraph] Ollama detected with model '{}' (local, free)",
+            chosen
+        );
+
+        Some(Self {
+            client,
+            api_key: "ollama".to_string(),
+            model: chosen.to_string(),
+            url: "http://localhost:11434/v1/chat/completions".to_string(),
         })
     }
 
