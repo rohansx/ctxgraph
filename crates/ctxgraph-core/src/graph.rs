@@ -93,14 +93,90 @@ impl Graph {
 
     /// Load the extraction pipeline from models in the given directory.
     ///
+    /// If a cached inferred schema exists at `.ctxgraph/schema.toml`, it is used.
+    /// Otherwise uses the default tech-domain schema. Auto-schema inference
+    /// triggers after enough episodes are logged (see `maybe_infer_schema`).
+    ///
     /// Once loaded, `add_episode()` will automatically extract entities and relations.
     /// Call this after `open()` or `init()` to enable extraction.
     #[cfg(feature = "extract")]
     pub fn load_extraction_pipeline(&mut self, models_dir: &Path) -> Result<()> {
-        let pipeline = ExtractionPipeline::with_defaults(models_dir)
+        // Check for cached inferred schema next to the database
+        let schema = self.load_cached_schema().unwrap_or_default();
+        let pipeline = ExtractionPipeline::new(schema, models_dir, 0.5)
             .map_err(|e| CtxGraphError::Extraction(e.to_string()))?;
         self.pipeline = Some(pipeline);
         Ok(())
+    }
+
+    /// Try to load a cached schema from `.ctxgraph/schema.toml`.
+    #[cfg(feature = "extract")]
+    fn load_cached_schema(&self) -> Option<ExtractionSchema> {
+        let schema_path = self.db_path.parent()?.join("schema.toml");
+        if schema_path.exists() {
+            match ExtractionSchema::load(&schema_path) {
+                Ok(schema) => {
+                    eprintln!(
+                        "[ctxgraph] Loaded inferred schema '{}' ({} entity types)",
+                        schema.name,
+                        schema.entity_types.len()
+                    );
+                    Some(schema)
+                }
+                Err(e) => {
+                    eprintln!("[ctxgraph] Failed to load cached schema: {e}");
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Infer a schema from recent episodes and cache it for future use.
+    ///
+    /// Called automatically after enough episodes are logged without a schema.
+    /// Requires an LLM (Ollama or cloud API) to analyze sample text.
+    #[cfg(feature = "extract")]
+    pub fn maybe_infer_schema(&mut self, models_dir: &Path) -> Result<bool> {
+        // Skip if we already have a cached schema
+        let schema_path = match self.db_path.parent() {
+            Some(p) => p.join("schema.toml"),
+            None => return Ok(false),
+        };
+        if schema_path.exists() {
+            return Ok(false);
+        }
+
+        // Need at least 3 episodes to infer a meaningful schema
+        let episodes = self.storage.list_episodes(5, 0)?;
+        if episodes.len() < 3 {
+            return Ok(false);
+        }
+
+        // Detect LLM endpoint (same logic as LlmExtractor::from_env)
+        let (url, key, model) = detect_llm_for_schema_inference()?;
+
+        let samples: Vec<&str> = episodes.iter().map(|e| e.content.as_str()).collect();
+
+        match ExtractionSchema::infer_from_text(&samples, &url, &key, &model) {
+            Ok(schema) => {
+                // Save for future use
+                if let Err(e) = schema.save(&schema_path) {
+                    eprintln!("[ctxgraph] Failed to save inferred schema: {e}");
+                }
+
+                // Reload pipeline with new schema
+                let pipeline = ExtractionPipeline::new(schema, models_dir, 0.5)
+                    .map_err(|e| CtxGraphError::Extraction(e.to_string()))?;
+                self.pipeline = Some(pipeline);
+                Ok(true)
+            }
+            Err(e) => {
+                eprintln!("[ctxgraph] Schema inference failed: {e}");
+                Ok(false)
+            }
+        }
     }
 
     /// Load the extraction pipeline with a custom schema.
@@ -180,13 +256,18 @@ impl Graph {
         self.pipeline.is_some()
     }
 
+    /// Get the database path.
+    pub fn db_path(&self) -> &Path {
+        &self.db_path
+    }
+
     // ── Core Operations ──
 
     /// Add an episode to the graph. Returns the episode ID and extraction results.
     ///
     /// If an extraction pipeline is loaded, entities and relations are automatically
     /// extracted from the episode content and stored in the graph.
-    pub fn add_episode(&self, episode: Episode) -> Result<EpisodeResult> {
+    pub fn add_episode(&mut self, episode: Episode) -> Result<EpisodeResult> {
         self.storage.insert_episode(&episode)?;
 
         #[cfg(feature = "extract")]
@@ -531,6 +612,63 @@ impl Graph {
 }
 
 /// Compute cosine similarity between two f32 vectors.
+/// Detect an LLM endpoint for schema inference.
+///
+/// Tries Ollama first (local, free), then cloud providers via env vars.
+#[cfg(feature = "extract")]
+fn detect_llm_for_schema_inference() -> Result<(String, String, String)> {
+    // Try Ollama first
+    if let Ok(client) = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+    {
+        if let Ok(resp) = client.get("http://localhost:11434/api/tags").send() {
+            if resp.status().is_success() {
+                if let Ok(body) = resp.json::<serde_json::Value>() {
+                    let models = body["models"]
+                        .as_array()
+                        .map(|m| {
+                            m.iter()
+                                .filter_map(|v| v["name"].as_str().map(String::from))
+                                .collect::<Vec<_>>()
+                        })
+                        .unwrap_or_default();
+                    let model = models.first().cloned().unwrap_or("gemma3n:e4b".into());
+                    return Ok((
+                        "http://localhost:11434/v1/chat/completions".into(),
+                        "ollama".into(),
+                        model,
+                    ));
+                }
+            }
+        }
+    }
+
+    // Try cloud providers
+    for (env_key, url, default_model) in [
+        (
+            "OPENAI_API_KEY",
+            "https://api.openai.com/v1/chat/completions",
+            "gpt-4o-mini",
+        ),
+        (
+            "OPENROUTER_API_KEY",
+            "https://openrouter.ai/api/v1/chat/completions",
+            "google/gemma-4-31b-it",
+        ),
+    ] {
+        if let Ok(key) = std::env::var(env_key) {
+            if !key.is_empty() {
+                return Ok((url.into(), key, default_model.into()));
+            }
+        }
+    }
+
+    Err(CtxGraphError::Extraction(
+        "No LLM available for schema inference. Install Ollama or set an API key.".into(),
+    ))
+}
+
 /// Returns 0.0 if either vector has zero magnitude.
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     if a.len() != b.len() || a.is_empty() {

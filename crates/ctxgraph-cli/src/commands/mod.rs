@@ -50,6 +50,13 @@ pub fn open_graph() -> ctxgraph::Result<Graph> {
     Ok(graph)
 }
 
+/// Get models directory for a graph (used by log command for schema inference).
+#[cfg(feature = "extract")]
+pub fn find_models_dir_from_graph(graph: &Graph) -> Option<PathBuf> {
+    let db_path = graph.db_path();
+    find_models_dir(db_path)
+}
+
 /// Locate models directory by checking (in order):
 /// 1. `CTXGRAPH_MODELS_DIR` env var
 /// 2. `~/.cache/ctxgraph/models`

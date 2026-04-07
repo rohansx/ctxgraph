@@ -63,7 +63,7 @@ impl ToolContext {
 
         // Store episode
         let result = {
-            let graph = self.graph.lock().map_err(|e| e.to_string())?;
+            let mut graph = self.graph.lock().map_err(|e| e.to_string())?;
             graph.add_episode(episode).map_err(|e| e.to_string())?
         };
 
