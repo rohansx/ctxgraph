@@ -329,6 +329,189 @@ impl Default for ExtractionSchema {
     }
 }
 
+impl ExtractionSchema {
+    /// Infer a schema from sample text using an LLM.
+    ///
+    /// Sends sample episodes to the LLM and asks it to identify the domain,
+    /// relevant entity types, and relation types. Returns a schema ready for
+    /// extraction. The LLM call uses the same `LlmExtractor` infrastructure.
+    ///
+    /// This is the "zero-config" path: users log episodes, and ctxgraph
+    /// automatically figures out what entities and relations matter.
+    pub fn infer_from_text(
+        samples: &[&str],
+        llm_url: &str,
+        llm_key: &str,
+        llm_model: &str,
+    ) -> Result<Self, SchemaError> {
+        let combined = samples
+            .iter()
+            .enumerate()
+            .map(|(i, t)| format!("Text {}: {}", i + 1, t))
+            .collect::<Vec<_>>()
+            .join("\n\n");
+
+        let prompt = format!(
+            r#"Analyze these text samples and design a knowledge graph schema for this domain.
+
+{combined}
+
+Return a JSON schema with:
+1. "name": short domain name (e.g. "healthcare", "finance", "devops")
+2. "entity_types": object mapping type names to short descriptions (5-10 types)
+3. "relation_types": object mapping relation names to descriptions (5-10 relations)
+
+Rules:
+- Entity type names should be PascalCase (Person, Organization, Technology)
+- Relation names should be snake_case (depends_on, partnered_with)
+- Descriptions should be 3-6 words
+- Always include Person, Organization, and Metric as entity types
+- Relations should be verb phrases that connect entity types
+
+Return ONLY valid JSON:
+{{"name": "...", "entity_types": {{"TypeName": "short description"}}, "relation_types": {{"relation_name": "short description"}}}}"#
+        );
+
+        let client = reqwest::blocking::Client::builder()
+            .timeout(std::time::Duration::from_secs(120))
+            .build()
+            .map_err(|e| SchemaError::Parse(format!("HTTP client: {e}")))?;
+
+        let payload = serde_json::json!({
+            "model": llm_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.0,
+            "max_tokens": 1024,
+        });
+
+        let resp = client
+            .post(llm_url)
+            .header("Authorization", format!("Bearer {llm_key}"))
+            .header("Content-Type", "application/json")
+            .json(&payload)
+            .send()
+            .map_err(|e| SchemaError::Parse(format!("LLM request failed: {e}")))?;
+
+        if !resp.status().is_success() {
+            let body = resp.text().unwrap_or_default();
+            return Err(SchemaError::Parse(format!("LLM error: {body}")));
+        }
+
+        let chat: serde_json::Value = resp
+            .json()
+            .map_err(|e| SchemaError::Parse(format!("LLM response parse: {e}")))?;
+        let content = chat["choices"][0]["message"]["content"]
+            .as_str()
+            .ok_or_else(|| SchemaError::Parse("empty LLM response".into()))?;
+
+        // Extract JSON from response (may have markdown fences)
+        let json_str = extract_json_block(content);
+
+        let raw: serde_json::Value = serde_json::from_str(json_str)
+            .map_err(|e| SchemaError::Parse(format!("schema JSON parse: {e}\nRaw: {content}")))?;
+
+        let name = raw["name"].as_str().unwrap_or("inferred").to_string();
+
+        let mut entity_types = BTreeMap::new();
+        if let Some(obj) = raw["entity_types"].as_object() {
+            for (k, v) in obj {
+                entity_types.insert(k.clone(), v.as_str().unwrap_or("").to_string());
+            }
+        }
+
+        // Build relation types (simplified — no head/tail constraints for inferred schemas)
+        let mut relation_types = BTreeMap::new();
+        if let Some(obj) = raw["relation_types"].as_object() {
+            let all_types: Vec<String> = entity_types.keys().cloned().collect();
+            for (k, v) in obj {
+                relation_types.insert(
+                    k.clone(),
+                    RelationSpec {
+                        head: all_types.clone(),
+                        tail: all_types.clone(),
+                        description: v.as_str().unwrap_or("").to_string(),
+                    },
+                );
+            }
+        }
+
+        if entity_types.is_empty() {
+            return Err(SchemaError::Parse(
+                "LLM returned empty entity types".into(),
+            ));
+        }
+
+        eprintln!(
+            "[ctxgraph] Schema inferred: domain='{}', {} entity types, {} relation types",
+            name,
+            entity_types.len(),
+            relation_types.len()
+        );
+
+        Ok(Self {
+            name,
+            entity_types,
+            relation_types,
+        })
+    }
+
+    /// Save schema to a TOML file for future use.
+    pub fn save(&self, path: &Path) -> Result<(), SchemaError> {
+        let mut toml = String::new();
+        toml.push_str(&format!("[schema]\nname = \"{}\"\n\n", self.name));
+
+        toml.push_str("[schema.entities]\n");
+        for (k, v) in &self.entity_types {
+            toml.push_str(&format!("{k} = \"{v}\"\n"));
+        }
+
+        if !self.relation_types.is_empty() {
+            toml.push_str("\n");
+            for (k, v) in &self.relation_types {
+                let head: Vec<String> = v.head.iter().map(|h| format!("\"{h}\"")).collect();
+                let tail: Vec<String> = v.tail.iter().map(|t| format!("\"{t}\"")).collect();
+                toml.push_str(&format!(
+                    "[schema.relations.{k}]\nhead = [{}]\ntail = [{}]\ndescription = \"{}\"\n\n",
+                    head.join(", "),
+                    tail.join(", "),
+                    v.description
+                ));
+            }
+        }
+
+        std::fs::write(path, &toml).map_err(|e| SchemaError::Io {
+            path: path.display().to_string(),
+            source: e,
+        })
+    }
+}
+
+/// Extract a JSON block from LLM output that may contain markdown fences.
+fn extract_json_block(content: &str) -> &str {
+    // Strip <think>...</think>
+    let stripped = if let Some(end) = content.find("</think>") {
+        &content[end + 8..]
+    } else {
+        content
+    }
+    .trim();
+
+    // Try ```json ... ```
+    if let Some(start) = stripped.find("```json") {
+        let after = &stripped[start + 7..];
+        if let Some(end) = after.find("```") {
+            return after[..end].trim();
+        }
+    }
+    // Try { ... }
+    if let Some(start) = stripped.find('{')
+        && let Some(end) = stripped.rfind('}')
+    {
+        return &stripped[start..=end];
+    }
+    stripped
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum SchemaError {
     #[error("failed to read schema at {path}: {source}")]
