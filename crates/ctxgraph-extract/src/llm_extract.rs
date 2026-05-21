@@ -242,28 +242,29 @@ impl LlmExtractor {
 
         // Tier 0: Explicit config (overrides everything)
         if let Ok(key) = std::env::var("CTXGRAPH_LLM_KEY")
-            && !key.is_empty() {
-                let url =
-                    std::env::var("CTXGRAPH_LLM_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());
-                let model = std::env::var("CTXGRAPH_LLM_MODEL")
-                    .unwrap_or_else(|_| DEFAULT_MODEL.to_string());
-                let client = reqwest::blocking::Client::builder()
-                    .timeout(std::time::Duration::from_secs(60))
-                    .build()
-                    .ok()?;
-                return Some(Self {
-                    client,
-                    api_key: key,
-                    model,
-                    url,
-                });
-            }
+            && !key.is_empty()
+        {
+            let url = std::env::var("CTXGRAPH_LLM_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());
+            let model =
+                std::env::var("CTXGRAPH_LLM_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string());
+            let client = reqwest::blocking::Client::builder()
+                .timeout(std::time::Duration::from_secs(60))
+                .build()
+                .ok()?;
+            return Some(Self {
+                client,
+                api_key: key,
+                model,
+                url,
+            });
+        }
 
         // Tier 1: Ollama local (auto-detect — free, private, no API key needed)
         if !std::env::var("CTXGRAPH_NO_OLLAMA").is_ok_and(|v| v == "1" || v == "true")
-            && let Some(extractor) = Self::detect_ollama() {
-                return Some(extractor);
-            }
+            && let Some(extractor) = Self::detect_ollama()
+        {
+            return Some(extractor);
+        }
 
         // Tier 2: Cloud providers (need API keys)
         let (api_key, default_url) = if let Ok(key) = std::env::var("OPENAI_API_KEY") {

@@ -105,69 +105,69 @@ pub fn run(query_text: String, limit: usize) -> ctxgraph::Result<()> {
 
     // ── Stage 2: simple path ─ verb resolves + entity found ──────
     if let (Some(rel), Some(head)) = (m.as_ref(), entity_hint.as_ref())
-        && rel.score >= VERB_CONFIDENCE_THRESHOLD {
-            let (entities, edges) = graph.traverse(&head.id, 1)?;
-            let connected: Vec<(String, Entity)> = edges
-                .iter()
-                .filter(|e| e.relation == rel.relation)
-                .filter_map(|e| {
-                    let other_id = if e.source_id == head.id {
-                        e.target_id.as_str()
-                    } else {
-                        e.source_id.as_str()
-                    };
-                    entities
-                        .iter()
-                        .find(|x| x.id == other_id)
-                        .cloned()
-                        .map(|x| (e.relation.clone(), x))
-                })
-                .collect();
+        && rel.score >= VERB_CONFIDENCE_THRESHOLD
+    {
+        let (entities, edges) = graph.traverse(&head.id, 1)?;
+        let connected: Vec<(String, Entity)> = edges
+            .iter()
+            .filter(|e| e.relation == rel.relation)
+            .filter_map(|e| {
+                let other_id = if e.source_id == head.id {
+                    e.target_id.as_str()
+                } else {
+                    e.source_id.as_str()
+                };
+                entities
+                    .iter()
+                    .find(|x| x.id == other_id)
+                    .cloned()
+                    .map(|x| (e.relation.clone(), x))
+            })
+            .collect();
 
+        println!(
+            "\n  SIMPLE PATH results ({}, relation={})",
+            connected.len(),
+            rel.relation
+        );
+        for (rel_name, ent) in connected.iter().take(limit) {
             println!(
-                "\n  SIMPLE PATH results ({}, relation={})",
-                connected.len(),
-                rel.relation
-            );
-            for (rel_name, ent) in connected.iter().take(limit) {
-                println!(
-                    "    {} --{}--> {} [{}]",
-                    head.name, rel_name, ent.name, ent.entity_type
-                );
-            }
-            if !connected.is_empty() {
-                println!();
-                return Ok(());
-            }
-            println!(
-                "  (no edges matched {} for {}; falling back to search)",
-                rel.relation, head.name
+                "    {} --{}--> {} [{}]",
+                head.name, rel_name, ent.name, ent.entity_type
             );
         }
+        if !connected.is_empty() {
+            println!();
+            return Ok(());
+        }
+        println!(
+            "  (no edges matched {} for {}; falling back to search)",
+            rel.relation, head.name
+        );
+    }
 
     // ── Stage 2.5: complex path (only if simple path produced nothing and
     //     the query has structural markers — multi-hop, time filter, etc.).
     //     CLARITY § 5: ~10% of real queries hit this path. Uses the local
     //     query-parse prompt against any LLM backend (Cerebras/Ollama/OpenRouter).
     let is_complex = looks_complex(&query_text);
-    if is_complex
-        && let Some(parsed) = try_complex_path(&query_text) {
-            println!("\n  COMPLEX PATH (NL → graph op)");
-            println!(
-                "    op={}, head={:?}, relation={:?}, tail={:?}",
-                parsed.op, parsed.head, parsed.relation, parsed.tail
-            );
-            let hits = dispatch_op(&graph, &parsed, limit)?;
-            if !hits.is_empty() {
-                println!("\n  Results ({}):", hits.len());
-                for (label, ent) in hits.iter().take(limit) {
-                    println!("    {label}  {} [{}]", ent.name, ent.entity_type);
-                }
-                println!();
-                return Ok(());
+    if is_complex && let Some(parsed) = try_complex_path(&query_text) {
+        println!("\n  COMPLEX PATH (NL → graph op)");
+        println!(
+            "    op={}, head={:?}, relation={:?}, tail={:?}",
+            parsed.op, parsed.head, parsed.relation, parsed.tail
+        );
+        let hits = dispatch_op(&graph, &parsed, limit)?;
+        if !hits.is_empty() {
+            println!("\n  Results ({}):", hits.len());
+            for (label, ent) in hits.iter().take(limit) {
+                println!("    {label}  {} [{}]", ent.name, ent.entity_type);
             }
-            println!("    (no results for parsed op; falling back to search)");
+            println!();
+            return Ok(());
         }
+        println!("    (no results for parsed op; falling back to search)");
+    }
 
     // ── Stage 3: fallback fused search ───────────────────────────
     // FTS5 doesn't like punctuation. Strip everything except word chars.
@@ -280,9 +280,10 @@ fn split_verb_entity(
         // Try the *whole* query against search_entities, take top hit
         if let Ok(hits) = graph.search_entities(&cleaned, 3)
             && let Some((e, score)) = hits.into_iter().next()
-                && score > 0.0 {
-                    best_match = Some((e, 0, tokens.len()));
-                }
+            && score > 0.0
+        {
+            best_match = Some((e, 0, tokens.len()));
+        }
     }
 
     let (entity, verb) = match best_match {
@@ -432,9 +433,10 @@ fn extract_json_object(raw: &str) -> &str {
     };
     let t = s.trim();
     if let (Some(a), Some(b)) = (t.find('{'), t.rfind('}'))
-        && b > a {
-            return &t[a..=b];
-        }
+        && b > a
+    {
+        return &t[a..=b];
+    }
     t
 }
 
@@ -466,9 +468,10 @@ fn dispatch_op(
             let mut out: Vec<(String, Entity)> = Vec::new();
             for e in &edges {
                 if let Some(r) = want_rel
-                    && e.relation != r {
-                        continue;
-                    }
+                    && e.relation != r
+                {
+                    continue;
+                }
                 let other_id = if e.source_id == head.id {
                     &e.target_id
                 } else {
@@ -476,9 +479,10 @@ fn dispatch_op(
                 };
                 if let Some(ent) = entities.iter().find(|x| &x.id == other_id) {
                     if let Some(t) = &entity_type_filter
-                        && &ent.entity_type != t {
-                            continue;
-                        }
+                        && &ent.entity_type != t
+                    {
+                        continue;
+                    }
                     out.push((format!("{} -[{}]->", head.name, e.relation), ent.clone()));
                 }
             }
@@ -506,9 +510,10 @@ fn dispatch_op(
 
 fn load_prompt_text(env_var: &str, fallback_rel: &str) -> Option<String> {
     if let Ok(val) = env::var(env_var)
-        && let Ok(s) = std::fs::read_to_string(&val) {
-            return Some(s);
-        }
+        && let Ok(s) = std::fs::read_to_string(&val)
+    {
+        return Some(s);
+    }
     let cwd = env::current_dir().ok()?;
     let candidates = [
         cwd.join(fallback_rel),

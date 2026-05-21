@@ -612,23 +612,24 @@ fn detect_llm_for_schema_inference() -> Result<(String, String, String)> {
         .timeout(std::time::Duration::from_secs(3))
         .build()
         && let Ok(resp) = client.get("http://localhost:11434/api/tags").send()
-            && resp.status().is_success()
-                && let Ok(body) = resp.json::<serde_json::Value>() {
-                    let models = body["models"]
-                        .as_array()
-                        .map(|m| {
-                            m.iter()
-                                .filter_map(|v| v["name"].as_str().map(String::from))
-                                .collect::<Vec<_>>()
-                        })
-                        .unwrap_or_default();
-                    let model = models.first().cloned().unwrap_or("gemma3n:e4b".into());
-                    return Ok((
-                        "http://localhost:11434/v1/chat/completions".into(),
-                        "ollama".into(),
-                        model,
-                    ));
-                }
+        && resp.status().is_success()
+        && let Ok(body) = resp.json::<serde_json::Value>()
+    {
+        let models = body["models"]
+            .as_array()
+            .map(|m| {
+                m.iter()
+                    .filter_map(|v| v["name"].as_str().map(String::from))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let model = models.first().cloned().unwrap_or("gemma3n:e4b".into());
+        return Ok((
+            "http://localhost:11434/v1/chat/completions".into(),
+            "ollama".into(),
+            model,
+        ));
+    }
 
     // Try cloud providers
     for (env_key, url, default_model) in [
@@ -644,9 +645,10 @@ fn detect_llm_for_schema_inference() -> Result<(String, String, String)> {
         ),
     ] {
         if let Ok(key) = std::env::var(env_key)
-            && !key.is_empty() {
-                return Ok((url.into(), key, default_model.into()));
-            }
+            && !key.is_empty()
+        {
+            return Ok((url.into(), key, default_model.into()));
+        }
     }
 
     Err(CtxGraphError::Extraction(

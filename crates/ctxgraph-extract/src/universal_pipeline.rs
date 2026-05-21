@@ -143,9 +143,10 @@ impl UniversalExtractionResult {
                 }
             }
             if best_score >= 0.5
-                && let Some(id) = best_id {
-                    out.push(id);
-                }
+                && let Some(id) = best_id
+            {
+                out.push(id);
+            }
         }
         out
     }
@@ -329,8 +330,9 @@ fn extract_json_object(raw: &str) -> &str {
     // Trim to first '{' / last '}'
     let trimmed = s.trim();
     if let (Some(start), Some(end)) = (trimmed.find('{'), trimmed.rfind('}'))
-        && end > start {
-            return &trimmed[start..=end];
-        }
+        && end > start
+    {
+        return &trimmed[start..=end];
+    }
     trimmed
 }
