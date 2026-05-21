@@ -1,0 +1,5697 @@
+{
+  "piece_3": {
+    "accuracy": 0.8333333333333334,
+    "correct": 20,
+    "total": 24,
+    "rows": [
+      {
+        "verb": "relies on",
+        "expected": "depends_on",
+        "predicted": "depends_on",
+        "score": 0.4679262042045593,
+        "runner_up": "references",
+        "runner_up_score": 0.15580376982688904,
+        "correct": true
+      },
+      {
+        "verb": "requires",
+        "expected": "depends_on",
+        "predicted": "depends_on",
+        "score": 0.4131397604942322,
+        "runner_up": "participated_in",
+        "runner_up_score": 0.15588532388210297,
+        "correct": true
+      },
+      {
+        "verb": "needs",
+        "expected": "depends_on",
+        "predicted": "depends_on",
+        "score": 0.27985528111457825,
+        "runner_up": "references",
+        "runner_up_score": 0.10473013669252396,
+        "correct": true
+      },
+      {
+        "verb": "is built on",
+        "expected": "depends_on",
+        "predicted": "depends_on",
+        "score": 0.2879090905189514,
+        "runner_up": "part_of",
+        "runner_up_score": 0.2276330143213272,
+        "correct": true
+      },
+      {
+        "verb": "part of",
+        "expected": "part_of",
+        "predicted": "part_of",
+        "score": 0.5166393518447876,
+        "runner_up": "participated_in",
+        "runner_up_score": 0.3342267572879791,
+        "correct": true
+      },
+      {
+        "verb": "belongs to",
+        "expected": "part_of",
+        "predicted": "owned_by",
+        "score": 0.4325064420700073,
+        "runner_up": "part_of",
+        "runner_up_score": 0.37597164511680603,
+        "correct": false
+      },
+      {
+        "verb": "works at",
+        "expected": "part_of",
+        "predicted": "located_at",
+        "score": 0.3309164345264435,
+        "runner_up": "part_of",
+        "runner_up_score": 0.20617741346359253,
+        "correct": false
+      },
+      {
+        "verb": "is at",
+        "expected": "located_at",
+        "predicted": "located_at",
+        "score": 0.3610401749610901,
+        "runner_up": "part_of",
+        "runner_up_score": 0.2742060422897339,
+        "correct": true
+      },
+      {
+        "verb": "happens in",
+        "expected": "located_at",
+        "predicted": "participated_in",
+        "score": 0.326498806476593,
+        "runner_up": "caused",
+        "runner_up_score": 0.21096274256706238,
+        "correct": false
+      },
+      {
+        "verb": "based in",
+        "expected": "located_at",
+        "predicted": "located_at",
+        "score": 0.36468175053596497,
+        "runner_up": "owned_by",
+        "runner_up_score": 0.23311097919940948,
+        "correct": true
+      },
+      {
+        "verb": "attended",
+        "expected": "participated_in",
+        "predicted": "participated_in",
+        "score": 0.5101360082626343,
+        "runner_up": "located_at",
+        "runner_up_score": 0.20420749485492706,
+        "correct": true
+      },
+      {
+        "verb": "was at",
+        "expected": "participated_in",
+        "predicted": "located_at",
+        "score": 0.3276461064815521,
+        "runner_up": "participated_in",
+        "runner_up_score": 0.31828629970550537,
+        "correct": false
+      },
+      {
+        "verb": "led to",
+        "expected": "caused",
+        "predicted": "caused",
+        "score": 0.36692872643470764,
+        "runner_up": "participated_in",
+        "runner_up_score": 0.26570016145706177,
+        "correct": true
+      },
+      {
+        "verb": "resulted in",
+        "expected": "caused",
+        "predicted": "caused",
+        "score": 0.4743049740791321,
+        "runner_up": "participated_in",
+        "runner_up_score": 0.3206111788749695,
+        "correct": true
+      },
+      {
+        "verb": "caused by",
+        "expected": "caused",
+        "predicted": "caused",
+        "score": 0.5496233701705933,
+        "runner_up": "preceded",
+        "runner_up_score": 0.23773416876792908,
+        "correct": true
+      },
+      {
+        "verb": "happened before",
+        "expected": "preceded",
+        "predicted": "preceded",
+        "score": 0.4355189800262451,
+        "runner_up": "caused",
+        "runner_up_score": 0.26379895210266113,
+        "correct": true
+      },
+      {
+        "verb": "predecessor of",
+        "expected": "preceded",
+        "predicted": "preceded",
+        "score": 0.5361372828483582,
+        "runner_up": "mentions",
+        "runner_up_score": 0.22382301092147827,
+        "correct": true
+      },
+      {
+        "verb": "cites",
+        "expected": "references",
+        "predicted": "references",
+        "score": 0.5682079792022705,
+        "runner_up": "mentions",
+        "runner_up_score": 0.26170721650123596,
+        "correct": true
+      },
+      {
+        "verb": "builds on",
+        "expected": "references",
+        "predicted": "references",
+        "score": 0.3120703101158142,
+        "runner_up": "depends_on",
+        "runner_up_score": 0.25217491388320923,
+        "correct": true
+      },
+      {
+        "verb": "owned by",
+        "expected": "owned_by",
+        "predicted": "owned_by",
+        "score": 0.6434953808784485,
+        "runner_up": "part_of",
+        "runner_up_score": 0.1736541986465454,
+        "correct": true
+      },
+      {
+        "verb": "belongs to (owner)",
+        "expected": "owned_by",
+        "predicted": "owned_by",
+        "score": 0.6821026802062988,
+        "runner_up": "part_of",
+        "runner_up_score": 0.3768472969532013,
+        "correct": true
+      },
+      {
+        "verb": "controlled by",
+        "expected": "owned_by",
+        "predicted": "owned_by",
+        "score": 0.44033169746398926,
+        "runner_up": "caused",
+        "runner_up_score": 0.21650660037994385,
+        "correct": true
+      },
+      {
+        "verb": "mentioned in",
+        "expected": "mentions",
+        "predicted": "mentions",
+        "score": 0.39664244651794434,
+        "runner_up": "participated_in",
+        "runner_up_score": 0.26898694038391113,
+        "correct": true
+      },
+      {
+        "verb": "named in",
+        "expected": "mentions",
+        "predicted": "mentions",
+        "score": 0.2962780296802521,
+        "runner_up": "participated_in",
+        "runner_up_score": 0.22845301032066345,
+        "correct": true
+      }
+    ]
+  },
+  "per_backend": {
+    "openrouter": {
+      "piece_2": {
+        "backend": "openrouter",
+        "model": "google/gemma-4-26b-a4b-it",
+        "avg_entity_f1": 0.7075926354347406,
+        "avg_relation_f1": 0.41075613275613276,
+        "combined_f1": 0.5591743840954366,
+        "cost_usd": 0.009129250000000002,
+        "extractions": [
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Priya",
+                "type": "Person",
+                "attributes": {
+                  "role": "Head of Engineering"
+                }
+              },
+              {
+                "id": "e2",
+                "name": "Verve Coffee",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "San Francisco",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Tuesday",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Sundae",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "staff role",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "team",
+                "type": "Organization",
+                "attributes": {
+                  "size": 6,
+                  "composition": "mostly ex-Stripe"
+                }
+              },
+              {
+                "id": "e8",
+                "name": "Stripe",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "Temporal",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e10",
+                "name": "billing pipeline",
+                "type": "Concept",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "located_at",
+                "tail": "e3",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "part_of",
+                "tail": "e5",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "part_of",
+                "tail": "e5",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "related_to",
+                "tail": "e8",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e10",
+                "relation": "depends_on",
+                "tail": "e9",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "depends_on",
+                "tail": "e9",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "e7",
+                "supporting_entity_ids": [
+                  "e7"
+                ],
+                "rationale": "The team is a subset of the organization Sundae."
+              },
+              {
+                "kind": "entity_type",
+                "name": "e9",
+                "supporting_entity_ids": [
+                  "e9"
+                ],
+                "rationale": "Temporal is a software tool/platform used for workflows."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Marco Pierre White",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "mushroom risotto recipe",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "arborio rice",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Whole Foods",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "dried porcini",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "toasting the rice in butter",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "stock",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "truffle oil",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e2",
+                "relation": "owned_by",
+                "tail": "e1",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "related_to",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "depends_on",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "depends_on",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "related_to",
+                "tail": "e6",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "arborio rice",
+                "supporting_entity_ids": [
+                  "e3"
+                ],
+                "rationale": "Arborio rice is a specific food ingredient, which could be categorized as Artifact or a more specific Food type if available."
+              },
+              {
+                "kind": "entity_type",
+                "name": "toasting the rice in butter",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "This is a culinary technique, which could be more specifically typed as a Process or Technique."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {},
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "risk management team",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Bloomberg Terminal",
+                "type": "Artifact",
+                "attributes": {
+                  "function": "real-time market data"
+                }
+              },
+              {
+                "id": "e3",
+                "name": "Refinitiv Eikon",
+                "type": "Artifact",
+                "attributes": {
+                  "function": "real-time market data"
+                }
+              },
+              {
+                "id": "e4",
+                "name": "Bloomberg's API",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Python-based trading engine",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "$50K annual budget cap",
+                "type": "Fact",
+                "attributes": {
+                  "amount": "$50,000",
+                  "frequency": "annual"
+                }
+              },
+              {
+                "id": "e7",
+                "name": "SOX compliance requirements",
+                "type": "Concept",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "depends_on",
+                "tail": "e5",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e6",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "SOX compliance requirements",
+                "supporting_entity_ids": [
+                  "e7"
+                ],
+                "rationale": "Could be classified as 'Fact' or 'Concept' depending on whether it is viewed as a regulatory rule or an abstract requirement."
+              },
+              {
+                "kind": "relation",
+                "name": "e2 related to e6",
+                "supporting_entity_ids": [
+                  "e2",
+                  "e6"
+                ],
+                "rationale": "The relation could be more specifically 'constrained_by' if that type were available."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "CTO",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Cerner EHR",
+                "type": "Artifact",
+                "attributes": {
+                  "deployment": "on-premise"
+                }
+              },
+              {
+                "id": "e3",
+                "name": "ransomware incident",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "two days of downtime",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Epic",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "Microsoft Azure",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "99.99% uptime SLA",
+                "type": "Fact",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "hospital board",
+                "type": "Organization",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "caused",
+                "tail": "e4",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "located_at",
+                "tail": "e6",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "depends_on",
+                "tail": "e8",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "depends_on",
+                "tail": "e7",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "Organization",
+                "name": "hospital board",
+                "supporting_entity_ids": [
+                  "e8"
+                ],
+                "rationale": "The board is a governing body within an organization."
+              },
+              {
+                "kind": "Concept",
+                "name": "99.99% uptime SLA",
+                "supporting_entity_ids": [
+                  "e7"
+                ],
+                "rationale": "An SLA is a contractual concept/requirement."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {},
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Baker Beach",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Sam",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Anthropic",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "equity vest cliff",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "March 2027",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "API team",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "Claude Code team",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Claude Code",
+                "type": "Artifact",
+                "attributes": {
+                  "nature": "consumer-facing"
+                }
+              }
+            ],
+            "relations": [
+              {
+                "head": "e2",
+                "relation": "participated_in",
+                "tail": "e1",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "preceded",
+                "tail": "e5",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "part_of",
+                "tail": "e3",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "part_of",
+                "tail": "e3",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "API team",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "The API team is a specific functional unit within the organization."
+              },
+              {
+                "kind": "entity_type",
+                "name": "Claude Code",
+                "supporting_entity_ids": [
+                  "e8"
+                ],
+                "rationale": "Claude Code is likely a software product or tool."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Mariana",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Diego",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Lin",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Q2 product review",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Workspaces beta",
+                "type": "Artifact",
+                "attributes": {
+                  "status": "discontinued"
+                }
+              },
+              {
+                "id": "e6",
+                "name": "200 weekly actives",
+                "type": "Fact",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "5K MAU bar",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "postmortem",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "next Friday",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e10",
+                "name": "onboarding funnel",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e11",
+                "name": "low adoption",
+                "type": "Fact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e4",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "participated_in",
+                "tail": "e4",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "participated_in",
+                "tail": "e4",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "participated_in",
+                "tail": "e8",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "preceded",
+                "tail": "e9",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e11",
+                "relation": "caused",
+                "tail": "e5",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e10",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "Event",
+                "name": "postmortem",
+                "supporting_entity_ids": [
+                  "e8"
+                ],
+                "rationale": "The text describes a specific scheduled event to analyze the failure."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Diana Kennedy",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "mole poblano",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Oaxaca al Gusto",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Saturday dinner",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "chiles ancho",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "chiles mulato",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "chiles pasilla",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "dark chocolate",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "Tcho",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e10",
+                "name": "abuelita brick",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "owned_by",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "part_of",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "related_to",
+                "tail": "e9",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "The instruction that chiles ancho, mulato, and pasilla should be fried instead of toasted dry."
+            ],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "chiles ancho",
+                "supporting_entity_ids": [
+                  "e5"
+                ],
+                "rationale": "Could be classified as 'Food' if that type were available, but 'Artifact' is the closest provided type for physical ingredients."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "GLiNER2",
+                "type": "Artifact",
+                "attributes": {
+                  "parameters": "205M",
+                  "license": "Apache 2.0"
+                }
+              },
+              {
+                "id": "e2",
+                "name": "Fastino",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "NER",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "RE",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "hierarchical JSON",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "CrossNER",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "GPT-4o",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "unified prompt encoder",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "owned_by",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e6",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "depends_on",
+                "tail": "e8",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "GLiNER2",
+                "supporting_entity_ids": [
+                  "e1"
+                ],
+                "rationale": "GLiNER2 is a specific machine learning model architecture."
+              },
+              {
+                "kind": "entity_type",
+                "name": "CrossNER",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "CrossNER is a benchmark dataset/evaluation task."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Lisbon",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Hotel da Estrela",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "pastel de nata",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Manteigaria",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Chiado",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "Bel\u00e9m",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "Sintra",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Pena Palace",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "Quinta da Regaleira",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e10",
+                "name": "Wednesday",
+                "type": "Time",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e2",
+                "relation": "located_at",
+                "tail": "e1",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "located_at",
+                "tail": "e5",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "part_of",
+                "tail": "e1",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "mentions",
+                "tail": "e3",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "part_of",
+                "tail": "e1",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "related_to",
+                "tail": "e1",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "located_at",
+                "tail": "e7",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e9",
+                "relation": "located_at",
+                "tail": "e7",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "Place",
+                "name": "Chiado",
+                "supporting_entity_ids": [
+                  "e5"
+                ],
+                "rationale": "Chiado is a well-known district in Lisbon."
+              },
+              {
+                "kind": "Place",
+                "name": "Bel\u00e9m",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "Bel\u00e9m is a district in Lisbon."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Annie Duke",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Thinking in Bets",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "separate the quality of a decision from the quality of its outcome",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "resulting",
+                "type": "Concept",
+                "attributes": {
+                  "definition": "confusing decision quality with outcome quality"
+                }
+              },
+              {
+                "id": "e5",
+                "name": "Daniel Kahneman",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "System 1/System 2 framework",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "Phil Tetlock",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Superforecasting",
+                "type": "Concept",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "owned_by",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "mentions",
+                "tail": "e3",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "mentions",
+                "tail": "e4",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "references",
+                "tail": "e6",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e8",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "Idea",
+                "name": "Superforecasting",
+                "supporting_entity_ids": [
+                  "e8"
+                ],
+                "rationale": "Superforecasting is a methodology/concept rather than just a general idea."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "PR #482",
+                "type": "Artifact",
+                "attributes": {
+                  "description": "rewrite the OrderRouter to use Kafka exactly-once semantics"
+                }
+              },
+              {
+                "id": "e2",
+                "name": "OrderRouter",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Kafka exactly-once semantics",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "homegrown idempotency table",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "duplicate-charge bug",
+                "type": "Fact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "incident #1198",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "upgrading kafka-clients to 4.0+",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Anjali",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "Tom\u00e1s",
+                "type": "Person",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "depends_on",
+                "tail": "e7",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "caused",
+                "tail": "e5",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "part_of",
+                "tail": "e6",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "participated_in",
+                "tail": "e1",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e9",
+                "relation": "participated_in",
+                "tail": "e1",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "OrderRouter",
+                "supporting_entity_ids": [
+                  "e2"
+                ],
+                "rationale": "OrderRouter is likely a software component or service."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {},
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Kojo",
+                "type": "Person",
+                "attributes": {
+                  "role": "Lead of observability stream"
+                }
+              },
+              {
+                "id": "e2",
+                "name": "Datadog",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "observability stream",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Eli",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "first quarter",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "metrics stack",
+                "type": "Artifact",
+                "attributes": {
+                  "description": "Frankenstein of Prometheus, Honeycomb, and a homegrown Lambda"
+                }
+              },
+              {
+                "id": "e7",
+                "name": "Prometheus",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Honeycomb",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "homegrown Lambda",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e3",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "depends_on",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "part_of",
+                "tail": "e7",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "part_of",
+                "tail": "e8",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "part_of",
+                "tail": "e9",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "reports_to",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e4"
+                ],
+                "rationale": "The text explicitly states Kojo will report to Eli, which is more specific than 'depends_on'."
+              },
+              {
+                "kind": "entity_type",
+                "name": "Software",
+                "supporting_entity_ids": [
+                  "e7",
+                  "e8"
+                ],
+                "rationale": "Prometheus and Honeycomb are specific software tools."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Cambridge",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Watts Towers",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "William Watts",
+                "type": "Person",
+                "attributes": {
+                  "duration_of_work": "33 years"
+                }
+              },
+              {
+                "id": "e4",
+                "name": "LA",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "1959",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "stress test",
+                "type": "Event",
+                "attributes": {
+                  "force_applied": "10,000 lbs of lateral force"
+                }
+              }
+            ],
+            "relations": [
+              {
+                "head": "e2",
+                "relation": "located_at",
+                "tail": "e4",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "participated_in",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "preceded",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "Watts Towers",
+                "supporting_entity_ids": [
+                  "e2"
+                ],
+                "rationale": "Could be classified as a Landmark or Monument, but Artifact is the closest provided type."
+              }
+            ],
+            "confidence": 0.95
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Tour du Mont Blanc",
+                "type": "Concept",
+                "attributes": {
+                  "description": "hiking segment"
+                }
+              },
+              {
+                "id": "e2",
+                "name": "Les Houches",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Les Contamines",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Saturday",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "1200m elevation gain",
+                "type": "Fact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "col de Voza",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "Refuge Nant Borrant",
+                "type": "Place",
+                "attributes": {
+                  "accommodation_type": "refuge"
+                }
+              },
+              {
+                "id": "e8",
+                "name": "tartiflette",
+                "type": "Artifact",
+                "attributes": {
+                  "description": "half-board dinner"
+                }
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "part_of",
+                "tail": "e3",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e1",
+                "confidence": 0.6,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "related_to",
+                "tail": "e1",
+                "confidence": 0.5,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "part_of",
+                "tail": "e7",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "Tour du Mont Blanc",
+                "supporting_entity_ids": [
+                  "e1"
+                ],
+                "rationale": "It is a specific hiking route/trail."
+              },
+              {
+                "kind": "entity_type",
+                "name": "tartiflette",
+                "supporting_entity_ids": [
+                  "e8"
+                ],
+                "rationale": "It is a specific food item/dish."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {},
+          {},
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Ruth",
+                "type": "Person",
+                "attributes": {
+                  "role": "therapist"
+                }
+              },
+              {
+                "id": "e2",
+                "name": "speaker",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "side projects",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "the book",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "fear of public commitment",
+                "type": "Idea",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "laziness",
+                "type": "Idea",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "homework",
+                "type": "Concept",
+                "attributes": {
+                  "description": "pick the one project that scares me most, ship the worst possible version of it within two weeks"
+                }
+              },
+              {
+                "id": "e8",
+                "name": "two weeks",
+                "type": "Time",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "caused",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e4",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "depends_on",
+                "tail": "e8",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "the book",
+                "supporting_entity_ids": [
+                  "e4"
+                ],
+                "rationale": "The text refers to a specific creative work being written."
+              },
+              {
+                "kind": "relation",
+                "name": "fear of public commitment",
+                "supporting_entity_ids": [
+                  "e5"
+                ],
+                "rationale": "The fear is identified as the underlying cause for the behavior of starting projects instead of finishing them."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "legal ops team",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Relativity",
+                "type": "Artifact",
+                "attributes": {
+                  "function": "e-discovery"
+                }
+              },
+              {
+                "id": "e3",
+                "name": "Everlaw",
+                "type": "Artifact",
+                "attributes": {
+                  "architecture": "cloud-native"
+                }
+              },
+              {
+                "id": "e4",
+                "name": "e-discovery",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "document review backlog",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "AWS GovCloud",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "FedRAMP compliance",
+                "type": "Fact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "related_to",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "caused",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "depends_on",
+                "tail": "e6",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "The legal ops team no longer uses Relativity for e-discovery."
+            ],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "Everlaw",
+                "supporting_entity_ids": [
+                  "e3"
+                ],
+                "rationale": "Everlaw is a software platform, which fits the Artifact type, but could be more specifically categorized as Software if that type were available."
+              },
+              {
+                "kind": "relation",
+                "name": "Everlaw to e-discovery",
+                "supporting_entity_ids": [
+                  "e3",
+                  "e4"
+                ],
+                "rationale": "The relationship is likely 'used_for' or 'specializes_in' rather than the generic 'related_to'."
+              }
+            ],
+            "confidence": 0.95
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "The cooperative",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "manual irrigation scheduling",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "John Deere Operations Center",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "drought",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "30% crop loss",
+                "type": "Fact",
+                "attributes": {
+                  "percentage": "30%"
+                }
+              },
+              {
+                "id": "e6",
+                "name": "Trimble GPS",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "field mapping",
+                "type": "Concept",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e3",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "caused",
+                "tail": "e5",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "depends_on",
+                "tail": "e6",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "Trimble GPS",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "Trimble GPS is a specific hardware/software tool, making Artifact a strong fit, but could be more specifically categorized as Technology if that type existed."
+              },
+              {
+                "kind": "relation",
+                "name": "e6 to e7",
+                "supporting_entity_ids": [
+                  "e6",
+                  "e7"
+                ],
+                "rationale": "The text implies Trimble GPS is used for field mapping, suggesting a 'used_for' or 'enables' relation."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Marriott",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "homegrown property management system",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Oracle OPERA Cloud",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "8,000 properties",
+                "type": "Concept",
+                "attributes": {
+                  "count": 8000
+                }
+              },
+              {
+                "id": "e5",
+                "name": "overnight reservation sync delays",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "GDPR",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "guest data residency",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "EU regions",
+                "type": "Place",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "owned_by",
+                "tail": "e2",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e3",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "part_of",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "caused",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "caused",
+                "tail": "e7",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "located_at",
+                "tail": "e8",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "e2",
+                "supporting_entity_ids": [
+                  "e2"
+                ],
+                "rationale": "The system is a specific software tool, making 'Artifact' or 'Software' appropriate."
+              },
+              {
+                "kind": "entity_type",
+                "name": "e6",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "GDPR is a legal regulation, which could be typed as 'Concept' or 'Fact' depending on granularity, but 'Concept' is safer."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Genentech",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "AlphaFold 3",
+                "type": "Artifact",
+                "attributes": {
+                  "function": "protein-ligand docking"
+                }
+              },
+              {
+                "id": "e3",
+                "name": "Schr\u00f6dinger",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "FEP+",
+                "type": "Artifact",
+                "attributes": {
+                  "function": "workflow"
+                }
+              },
+              {
+                "id": "e5",
+                "name": "Glide",
+                "type": "Artifact",
+                "attributes": {
+                  "function": "initial pose generation"
+                }
+              },
+              {
+                "id": "e6",
+                "name": "FDA 21 CFR Part 11",
+                "type": "Fact",
+                "attributes": {
+                  "description": "electronic signature workflows constraint"
+                }
+              },
+              {
+                "id": "e7",
+                "name": "design pipeline",
+                "type": "Concept",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "depends_on",
+                "tail": "e5",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "part_of",
+                "tail": "e7",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "AlphaFold 3",
+                "supporting_entity_ids": [
+                  "e2"
+                ],
+                "rationale": "AlphaFold 3 is a specific software/AI model, which fits 'Artifact' well, but could be more specifically 'Software'."
+              },
+              {
+                "kind": "entity_type",
+                "name": "FDA 21 CFR Part 11",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "This is a regulatory standard, which could be typed as 'Concept' or 'Fact', but 'Fact' is used here to represent the regulatory requirement."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Ana",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Mira AI",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "$2M seed",
+                "type": "Fact",
+                "attributes": {
+                  "amount": "2M",
+                  "round": "seed"
+                }
+              },
+              {
+                "id": "e4",
+                "name": "Sequoia",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "voice-first customer support",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "European banks",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "Czech",
+                "type": "Concept",
+                "attributes": {
+                  "category": "language"
+                }
+              },
+              {
+                "id": "e8",
+                "name": "Hungarian",
+                "type": "Concept",
+                "attributes": {
+                  "category": "language"
+                }
+              },
+              {
+                "id": "e9",
+                "name": "Estonian",
+                "type": "Concept",
+                "attributes": {
+                  "category": "language"
+                }
+              },
+              {
+                "id": "e10",
+                "name": "Whisper Turbo",
+                "type": "Artifact",
+                "attributes": {
+                  "function": "ASR"
+                }
+              },
+              {
+                "id": "e11",
+                "name": "Mistral Small 3",
+                "type": "Artifact",
+                "attributes": {
+                  "function": "response generation"
+                }
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "owned_by",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e6",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e8",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e9",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "depends_on",
+                "tail": "e10",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "depends_on",
+                "tail": "e11",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "Place",
+                "name": "Europe",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "European banks implies a geographic focus on Europe."
+              },
+              {
+                "kind": "Concept",
+                "name": "Czech",
+                "supporting_entity_ids": [
+                  "e7"
+                ],
+                "rationale": "Czech is a language, which is a linguistic concept."
+              }
+            ],
+            "confidence": 0.9
+          }
+        ],
+        "per_ep_ent_f1": [
+          0.888888888888889,
+          0.8571428571428571,
+          0.0,
+          0.8571428571428571,
+          0.9333333333333333,
+          0.0,
+          0.9333333333333333,
+          0.7999999999999999,
+          0.8421052631578948,
+          0.625,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          0.9333333333333333,
+          0.0,
+          0.0,
+          0.6153846153846154,
+          0.923076923076923,
+          0.923076923076923,
+          0.8571428571428571,
+          0.923076923076923,
+          0.7777777777777778
+        ],
+        "per_ep_rel_f1": [
+          0.7272727272727273,
+          0.6,
+          0.0,
+          0.4444444444444444,
+          0.4444444444444445,
+          0.0,
+          0.7499999999999999,
+          0.5454545454545454,
+          0.4,
+          0.5,
+          0.6666666666666666,
+          0.36363636363636365,
+          0.6666666666666666,
+          0.0,
+          0.4444444444444445,
+          0.8,
+          0.22222222222222224,
+          0.0,
+          0.0,
+          0.4,
+          0.5,
+          0.5714285714285715,
+          0.2222222222222222,
+          0.5714285714285715,
+          0.4285714285714285
+        ],
+        "suggestions_count": 35,
+        "per_domain": {
+          "journal": {
+            "n": 4,
+            "ent_f1": 0.8594017094017095,
+            "rel_f1": 0.6693181818181818
+          },
+          "recipe": {
+            "n": 2,
+            "ent_f1": 0.849624060150376,
+            "rel_f1": 0.5
+          },
+          "research_notes": {
+            "n": 3,
+            "ent_f1": 0.20833333333333334,
+            "rel_f1": 0.16666666666666666
+          },
+          "finance": {
+            "n": 1,
+            "ent_f1": 0.8571428571428571,
+            "rel_f1": 0.4444444444444444
+          },
+          "healthcare": {
+            "n": 1,
+            "ent_f1": 0.9333333333333333,
+            "rel_f1": 0.4444444444444445
+          },
+          "manufacturing": {
+            "n": 1,
+            "ent_f1": 0.0,
+            "rel_f1": 0.0
+          },
+          "meeting_notes": {
+            "n": 3,
+            "ent_f1": 0.8592592592592592,
+            "rel_f1": 0.4728234728234728
+          },
+          "travel": {
+            "n": 2,
+            "ent_f1": 0.9666666666666667,
+            "rel_f1": 0.4444444444444444
+          },
+          "book_notes": {
+            "n": 2,
+            "ent_f1": 0.5,
+            "rel_f1": 0.18181818181818182
+          },
+          "code_pr": {
+            "n": 2,
+            "ent_f1": 0.5,
+            "rel_f1": 0.3333333333333333
+          },
+          "legal": {
+            "n": 1,
+            "ent_f1": 0.923076923076923,
+            "rel_f1": 0.5
+          },
+          "agriculture": {
+            "n": 1,
+            "ent_f1": 0.923076923076923,
+            "rel_f1": 0.5714285714285715
+          },
+          "hospitality": {
+            "n": 1,
+            "ent_f1": 0.8571428571428571,
+            "rel_f1": 0.2222222222222222
+          },
+          "biotech": {
+            "n": 1,
+            "ent_f1": 0.923076923076923,
+            "rel_f1": 0.5714285714285715
+          }
+        }
+      },
+      "piece_4": {
+        "json_valid": 8,
+        "schema_valid": 8,
+        "op_correct": 8,
+        "rel_correct": 7,
+        "total": 8,
+        "cost_usd": 0.003262193,
+        "rows": [
+          {
+            "query": "what does Vernon CMS depend on?",
+            "op": "traverse",
+            "relation": "depends_on",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "who did I meet at PyCon?",
+            "op": "traverse",
+            "relation": "participated_in",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "what did I learn this week?",
+            "op": "list",
+            "relation": null,
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "what concepts are connected to Letta?",
+            "op": "traverse",
+            "relation": null,
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "who replaced whom?",
+            "op": "filter",
+            "relation": "preceded",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "what caused the outage?",
+            "op": "traverse",
+            "relation": "caused",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "which papers cite MemGPT?",
+            "op": "traverse",
+            "relation": "references",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "who works at Sundae?",
+            "op": "traverse",
+            "relation": "related_to",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": false
+          }
+        ]
+      }
+    },
+    "cerebras": {
+      "piece_2": {
+        "backend": "cerebras",
+        "model": "qwen-3-235b-a22b-instruct-2507",
+        "avg_entity_f1": 0.6128670668856427,
+        "avg_relation_f1": 0.27776046176046176,
+        "combined_f1": 0.44531376432305225,
+        "cost_usd": 0.0,
+        "extractions": [
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Priya",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Verve Coffee",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "San Francisco",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Sundae",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Head of Engineering",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "staff role",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "team",
+                "type": "Concept",
+                "attributes": {
+                  "size": 6
+                }
+              },
+              {
+                "id": "e8",
+                "name": "ex-Stripe",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "Temporal",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e10",
+                "name": "billing pipeline",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e11",
+                "name": "Tuesday",
+                "type": "Time",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e11",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "located_at",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "located_at",
+                "tail": "e3",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "owned_by",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "related_to",
+                "tail": "e6",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "part_of",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "related_to",
+                "tail": "e8",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "depends_on",
+                "tail": "e9",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e10",
+                "relation": "part_of",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e9",
+                "relation": "part_of",
+                "tail": "e10",
+                "confidence": 0.75,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "Head of Engineering",
+                "supporting_entity_ids": [
+                  "e5"
+                ],
+                "rationale": "This is a job title, which could be modeled more specifically as a Role type if supported."
+              },
+              {
+                "kind": "entity_type",
+                "name": "staff role",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "This likely refers to a senior engineering role, possibly a Staff Engineer position, which could be a more specific concept."
+              },
+              {
+                "kind": "relation",
+                "name": "depends_on",
+                "supporting_entity_ids": [
+                  "e4",
+                  "e9"
+                ],
+                "rationale": "The dependence of Sundae on Temporal for a critical function suggests a strong technical dependency, possibly warranting a more specific relation like 'uses_for' or 'relies_on'."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Marco Pierre White",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "mushroom risotto recipe",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "arborio rice",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Whole Foods",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "dried porcini",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "toasting the rice in butter",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "stock",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "truffle oil",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e2",
+                "relation": "owned_by",
+                "tail": "e1",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "owned_by",
+                "tail": "e4",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "related_to",
+                "tail": "e2",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "enhancement",
+                "supporting_entity_ids": [
+                  "e8",
+                  "e2"
+                ],
+                "rationale": "The speaker plans to use truffle oil as a future addition to improve the dish, suggesting it's an enhancement rather than a core ingredient."
+              },
+              {
+                "kind": "entity_type",
+                "name": "Technique",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "Toasting the rice in butter is a cooking method, so 'Technique' would be more specific than 'Concept'."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {},
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "risk management team",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Bloomberg Terminal",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Refinitiv Eikon",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "real-time market data",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Bloomberg API",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "Python-based trading engine",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "$50K annual budget cap",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "SOX compliance requirements",
+                "type": "Concept",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "references",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "references",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "depends_on",
+                "tail": "e6",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e8",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "chose",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e2"
+                ],
+                "rationale": "The text states 'chose Bloomberg Terminal over Refinitiv Eikon', indicating a selection decision; 'mentions' is too weak."
+              },
+              {
+                "kind": "relation",
+                "name": "excluded",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e3"
+                ],
+                "rationale": "The use of 'over' implies Refinitiv Eikon was considered but not selected; current relation does not capture this."
+              },
+              {
+                "kind": "entity_type",
+                "name": "BudgetConstraint",
+                "supporting_entity_ids": [
+                  "e7"
+                ],
+                "rationale": "'$50K annual budget cap' acts as a decision constraint; a more specific type than Concept would clarify its role."
+              },
+              {
+                "kind": "entity_type",
+                "name": "RegulatoryRequirement",
+                "supporting_entity_ids": [
+                  "e8"
+                ],
+                "rationale": "'SOX compliance requirements' is a regulatory constraint; more specific than generic Concept."
+              }
+            ],
+            "confidence": 0.88
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "CTO",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "on-premise Cerner EHR",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "ransomware incident",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "two days of downtime",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Epic on Microsoft Azure",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "99.99% uptime SLA",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "hospital board",
+                "type": "Organization",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "caused",
+                "tail": "e4",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "preceded",
+                "tail": "e2",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "depends_on",
+                "tail": "e6",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "owned_by",
+                "tail": "e7",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "The on-premise Cerner EHR is no longer in active use due to deprecation by the CTO following the ransomware incident."
+            ],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "99.99% uptime SLA",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "This is a formal service-level agreement, so a more specific type such as 'Contract' could be appropriate if supported."
+              },
+              {
+                "kind": "relation",
+                "name": "Epic on Microsoft Azure",
+                "supporting_entity_ids": [
+                  "e5",
+                  "e7"
+                ],
+                "rationale": "The hospital board mandated the SLA, which governs the deployment; thus, 'Epic on Microsoft Azure' may be 'mandated_by' the hospital board, if such a relation type were available."
+              }
+            ],
+            "confidence": 0.88
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "plant manager",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Siemens MindSphere",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "PTC ThingWorx",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "IoT monitoring",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "50 CNC machines",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "100ms latency requirement",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "real-time vibration analysis",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Apache Kafka",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "part_of",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "part_of",
+                "tail": "e5",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "depends_on",
+                "tail": "e7",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "depends_on",
+                "tail": "e8",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "The plant manager considered PTC ThingWorx as a viable option for IoT monitoring, but this decision is superseded by the selection of Siemens MindSphere."
+            ],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "plant manager",
+                "supporting_entity_ids": [
+                  "e1"
+                ],
+                "rationale": "Could potentially be a role within an organization rather than a specific person, but 'Person' is appropriate as it refers to a decision-making individual."
+              },
+              {
+                "kind": "relation",
+                "name": "chose",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e2"
+                ],
+                "rationale": "The relation 'mentions' is used as a proxy; a more specific relation like 'chose' would better capture the decision-making action."
+              },
+              {
+                "kind": "relation",
+                "name": "constrained_by",
+                "supporting_entity_ids": [
+                  "e4",
+                  "e6"
+                ],
+                "rationale": "The IoT monitoring system is constrained by the 100ms latency requirement, suggesting a 'constrained_by' relation which is not in the standard set but semantically fitting."
+              }
+            ],
+            "confidence": 0.88
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Sam",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Baker Beach",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Anthropic",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "equity vest cliff",
+                "type": "Concept",
+                "attributes": {
+                  "date": "2027-03"
+                }
+              },
+              {
+                "id": "e5",
+                "name": "API team",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "Claude Code team",
+                "type": "Organization",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "part_of",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "depends_on",
+                "tail": "e3",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e6",
+                "confidence": 0.6,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "will_absorb",
+                "supporting_entity_ids": [
+                  "e5",
+                  "e6"
+                ],
+                "rationale": "Sam thinks the API team is going to absorb the Claude Code team, suggesting a potential organizational restructuring."
+              },
+              {
+                "kind": "entity_type",
+                "name": "Team",
+                "supporting_entity_ids": [
+                  "e5",
+                  "e6"
+                ],
+                "rationale": "API team and Claude Code team are subunits within Anthropic, so 'Team' may be a more specific type than 'Organization'."
+              }
+            ],
+            "confidence": 0.75
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Q2 product review",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Mariana",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Diego",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Lin",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Workspaces beta",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "postmortem",
+                "type": "Event",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "caused",
+                "tail": "e1",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "will lead",
+                "tail": "e6",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e1",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "will lead",
+                "supporting_entity_ids": [
+                  "e3",
+                  "e6"
+                ],
+                "rationale": "Diego will lead the postmortem, so a specific relation 'will lead' better captures this than 'participated_in' or 'related_to'."
+              },
+              {
+                "kind": "relation",
+                "name": "caused",
+                "tail_entity": "e1",
+                "supporting_entity_ids": [
+                  "e5"
+                ],
+                "rationale": "The low adoption of Workspaces beta prompted the Q2 product review, suggesting a causal relationship."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {},
+          {},
+          {},
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Annie Duke",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Thinking in Bets",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "quality of a decision",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "quality of an outcome",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "resulting",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "Daniel Kahneman",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "System 1/System 2 framework",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Phil Tetlock",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "Superforecasting",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e2",
+                "relation": "mentions",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "mentions",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "mentions",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "references",
+                "tail": "e7",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "owned_by",
+                "tail": "e6",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e9",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e9",
+                "relation": "owned_by",
+                "tail": "e8",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "resulting",
+                "supporting_entity_ids": [
+                  "e5"
+                ],
+                "rationale": "The term 'resulting' is used as a defined cognitive bias in the text, suggesting it could be classified as 'Idea' or 'Concept' with more precision. 'Concept' is already used, but 'Idea' might better reflect its status as a named mental model."
+              },
+              {
+                "kind": "relation",
+                "name": "Thinking in Bets",
+                "supporting_entity_ids": [
+                  "e2",
+                  "e9"
+                ],
+                "rationale": "The phrase 'Felt similar to Phil Tetlock's Superforecasting' suggests a comparative or analogical relationship. 'related_to' is used, but 'analogous_to' or 'similar_to' would be more precise if available."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "PR #482",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "OrderRouter",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Kafka exactly-once semantics",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "homegrown idempotency table",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "duplicate-charge bug",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "incident #1198",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "kafka-clients",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Anjali",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "Tom\u00e1s",
+                "type": "Person",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "references",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "caused",
+                "tail": "e6",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "depends_on",
+                "tail": "e7",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e8",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e9",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "OrderRouter",
+                "supporting_entity_ids": [
+                  "e2"
+                ],
+                "rationale": "OrderRouter is likely a software component or service, so a more specific type like 'Artifact' or 'Service' may be appropriate if available."
+              },
+              {
+                "kind": "entity_type",
+                "name": "kafka-clients",
+                "supporting_entity_ids": [
+                  "e7"
+                ],
+                "rationale": "kafka-clients is a software library, so 'Artifact' is appropriate, but 'Library' would be more specific if available."
+              },
+              {
+                "kind": "relation",
+                "name": "resolves",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e5"
+                ],
+                "rationale": "The text states that PR #482 'resolves' the duplicate-charge bug, so a 'resolves' relation between e1 and e5 would be more precise than 'references'."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {},
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Kojo",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Datadog",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "observability stream",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Eli",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "first quarter",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "metrics stack",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "Prometheus",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "Honeycomb",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "homegrown Lambda",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "owned_by",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": "end_of_first_quarter"
+              },
+              {
+                "head": "e1",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "part_of",
+                "tail": "e3",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e8",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e9",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "observability stream",
+                "supporting_entity_ids": [
+                  "e3"
+                ],
+                "rationale": "The term 'observability stream' likely refers to an organizational team or initiative; could be more specifically typed as 'Organization' if confirmed."
+              },
+              {
+                "kind": "relation",
+                "name": "leads",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e3"
+                ],
+                "rationale": "The phrase 'lead the observability stream' suggests a stronger relation than 'related_to'; 'leads' would be more precise if supported by formal structure."
+              },
+              {
+                "kind": "entity_type",
+                "name": "homegrown Lambda",
+                "supporting_entity_ids": [
+                  "e9"
+                ],
+                "rationale": "This likely refers to a custom AWS Lambda function or service; could be more specifically typed as 'Artifact' with clarification if confirmed."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "William Watts",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Watts Towers",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Los Angeles",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "1959 demolition attempt",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "stress test",
+                "type": "Event",
+                "attributes": {
+                  "force_applied_lbs": 10000
+                }
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "located_at",
+                "tail": "e3",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "owned_by",
+                "tail": "e1",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "preceded",
+                "tail": "e5",
+                "confidence": 0.85,
+                "valid_from": "1959-01-01",
+                "valid_to": "1959-12-31"
+              },
+              {
+                "head": "e5",
+                "relation": "caused",
+                "tail": "e4",
+                "confidence": 0.7,
+                "valid_from": "1959-01-01",
+                "valid_to": "1959-12-31"
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "prevented",
+                "supporting_entity_ids": [
+                  "e5",
+                  "e4"
+                ],
+                "rationale": "The stress test demonstrated structural integrity, which prevented the demolition; 'caused' is inaccurate as it reverses the causal direction."
+              }
+            ],
+            "confidence": 0.82
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Tour du Mont Blanc",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Les Houches",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Les Contamines",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "Saturday",
+                "type": "Time",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "col de Voza",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "Refuge Nant Borrant",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "tartiflette",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "part_of",
+                "tail": "e2",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "part_of",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "located_at",
+                "tail": "e5",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "preceded",
+                "tail": "e4",
+                "confidence": 0.6,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "located_at",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "owned_by",
+                "tail": "e6",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e6",
+                "confidence": 0.6,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "Tour du Mont Blanc",
+                "supporting_entity_ids": [
+                  "e1"
+                ],
+                "rationale": "The Tour du Mont Blanc is a well-known hiking trail, so 'Concept' could be upgraded to a more specific type like 'Trail' if supported by the schema."
+              },
+              {
+                "kind": "entity_type",
+                "name": "tartiflette",
+                "supporting_entity_ids": [
+                  "e7"
+                ],
+                "rationale": "Tartiflette is a food dish, so 'Artifact' could be refined to 'Food' if available."
+              },
+              {
+                "kind": "relation",
+                "name": "rained through",
+                "supporting_entity_ids": [
+                  "e5"
+                ],
+                "rationale": "The phrase 'Rain through the col de Voza' suggests a weather event; 'located_at' may be too generic. A relation like 'affected_by_weather' or 'experienced_precipitation' might be more precise."
+              }
+            ],
+            "confidence": 0.75
+          },
+          {},
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Robert Caro",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "The Power Broker",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Robert Moses",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "modern New York",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "bureaucratic procedure",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "roads, parks, and bridges",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "research method",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "every memo Moses ever signed",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "references",
+                "tail": "e3",
+                "confidence": 1.0,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "part_of",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "owned_by",
+                "tail": "e6",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e7",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "depends_on",
+                "tail": "e8",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "built",
+                "supporting_entity_ids": [
+                  "e3",
+                  "e6"
+                ],
+                "rationale": "The text states that Moses built modern New York's roads, parks, and bridges."
+              },
+              {
+                "kind": "relation",
+                "name": "master_of",
+                "supporting_entity_ids": [
+                  "e3",
+                  "e5"
+                ],
+                "rationale": "The text describes Moses as the master of bureaucratic procedure."
+              },
+              {
+                "kind": "entity_type",
+                "name": "Infrastructure",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "Roads, parks, and bridges are physical infrastructure elements."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Ruth",
+                "type": "Person",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "side projects",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "finishing the book",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "fear of public commitment",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "laziness",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "homework",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "ship the worst possible version of a project",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "two weeks",
+                "type": "Time",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "related_to",
+                "tail": "e2",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e2",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e5",
+                "relation": "related_to",
+                "tail": "e3",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "precedes",
+                "tail": "e5",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "mentions",
+                "tail": "e7",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "depends_on",
+                "tail": "e8",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "The idea that not finishing the book is due to laziness is contradicted by Ruth's framing of it as fear of public commitment."
+            ],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "caused",
+                "supporting_entity_ids": [
+                  "e4",
+                  "e2",
+                  "e3"
+                ],
+                "rationale": "Ruth explicitly frames fear of public commitment as the cause of starting side projects and not finishing the book, rather than laziness."
+              },
+              {
+                "kind": "entity_type",
+                "name": "Event",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "The homework is a specific task assigned during a therapy session, which qualifies it as an event."
+              }
+            ],
+            "confidence": 0.85
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "legal ops team",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Relativity",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Everlaw",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "e-discovery",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "document review backlog",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "AWS GovCloud",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "FedRAMP compliance",
+                "type": "Concept",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "references",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "related_to",
+                "tail": "e5",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "depends_on",
+                "tail": "e6",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e7",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "The legal ops team previously used Relativity for e-discovery, but now uses Everlaw instead."
+            ],
+            "suggestions": [
+              {
+                "kind": "relation",
+                "name": "replaced",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e2",
+                  "e3"
+                ],
+                "rationale": "The text states 'replaced Relativity with Everlaw', which implies a direct replacement relationship not fully captured by 'mentions'."
+              },
+              {
+                "kind": "relation",
+                "name": "resolved",
+                "supporting_entity_ids": [
+                  "e3",
+                  "e5"
+                ],
+                "rationale": "The text says Everlaw 'fixed the document review backlog', indicating a resolution or causation that 'related_to' underspecifies."
+              },
+              {
+                "kind": "relation",
+                "name": "enables",
+                "supporting_entity_ids": [
+                  "e6",
+                  "e7"
+                ],
+                "rationale": "AWS GovCloud supports FedRAMP compliance, so 'enables' or 'provides' would be more precise than 'related_to'."
+              }
+            ],
+            "confidence": 0.88
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "The cooperative",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "manual irrigation scheduling",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "John Deere Operations Center",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "drought",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "30% crop loss",
+                "type": "Event",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "Trimble GPS",
+                "type": "Artifact",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "caused",
+                "tail": "e5",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "depends_on",
+                "tail": "e6",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "participated_in",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "The cooperative previously used manual irrigation scheduling, which is no longer in use after adopting John Deere Operations Center."
+            ],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "Artifact",
+                "supporting_entity_ids": [
+                  "e3"
+                ],
+                "rationale": "John Deere Operations Center is a specific software platform used for farm management, justifying the Artifact type."
+              },
+              {
+                "kind": "entity_type",
+                "name": "Artifact",
+                "supporting_entity_ids": [
+                  "e6"
+                ],
+                "rationale": "Trimble GPS refers to a specific technological system used for field mapping, fitting the Artifact type."
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Marriott",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "Oracle OPERA Cloud",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "homegrown property management system",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "8,000 properties",
+                "type": "Place",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "overnight reservation sync delays",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "GDPR compliance",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "guest data residency",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "EU regions",
+                "type": "Place",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "replaced",
+                "tail": "e3",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "references",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "part_of",
+                "tail": "e4",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e3",
+                "relation": "caused",
+                "tail": "e5",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e5",
+                "confidence": 0.7,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "depends_on",
+                "tail": "e7",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "located_at",
+                "tail": "e8",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e6",
+                "relation": "related_to",
+                "tail": "e1",
+                "confidence": 0.75,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "The prior homegrown property management system caused overnight reservation sync delays, which are now resolved by Oracle OPERA Cloud."
+            ],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "Event",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e2",
+                  "e3"
+                ],
+                "rationale": "The migration of Marriott from a homegrown system to Oracle OPERA Cloud represents a significant operational event."
+              },
+              {
+                "kind": "relation",
+                "name": "implemented",
+                "supporting_entity_ids": [
+                  "e1",
+                  "e2"
+                ],
+                "rationale": "Marriott implemented Oracle OPERA Cloud, which is more specific than 'references'."
+              },
+              {
+                "kind": "relation",
+                "name": "resolved",
+                "supporting_entity_ids": [
+                  "e2",
+                  "e5"
+                ],
+                "rationale": "Oracle OPERA Cloud resolved the overnight reservation sync delays, which is more precise than implying it through replacement."
+              }
+            ],
+            "confidence": 0.82
+          },
+          {
+            "entities": [
+              {
+                "id": "e1",
+                "name": "Genentech",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e2",
+                "name": "AlphaFold 3",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e3",
+                "name": "Schr\u00f6dinger",
+                "type": "Organization",
+                "attributes": {}
+              },
+              {
+                "id": "e4",
+                "name": "FEP+",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e5",
+                "name": "Glide",
+                "type": "Artifact",
+                "attributes": {}
+              },
+              {
+                "id": "e6",
+                "name": "protein-ligand docking",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e7",
+                "name": "FDA 21 CFR Part 11",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e8",
+                "name": "electronic signature workflows",
+                "type": "Concept",
+                "attributes": {}
+              },
+              {
+                "id": "e9",
+                "name": "design pipeline",
+                "type": "Concept",
+                "attributes": {}
+              }
+            ],
+            "relations": [
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e2",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e1",
+                "relation": "mentions",
+                "tail": "e4",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "part_of",
+                "tail": "e3",
+                "confidence": 0.8,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "depends_on",
+                "tail": "e5",
+                "confidence": 0.95,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e4",
+                "relation": "related_to",
+                "tail": "e6",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e2",
+                "relation": "related_to",
+                "tail": "e6",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e7",
+                "relation": "related_to",
+                "tail": "e8",
+                "confidence": 0.9,
+                "valid_from": null,
+                "valid_to": null
+              },
+              {
+                "head": "e8",
+                "relation": "part_of",
+                "tail": "e9",
+                "confidence": 0.85,
+                "valid_from": null,
+                "valid_to": null
+              }
+            ],
+            "invalidates": [
+              "Genentech's discovery team initially considered AlphaFold 3 for protein-ligand docking but rejected it in favor of FEP+, implying AlphaFold 3 was not suitable for this use case in their pipeline."
+            ],
+            "suggestions": [
+              {
+                "kind": "entity_type",
+                "name": "FEP+",
+                "supporting_entity_ids": [
+                  "e4"
+                ],
+                "rationale": "FEP+ is a computational method for free energy perturbation calculations; could be more specifically typed as 'Method' if supported."
+              },
+              {
+                "kind": "entity_type",
+                "name": "Glide",
+                "supporting_entity_ids": [
+                  "e5"
+                ],
+                "rationale": "Glide is a software tool for molecular docking; could be more specifically typed as 'Software' if supported."
+              },
+              {
+                "kind": "relation_type",
+                "name": "related_to",
+                "supporting_entity_ids": [
+                  "e4",
+                  "e6"
+                ],
+                "rationale": "FEP+ is used specifically for protein-ligand docking refinement; 'used_for' would be more precise than 'related_to'."
+              },
+              {
+                "kind": "relation_type",
+                "name": "related_to",
+                "supporting_entity_ids": [
+                  "e2",
+                  "e6"
+                ],
+                "rationale": "AlphaFold 3 was evaluated for protein-ligand docking; 'evaluated_for' would better capture the rejection context."
+              }
+            ],
+            "confidence": 0.88
+          },
+          {}
+        ],
+        "per_ep_ent_f1": [
+          0.8421052631578948,
+          0.8571428571428571,
+          0.0,
+          0.7999999999999999,
+          0.8571428571428571,
+          0.8571428571428571,
+          0.7692307692307692,
+          0.6666666666666667,
+          0.0,
+          0.0,
+          0.0,
+          0.9411764705882353,
+          1.0,
+          0.0,
+          1.0,
+          0.9090909090909091,
+          0.8571428571428571,
+          0.0,
+          0.7692307692307693,
+          0.6153846153846154,
+          0.923076923076923,
+          1.0,
+          0.8571428571428571,
+          0.8,
+          0.0
+        ],
+        "per_ep_rel_f1": [
+          0.5333333333333333,
+          0.6,
+          0.0,
+          0.18181818181818182,
+          0.4,
+          0.4444444444444444,
+          0.28571428571428575,
+          0.6,
+          0.0,
+          0.0,
+          0.0,
+          0.16666666666666666,
+          0.5454545454545454,
+          0.0,
+          0.4,
+          0.5714285714285715,
+          0.4444444444444445,
+          0.0,
+          0.4444444444444445,
+          0.19999999999999998,
+          0.4444444444444444,
+          0.5,
+          0.0,
+          0.18181818181818182,
+          0.0
+        ],
+        "suggestions_count": 47,
+        "per_domain": {
+          "journal": {
+            "n": 4,
+            "ent_f1": 0.7839528892160471,
+            "rel_f1": 0.39761904761904765
+          },
+          "recipe": {
+            "n": 2,
+            "ent_f1": 0.42857142857142855,
+            "rel_f1": 0.3
+          },
+          "research_notes": {
+            "n": 3,
+            "ent_f1": 0.0,
+            "rel_f1": 0.0
+          },
+          "finance": {
+            "n": 1,
+            "ent_f1": 0.7999999999999999,
+            "rel_f1": 0.18181818181818182
+          },
+          "healthcare": {
+            "n": 1,
+            "ent_f1": 0.8571428571428571,
+            "rel_f1": 0.4
+          },
+          "manufacturing": {
+            "n": 1,
+            "ent_f1": 0.8571428571428571,
+            "rel_f1": 0.4444444444444444
+          },
+          "meeting_notes": {
+            "n": 3,
+            "ent_f1": 0.5555555555555556,
+            "rel_f1": 0.3333333333333333
+          },
+          "travel": {
+            "n": 2,
+            "ent_f1": 0.42857142857142855,
+            "rel_f1": 0.22222222222222224
+          },
+          "book_notes": {
+            "n": 2,
+            "ent_f1": 0.8552036199095023,
+            "rel_f1": 0.3055555555555556
+          },
+          "code_pr": {
+            "n": 2,
+            "ent_f1": 0.5,
+            "rel_f1": 0.2727272727272727
+          },
+          "legal": {
+            "n": 1,
+            "ent_f1": 0.923076923076923,
+            "rel_f1": 0.4444444444444444
+          },
+          "agriculture": {
+            "n": 1,
+            "ent_f1": 1.0,
+            "rel_f1": 0.5
+          },
+          "hospitality": {
+            "n": 1,
+            "ent_f1": 0.8571428571428571,
+            "rel_f1": 0.0
+          },
+          "biotech": {
+            "n": 1,
+            "ent_f1": 0.8,
+            "rel_f1": 0.18181818181818182
+          }
+        }
+      },
+      "piece_4": {
+        "json_valid": 8,
+        "schema_valid": 8,
+        "op_correct": 8,
+        "rel_correct": 7,
+        "total": 8,
+        "cost_usd": 0.0,
+        "rows": [
+          {
+            "query": "what does Vernon CMS depend on?",
+            "op": "traverse",
+            "relation": "depends_on",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "who did I meet at PyCon?",
+            "op": "traverse",
+            "relation": "participated_in",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "what did I learn this week?",
+            "op": "list",
+            "relation": null,
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "what concepts are connected to Letta?",
+            "op": "traverse",
+            "relation": null,
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "who replaced whom?",
+            "op": "filter",
+            "relation": "preceded",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "what caused the outage?",
+            "op": "traverse",
+            "relation": "caused",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "which papers cite MemGPT?",
+            "op": "traverse",
+            "relation": "references",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": true
+          },
+          {
+            "query": "who works at Sundae?",
+            "op": "traverse",
+            "relation": "owned_by",
+            "json_valid": true,
+            "schema_valid": true,
+            "op_correct": true,
+            "rel_correct": false
+          }
+        ]
+      }
+    }
+  },
+  "total_cost_usd": 0.012391443000000002,
+  "targets": {
+    "piece_2_combined_f1_min": 0.55,
+    "piece_3_accuracy_min": 0.8,
+    "piece_4_json_valid_rate_min": 0.95,
+    "piece_4_op_accuracy_min": 0.75
+  },
+  "fixture_size": 25
+}

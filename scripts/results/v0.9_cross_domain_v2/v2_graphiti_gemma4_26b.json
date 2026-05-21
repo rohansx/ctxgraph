@@ -1,0 +1,277 @@
+{
+  "system": "graphiti",
+  "model": "google/gemma-4-26b-a4b-it",
+  "fixture": "cross_domain_v2.json",
+  "n_episodes": 29,
+  "n_ok": 29,
+  "n_errors": 0,
+  "ent_f1_pair": 0.8240983154776258,
+  "rel_f1_pair": 0.09635184429327605,
+  "combined_f1_pair": 0.4602250798854509,
+  "avg_time_s": 16.684926698947773,
+  "total_time_s": 483.8628742694855,
+  "llm_calls_per_episode_approx": 6,
+  "per_episode": [
+    {
+      "idx": 0,
+      "domain": "finance",
+      "ent_f1_pair": 0.7272727272727272,
+      "rel_f1_pair": 0.0,
+      "elapsed_s": 18.890708684921265,
+      "pred_ents": 5,
+      "pred_rels": 3
+    },
+    {
+      "idx": 1,
+      "domain": "finance",
+      "ent_f1_pair": 0.9090909090909091,
+      "rel_f1_pair": 0.4,
+      "elapsed_s": 37.27212309837341,
+      "pred_ents": 5,
+      "pred_rels": 7
+    },
+    {
+      "idx": 2,
+      "domain": "finance",
+      "ent_f1_pair": 0.75,
+      "rel_f1_pair": 0.0,
+      "elapsed_s": 32.23832964897156,
+      "pred_ents": 4,
+      "pred_rels": 10
+    },
+    {
+      "idx": 3,
+      "domain": "healthcare",
+      "ent_f1_pair": 0.8333333333333333,
+      "rel_f1_pair": 0.11111111111111112,
+      "elapsed_s": 12.558971643447876,
+      "pred_ents": 7,
+      "pred_rels": 14
+    },
+    {
+      "idx": 4,
+      "domain": "healthcare",
+      "ent_f1_pair": 0.8571428571428571,
+      "rel_f1_pair": 0.21052631578947367,
+      "elapsed_s": 20.412746906280518,
+      "pred_ents": 3,
+      "pred_rels": 16
+    },
+    {
+      "idx": 5,
+      "domain": "healthcare",
+      "ent_f1_pair": 0.6666666666666666,
+      "rel_f1_pair": 0.0909090909090909,
+      "elapsed_s": 30.645914793014526,
+      "pred_ents": 3,
+      "pred_rels": 17
+    },
+    {
+      "idx": 6,
+      "domain": "legal",
+      "ent_f1_pair": 0.888888888888889,
+      "rel_f1_pair": 0.16666666666666669,
+      "elapsed_s": 8.152386665344238,
+      "pred_ents": 4,
+      "pred_rels": 20
+    },
+    {
+      "idx": 7,
+      "domain": "manufacturing",
+      "ent_f1_pair": 0.8,
+      "rel_f1_pair": 0.07407407407407408,
+      "elapsed_s": 12.409786701202393,
+      "pred_ents": 4,
+      "pred_rels": 23
+    },
+    {
+      "idx": 8,
+      "domain": "education",
+      "ent_f1_pair": 1.0,
+      "rel_f1_pair": 0.19999999999999998,
+      "elapsed_s": 15.33715534210205,
+      "pred_ents": 5,
+      "pred_rels": 27
+    },
+    {
+      "idx": 9,
+      "domain": "government",
+      "ent_f1_pair": 0.888888888888889,
+      "rel_f1_pair": 0.058823529411764705,
+      "elapsed_s": 9.135185480117798,
+      "pred_ents": 4,
+      "pred_rels": 30
+    },
+    {
+      "idx": 10,
+      "domain": "agriculture",
+      "ent_f1_pair": 0.6666666666666665,
+      "rel_f1_pair": 0.05555555555555555,
+      "elapsed_s": 4.5599589347839355,
+      "pred_ents": 4,
+      "pred_rels": 32
+    },
+    {
+      "idx": 11,
+      "domain": "hospitality",
+      "ent_f1_pair": 0.6,
+      "rel_f1_pair": 0.0,
+      "elapsed_s": 10.782744884490967,
+      "pred_ents": 4,
+      "pred_rels": 34
+    },
+    {
+      "idx": 12,
+      "domain": "telecom",
+      "ent_f1_pair": 1.0,
+      "rel_f1_pair": 0.1904761904761905,
+      "elapsed_s": 7.746103048324585,
+      "pred_ents": 5,
+      "pred_rels": 38
+    },
+    {
+      "idx": 13,
+      "domain": "energy",
+      "ent_f1_pair": 0.8,
+      "rel_f1_pair": 0.04347826086956522,
+      "elapsed_s": 11.287805080413818,
+      "pred_ents": 4,
+      "pred_rels": 41
+    },
+    {
+      "idx": 14,
+      "domain": "retail",
+      "ent_f1_pair": 1.0,
+      "rel_f1_pair": 0.08333333333333334,
+      "elapsed_s": 13.480294227600098,
+      "pred_ents": 5,
+      "pred_rels": 45
+    },
+    {
+      "idx": 15,
+      "domain": "ngo",
+      "ent_f1_pair": 0.888888888888889,
+      "rel_f1_pair": 0.0392156862745098,
+      "elapsed_s": 7.679154634475708,
+      "pred_ents": 4,
+      "pred_rels": 48
+    },
+    {
+      "idx": 16,
+      "domain": "sports",
+      "ent_f1_pair": 0.9090909090909091,
+      "rel_f1_pair": 0.07407407407407407,
+      "elapsed_s": 14.832459211349487,
+      "pred_ents": 6,
+      "pred_rels": 50
+    },
+    {
+      "idx": 17,
+      "domain": "journalism",
+      "ent_f1_pair": 0.8000000000000002,
+      "rel_f1_pair": 0.037037037037037035,
+      "elapsed_s": 18.14712166786194,
+      "pred_ents": 5,
+      "pred_rels": 50
+    },
+    {
+      "idx": 18,
+      "domain": "transportation",
+      "ent_f1_pair": 0.8333333333333334,
+      "rel_f1_pair": 0.07407407407407407,
+      "elapsed_s": 15.156718015670776,
+      "pred_ents": 6,
+      "pred_rels": 50
+    },
+    {
+      "idx": 19,
+      "domain": "biotech",
+      "ent_f1_pair": 0.7272727272727272,
+      "rel_f1_pair": 0.037037037037037035,
+      "elapsed_s": 25.788006067276,
+      "pred_ents": 6,
+      "pred_rels": 50
+    },
+    {
+      "idx": 20,
+      "domain": "real_estate",
+      "ent_f1_pair": 0.8333333333333334,
+      "rel_f1_pair": 0.07407407407407407,
+      "elapsed_s": 9.502962589263916,
+      "pred_ents": 6,
+      "pred_rels": 50
+    },
+    {
+      "idx": 21,
+      "domain": "entertainment",
+      "ent_f1_pair": 0.8571428571428571,
+      "rel_f1_pair": 0.1111111111111111,
+      "elapsed_s": 20.74927854537964,
+      "pred_ents": 8,
+      "pred_rels": 50
+    },
+    {
+      "idx": 22,
+      "domain": "food_service",
+      "ent_f1_pair": 0.6666666666666666,
+      "rel_f1_pair": 0.1090909090909091,
+      "elapsed_s": 27.125479459762573,
+      "pred_ents": 6,
+      "pred_rels": 50
+    },
+    {
+      "idx": 23,
+      "domain": "gaming",
+      "ent_f1_pair": 0.7692307692307692,
+      "rel_f1_pair": 0.07272727272727272,
+      "elapsed_s": 18.791032075881958,
+      "pred_ents": 6,
+      "pred_rels": 50
+    },
+    {
+      "idx": 24,
+      "domain": "automotive",
+      "ent_f1_pair": 0.8333333333333333,
+      "rel_f1_pair": 0.1111111111111111,
+      "elapsed_s": 17.661794900894165,
+      "pred_ents": 7,
+      "pred_rels": 50
+    },
+    {
+      "idx": 25,
+      "domain": "publishing",
+      "ent_f1_pair": 0.7692307692307693,
+      "rel_f1_pair": 0.1111111111111111,
+      "elapsed_s": 14.614121198654175,
+      "pred_ents": 8,
+      "pred_rels": 50
+    },
+    {
+      "idx": 26,
+      "domain": "museum",
+      "ent_f1_pair": 0.9090909090909091,
+      "rel_f1_pair": 0.1111111111111111,
+      "elapsed_s": 8.456432104110718,
+      "pred_ents": 6,
+      "pred_rels": 50
+    },
+    {
+      "idx": 27,
+      "domain": "construction",
+      "ent_f1_pair": 0.7142857142857143,
+      "rel_f1_pair": 0.03636363636363636,
+      "elapsed_s": 25.931238412857056,
+      "pred_ents": 7,
+      "pred_rels": 50
+    },
+    {
+      "idx": 28,
+      "domain": "insurance",
+      "ent_f1_pair": 1.0,
+      "rel_f1_pair": 0.1111111111111111,
+      "elapsed_s": 14.516860246658325,
+      "pred_ents": 5,
+      "pred_rels": 50
+    }
+  ]
+}

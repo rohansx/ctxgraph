@@ -1,0 +1,1184 @@
+[
+  {
+    "episode_idx": 0,
+    "episode_domain": "journal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "e7",
+      "supporting_entity_ids": [
+        "e7"
+      ],
+      "rationale": "The team is a subset of the organization Sundae."
+    }
+  },
+  {
+    "episode_idx": 0,
+    "episode_domain": "journal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "e9",
+      "supporting_entity_ids": [
+        "e9"
+      ],
+      "rationale": "Temporal is a software tool/platform used for workflows."
+    }
+  },
+  {
+    "episode_idx": 1,
+    "episode_domain": "recipe",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "arborio rice",
+      "supporting_entity_ids": [
+        "e3"
+      ],
+      "rationale": "Arborio rice is a specific food ingredient, which could be categorized as Artifact or a more specific Food type if available."
+    }
+  },
+  {
+    "episode_idx": 1,
+    "episode_domain": "recipe",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "toasting the rice in butter",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "This is a culinary technique, which could be more specifically typed as a Process or Technique."
+    }
+  },
+  {
+    "episode_idx": 3,
+    "episode_domain": "finance",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "SOX compliance requirements",
+      "supporting_entity_ids": [
+        "e7"
+      ],
+      "rationale": "Could be classified as 'Fact' or 'Concept' depending on whether it is viewed as a regulatory rule or an abstract requirement."
+    }
+  },
+  {
+    "episode_idx": 3,
+    "episode_domain": "finance",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "relation",
+      "name": "e2 related to e6",
+      "supporting_entity_ids": [
+        "e2",
+        "e6"
+      ],
+      "rationale": "The relation could be more specifically 'constrained_by' if that type were available."
+    }
+  },
+  {
+    "episode_idx": 4,
+    "episode_domain": "healthcare",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "Organization",
+      "name": "hospital board",
+      "supporting_entity_ids": [
+        "e8"
+      ],
+      "rationale": "The board is a governing body within an organization."
+    }
+  },
+  {
+    "episode_idx": 4,
+    "episode_domain": "healthcare",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "Concept",
+      "name": "99.99% uptime SLA",
+      "supporting_entity_ids": [
+        "e7"
+      ],
+      "rationale": "An SLA is a contractual concept/requirement."
+    }
+  },
+  {
+    "episode_idx": 6,
+    "episode_domain": "journal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "API team",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "The API team is a specific functional unit within the organization."
+    }
+  },
+  {
+    "episode_idx": 6,
+    "episode_domain": "journal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Claude Code",
+      "supporting_entity_ids": [
+        "e8"
+      ],
+      "rationale": "Claude Code is likely a software product or tool."
+    }
+  },
+  {
+    "episode_idx": 7,
+    "episode_domain": "meeting_notes",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "Event",
+      "name": "postmortem",
+      "supporting_entity_ids": [
+        "e8"
+      ],
+      "rationale": "The text describes a specific scheduled event to analyze the failure."
+    }
+  },
+  {
+    "episode_idx": 8,
+    "episode_domain": "recipe",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "chiles ancho",
+      "supporting_entity_ids": [
+        "e5"
+      ],
+      "rationale": "Could be classified as 'Food' if that type were available, but 'Artifact' is the closest provided type for physical ingredients."
+    }
+  },
+  {
+    "episode_idx": 9,
+    "episode_domain": "research_notes",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "GLiNER2",
+      "supporting_entity_ids": [
+        "e1"
+      ],
+      "rationale": "GLiNER2 is a specific machine learning model architecture."
+    }
+  },
+  {
+    "episode_idx": 9,
+    "episode_domain": "research_notes",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "CrossNER",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "CrossNER is a benchmark dataset/evaluation task."
+    }
+  },
+  {
+    "episode_idx": 10,
+    "episode_domain": "travel",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "Place",
+      "name": "Chiado",
+      "supporting_entity_ids": [
+        "e5"
+      ],
+      "rationale": "Chiado is a well-known district in Lisbon."
+    }
+  },
+  {
+    "episode_idx": 10,
+    "episode_domain": "travel",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "Place",
+      "name": "Bel\u00e9m",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "Bel\u00e9m is a district in Lisbon."
+    }
+  },
+  {
+    "episode_idx": 11,
+    "episode_domain": "book_notes",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "Idea",
+      "name": "Superforecasting",
+      "supporting_entity_ids": [
+        "e8"
+      ],
+      "rationale": "Superforecasting is a methodology/concept rather than just a general idea."
+    }
+  },
+  {
+    "episode_idx": 12,
+    "episode_domain": "code_pr",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "OrderRouter",
+      "supporting_entity_ids": [
+        "e2"
+      ],
+      "rationale": "OrderRouter is likely a software component or service."
+    }
+  },
+  {
+    "episode_idx": 14,
+    "episode_domain": "meeting_notes",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "relation",
+      "name": "reports_to",
+      "supporting_entity_ids": [
+        "e1",
+        "e4"
+      ],
+      "rationale": "The text explicitly states Kojo will report to Eli, which is more specific than 'depends_on'."
+    }
+  },
+  {
+    "episode_idx": 14,
+    "episode_domain": "meeting_notes",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Software",
+      "supporting_entity_ids": [
+        "e7",
+        "e8"
+      ],
+      "rationale": "Prometheus and Honeycomb are specific software tools."
+    }
+  },
+  {
+    "episode_idx": 15,
+    "episode_domain": "journal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Watts Towers",
+      "supporting_entity_ids": [
+        "e2"
+      ],
+      "rationale": "Could be classified as a Landmark or Monument, but Artifact is the closest provided type."
+    }
+  },
+  {
+    "episode_idx": 16,
+    "episode_domain": "travel",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Tour du Mont Blanc",
+      "supporting_entity_ids": [
+        "e1"
+      ],
+      "rationale": "It is a specific hiking route/trail."
+    }
+  },
+  {
+    "episode_idx": 16,
+    "episode_domain": "travel",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "tartiflette",
+      "supporting_entity_ids": [
+        "e8"
+      ],
+      "rationale": "It is a specific food item/dish."
+    }
+  },
+  {
+    "episode_idx": 19,
+    "episode_domain": "journal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "the book",
+      "supporting_entity_ids": [
+        "e4"
+      ],
+      "rationale": "The text refers to a specific creative work being written."
+    }
+  },
+  {
+    "episode_idx": 19,
+    "episode_domain": "journal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "relation",
+      "name": "fear of public commitment",
+      "supporting_entity_ids": [
+        "e5"
+      ],
+      "rationale": "The fear is identified as the underlying cause for the behavior of starting projects instead of finishing them."
+    }
+  },
+  {
+    "episode_idx": 20,
+    "episode_domain": "legal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Everlaw",
+      "supporting_entity_ids": [
+        "e3"
+      ],
+      "rationale": "Everlaw is a software platform, which fits the Artifact type, but could be more specifically categorized as Software if that type were available."
+    }
+  },
+  {
+    "episode_idx": 20,
+    "episode_domain": "legal",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "relation",
+      "name": "Everlaw to e-discovery",
+      "supporting_entity_ids": [
+        "e3",
+        "e4"
+      ],
+      "rationale": "The relationship is likely 'used_for' or 'specializes_in' rather than the generic 'related_to'."
+    }
+  },
+  {
+    "episode_idx": 21,
+    "episode_domain": "agriculture",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Trimble GPS",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "Trimble GPS is a specific hardware/software tool, making Artifact a strong fit, but could be more specifically categorized as Technology if that type existed."
+    }
+  },
+  {
+    "episode_idx": 21,
+    "episode_domain": "agriculture",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "relation",
+      "name": "e6 to e7",
+      "supporting_entity_ids": [
+        "e6",
+        "e7"
+      ],
+      "rationale": "The text implies Trimble GPS is used for field mapping, suggesting a 'used_for' or 'enables' relation."
+    }
+  },
+  {
+    "episode_idx": 22,
+    "episode_domain": "hospitality",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "e2",
+      "supporting_entity_ids": [
+        "e2"
+      ],
+      "rationale": "The system is a specific software tool, making 'Artifact' or 'Software' appropriate."
+    }
+  },
+  {
+    "episode_idx": 22,
+    "episode_domain": "hospitality",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "e6",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "GDPR is a legal regulation, which could be typed as 'Concept' or 'Fact' depending on granularity, but 'Concept' is safer."
+    }
+  },
+  {
+    "episode_idx": 23,
+    "episode_domain": "biotech",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "AlphaFold 3",
+      "supporting_entity_ids": [
+        "e2"
+      ],
+      "rationale": "AlphaFold 3 is a specific software/AI model, which fits 'Artifact' well, but could be more specifically 'Software'."
+    }
+  },
+  {
+    "episode_idx": 23,
+    "episode_domain": "biotech",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "FDA 21 CFR Part 11",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "This is a regulatory standard, which could be typed as 'Concept' or 'Fact', but 'Fact' is used here to represent the regulatory requirement."
+    }
+  },
+  {
+    "episode_idx": 24,
+    "episode_domain": "meeting_notes",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "Place",
+      "name": "Europe",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "European banks implies a geographic focus on Europe."
+    }
+  },
+  {
+    "episode_idx": 24,
+    "episode_domain": "meeting_notes",
+    "backend": "openrouter",
+    "model": "google/gemma-4-26b-a4b-it",
+    "suggestion": {
+      "kind": "Concept",
+      "name": "Czech",
+      "supporting_entity_ids": [
+        "e7"
+      ],
+      "rationale": "Czech is a language, which is a linguistic concept."
+    }
+  },
+  {
+    "episode_idx": 0,
+    "episode_domain": "journal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Head of Engineering",
+      "supporting_entity_ids": [
+        "e5"
+      ],
+      "rationale": "This is a job title, which could be modeled more specifically as a Role type if supported."
+    }
+  },
+  {
+    "episode_idx": 0,
+    "episode_domain": "journal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "staff role",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "This likely refers to a senior engineering role, possibly a Staff Engineer position, which could be a more specific concept."
+    }
+  },
+  {
+    "episode_idx": 0,
+    "episode_domain": "journal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "depends_on",
+      "supporting_entity_ids": [
+        "e4",
+        "e9"
+      ],
+      "rationale": "The dependence of Sundae on Temporal for a critical function suggests a strong technical dependency, possibly warranting a more specific relation like 'uses_for' or 'relies_on'."
+    }
+  },
+  {
+    "episode_idx": 1,
+    "episode_domain": "recipe",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "enhancement",
+      "supporting_entity_ids": [
+        "e8",
+        "e2"
+      ],
+      "rationale": "The speaker plans to use truffle oil as a future addition to improve the dish, suggesting it's an enhancement rather than a core ingredient."
+    }
+  },
+  {
+    "episode_idx": 1,
+    "episode_domain": "recipe",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Technique",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "Toasting the rice in butter is a cooking method, so 'Technique' would be more specific than 'Concept'."
+    }
+  },
+  {
+    "episode_idx": 3,
+    "episode_domain": "finance",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "chose",
+      "supporting_entity_ids": [
+        "e1",
+        "e2"
+      ],
+      "rationale": "The text states 'chose Bloomberg Terminal over Refinitiv Eikon', indicating a selection decision; 'mentions' is too weak."
+    }
+  },
+  {
+    "episode_idx": 3,
+    "episode_domain": "finance",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "excluded",
+      "supporting_entity_ids": [
+        "e1",
+        "e3"
+      ],
+      "rationale": "The use of 'over' implies Refinitiv Eikon was considered but not selected; current relation does not capture this."
+    }
+  },
+  {
+    "episode_idx": 3,
+    "episode_domain": "finance",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "BudgetConstraint",
+      "supporting_entity_ids": [
+        "e7"
+      ],
+      "rationale": "'$50K annual budget cap' acts as a decision constraint; a more specific type than Concept would clarify its role."
+    }
+  },
+  {
+    "episode_idx": 3,
+    "episode_domain": "finance",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "RegulatoryRequirement",
+      "supporting_entity_ids": [
+        "e8"
+      ],
+      "rationale": "'SOX compliance requirements' is a regulatory constraint; more specific than generic Concept."
+    }
+  },
+  {
+    "episode_idx": 4,
+    "episode_domain": "healthcare",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "99.99% uptime SLA",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "This is a formal service-level agreement, so a more specific type such as 'Contract' could be appropriate if supported."
+    }
+  },
+  {
+    "episode_idx": 4,
+    "episode_domain": "healthcare",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "Epic on Microsoft Azure",
+      "supporting_entity_ids": [
+        "e5",
+        "e7"
+      ],
+      "rationale": "The hospital board mandated the SLA, which governs the deployment; thus, 'Epic on Microsoft Azure' may be 'mandated_by' the hospital board, if such a relation type were available."
+    }
+  },
+  {
+    "episode_idx": 5,
+    "episode_domain": "manufacturing",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "plant manager",
+      "supporting_entity_ids": [
+        "e1"
+      ],
+      "rationale": "Could potentially be a role within an organization rather than a specific person, but 'Person' is appropriate as it refers to a decision-making individual."
+    }
+  },
+  {
+    "episode_idx": 5,
+    "episode_domain": "manufacturing",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "chose",
+      "supporting_entity_ids": [
+        "e1",
+        "e2"
+      ],
+      "rationale": "The relation 'mentions' is used as a proxy; a more specific relation like 'chose' would better capture the decision-making action."
+    }
+  },
+  {
+    "episode_idx": 5,
+    "episode_domain": "manufacturing",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "constrained_by",
+      "supporting_entity_ids": [
+        "e4",
+        "e6"
+      ],
+      "rationale": "The IoT monitoring system is constrained by the 100ms latency requirement, suggesting a 'constrained_by' relation which is not in the standard set but semantically fitting."
+    }
+  },
+  {
+    "episode_idx": 6,
+    "episode_domain": "journal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "will_absorb",
+      "supporting_entity_ids": [
+        "e5",
+        "e6"
+      ],
+      "rationale": "Sam thinks the API team is going to absorb the Claude Code team, suggesting a potential organizational restructuring."
+    }
+  },
+  {
+    "episode_idx": 6,
+    "episode_domain": "journal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Team",
+      "supporting_entity_ids": [
+        "e5",
+        "e6"
+      ],
+      "rationale": "API team and Claude Code team are subunits within Anthropic, so 'Team' may be a more specific type than 'Organization'."
+    }
+  },
+  {
+    "episode_idx": 7,
+    "episode_domain": "meeting_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "will lead",
+      "supporting_entity_ids": [
+        "e3",
+        "e6"
+      ],
+      "rationale": "Diego will lead the postmortem, so a specific relation 'will lead' better captures this than 'participated_in' or 'related_to'."
+    }
+  },
+  {
+    "episode_idx": 7,
+    "episode_domain": "meeting_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "caused",
+      "tail_entity": "e1",
+      "supporting_entity_ids": [
+        "e5"
+      ],
+      "rationale": "The low adoption of Workspaces beta prompted the Q2 product review, suggesting a causal relationship."
+    }
+  },
+  {
+    "episode_idx": 11,
+    "episode_domain": "book_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "resulting",
+      "supporting_entity_ids": [
+        "e5"
+      ],
+      "rationale": "The term 'resulting' is used as a defined cognitive bias in the text, suggesting it could be classified as 'Idea' or 'Concept' with more precision. 'Concept' is already used, but 'Idea' might better reflect its status as a named mental model."
+    }
+  },
+  {
+    "episode_idx": 11,
+    "episode_domain": "book_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "Thinking in Bets",
+      "supporting_entity_ids": [
+        "e2",
+        "e9"
+      ],
+      "rationale": "The phrase 'Felt similar to Phil Tetlock's Superforecasting' suggests a comparative or analogical relationship. 'related_to' is used, but 'analogous_to' or 'similar_to' would be more precise if available."
+    }
+  },
+  {
+    "episode_idx": 12,
+    "episode_domain": "code_pr",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "OrderRouter",
+      "supporting_entity_ids": [
+        "e2"
+      ],
+      "rationale": "OrderRouter is likely a software component or service, so a more specific type like 'Artifact' or 'Service' may be appropriate if available."
+    }
+  },
+  {
+    "episode_idx": 12,
+    "episode_domain": "code_pr",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "kafka-clients",
+      "supporting_entity_ids": [
+        "e7"
+      ],
+      "rationale": "kafka-clients is a software library, so 'Artifact' is appropriate, but 'Library' would be more specific if available."
+    }
+  },
+  {
+    "episode_idx": 12,
+    "episode_domain": "code_pr",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "resolves",
+      "supporting_entity_ids": [
+        "e1",
+        "e5"
+      ],
+      "rationale": "The text states that PR #482 'resolves' the duplicate-charge bug, so a 'resolves' relation between e1 and e5 would be more precise than 'references'."
+    }
+  },
+  {
+    "episode_idx": 14,
+    "episode_domain": "meeting_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "observability stream",
+      "supporting_entity_ids": [
+        "e3"
+      ],
+      "rationale": "The term 'observability stream' likely refers to an organizational team or initiative; could be more specifically typed as 'Organization' if confirmed."
+    }
+  },
+  {
+    "episode_idx": 14,
+    "episode_domain": "meeting_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "leads",
+      "supporting_entity_ids": [
+        "e1",
+        "e3"
+      ],
+      "rationale": "The phrase 'lead the observability stream' suggests a stronger relation than 'related_to'; 'leads' would be more precise if supported by formal structure."
+    }
+  },
+  {
+    "episode_idx": 14,
+    "episode_domain": "meeting_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "homegrown Lambda",
+      "supporting_entity_ids": [
+        "e9"
+      ],
+      "rationale": "This likely refers to a custom AWS Lambda function or service; could be more specifically typed as 'Artifact' with clarification if confirmed."
+    }
+  },
+  {
+    "episode_idx": 15,
+    "episode_domain": "journal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "prevented",
+      "supporting_entity_ids": [
+        "e5",
+        "e4"
+      ],
+      "rationale": "The stress test demonstrated structural integrity, which prevented the demolition; 'caused' is inaccurate as it reverses the causal direction."
+    }
+  },
+  {
+    "episode_idx": 16,
+    "episode_domain": "travel",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Tour du Mont Blanc",
+      "supporting_entity_ids": [
+        "e1"
+      ],
+      "rationale": "The Tour du Mont Blanc is a well-known hiking trail, so 'Concept' could be upgraded to a more specific type like 'Trail' if supported by the schema."
+    }
+  },
+  {
+    "episode_idx": 16,
+    "episode_domain": "travel",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "tartiflette",
+      "supporting_entity_ids": [
+        "e7"
+      ],
+      "rationale": "Tartiflette is a food dish, so 'Artifact' could be refined to 'Food' if available."
+    }
+  },
+  {
+    "episode_idx": 16,
+    "episode_domain": "travel",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "rained through",
+      "supporting_entity_ids": [
+        "e5"
+      ],
+      "rationale": "The phrase 'Rain through the col de Voza' suggests a weather event; 'located_at' may be too generic. A relation like 'affected_by_weather' or 'experienced_precipitation' might be more precise."
+    }
+  },
+  {
+    "episode_idx": 18,
+    "episode_domain": "book_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "built",
+      "supporting_entity_ids": [
+        "e3",
+        "e6"
+      ],
+      "rationale": "The text states that Moses built modern New York's roads, parks, and bridges."
+    }
+  },
+  {
+    "episode_idx": 18,
+    "episode_domain": "book_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "master_of",
+      "supporting_entity_ids": [
+        "e3",
+        "e5"
+      ],
+      "rationale": "The text describes Moses as the master of bureaucratic procedure."
+    }
+  },
+  {
+    "episode_idx": 18,
+    "episode_domain": "book_notes",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Infrastructure",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "Roads, parks, and bridges are physical infrastructure elements."
+    }
+  },
+  {
+    "episode_idx": 19,
+    "episode_domain": "journal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "caused",
+      "supporting_entity_ids": [
+        "e4",
+        "e2",
+        "e3"
+      ],
+      "rationale": "Ruth explicitly frames fear of public commitment as the cause of starting side projects and not finishing the book, rather than laziness."
+    }
+  },
+  {
+    "episode_idx": 19,
+    "episode_domain": "journal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Event",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "The homework is a specific task assigned during a therapy session, which qualifies it as an event."
+    }
+  },
+  {
+    "episode_idx": 20,
+    "episode_domain": "legal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "replaced",
+      "supporting_entity_ids": [
+        "e1",
+        "e2",
+        "e3"
+      ],
+      "rationale": "The text states 'replaced Relativity with Everlaw', which implies a direct replacement relationship not fully captured by 'mentions'."
+    }
+  },
+  {
+    "episode_idx": 20,
+    "episode_domain": "legal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "resolved",
+      "supporting_entity_ids": [
+        "e3",
+        "e5"
+      ],
+      "rationale": "The text says Everlaw 'fixed the document review backlog', indicating a resolution or causation that 'related_to' underspecifies."
+    }
+  },
+  {
+    "episode_idx": 20,
+    "episode_domain": "legal",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "enables",
+      "supporting_entity_ids": [
+        "e6",
+        "e7"
+      ],
+      "rationale": "AWS GovCloud supports FedRAMP compliance, so 'enables' or 'provides' would be more precise than 'related_to'."
+    }
+  },
+  {
+    "episode_idx": 21,
+    "episode_domain": "agriculture",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Artifact",
+      "supporting_entity_ids": [
+        "e3"
+      ],
+      "rationale": "John Deere Operations Center is a specific software platform used for farm management, justifying the Artifact type."
+    }
+  },
+  {
+    "episode_idx": 21,
+    "episode_domain": "agriculture",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Artifact",
+      "supporting_entity_ids": [
+        "e6"
+      ],
+      "rationale": "Trimble GPS refers to a specific technological system used for field mapping, fitting the Artifact type."
+    }
+  },
+  {
+    "episode_idx": 22,
+    "episode_domain": "hospitality",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Event",
+      "supporting_entity_ids": [
+        "e1",
+        "e2",
+        "e3"
+      ],
+      "rationale": "The migration of Marriott from a homegrown system to Oracle OPERA Cloud represents a significant operational event."
+    }
+  },
+  {
+    "episode_idx": 22,
+    "episode_domain": "hospitality",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "implemented",
+      "supporting_entity_ids": [
+        "e1",
+        "e2"
+      ],
+      "rationale": "Marriott implemented Oracle OPERA Cloud, which is more specific than 'references'."
+    }
+  },
+  {
+    "episode_idx": 22,
+    "episode_domain": "hospitality",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation",
+      "name": "resolved",
+      "supporting_entity_ids": [
+        "e2",
+        "e5"
+      ],
+      "rationale": "Oracle OPERA Cloud resolved the overnight reservation sync delays, which is more precise than implying it through replacement."
+    }
+  },
+  {
+    "episode_idx": 23,
+    "episode_domain": "biotech",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "FEP+",
+      "supporting_entity_ids": [
+        "e4"
+      ],
+      "rationale": "FEP+ is a computational method for free energy perturbation calculations; could be more specifically typed as 'Method' if supported."
+    }
+  },
+  {
+    "episode_idx": 23,
+    "episode_domain": "biotech",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Glide",
+      "supporting_entity_ids": [
+        "e5"
+      ],
+      "rationale": "Glide is a software tool for molecular docking; could be more specifically typed as 'Software' if supported."
+    }
+  },
+  {
+    "episode_idx": 23,
+    "episode_domain": "biotech",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation_type",
+      "name": "related_to",
+      "supporting_entity_ids": [
+        "e4",
+        "e6"
+      ],
+      "rationale": "FEP+ is used specifically for protein-ligand docking refinement; 'used_for' would be more precise than 'related_to'."
+    }
+  },
+  {
+    "episode_idx": 23,
+    "episode_domain": "biotech",
+    "backend": "cerebras",
+    "model": "qwen-3-235b-a22b-instruct-2507",
+    "suggestion": {
+      "kind": "relation_type",
+      "name": "related_to",
+      "supporting_entity_ids": [
+        "e2",
+        "e6"
+      ],
+      "rationale": "AlphaFold 3 was evaluated for protein-ligand docking; 'evaluated_for' would better capture the rejection context."
+    }
+  }
+]

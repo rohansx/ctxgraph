@@ -1,0 +1,338 @@
+[
+  {
+    "extraction_confidence": 0.8500000238418579,
+    "logged_at": "2026-05-14T12:31:31.105098175+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "TypeScript",
+      "rationale": "TypeScript is a programming language, so a more specific type could be 'Technology' or 'ProgrammingLanguage', but 'Concept' is used as it's not in the allowed entity types.",
+      "supporting_entity_ids": [
+        "e6"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8500000238418579,
+    "logged_at": "2026-05-14T12:31:31.105098175+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "related_to",
+      "rationale": "The relation between leadecho and TypeScript could be more specifically 'implemented_in' if that relation type were allowed.",
+      "supporting_entity_ids": [
+        "e1",
+        "e6"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8500000238418579,
+    "logged_at": "2026-05-14T12:31:31.105098175+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "related_to",
+      "rationale": "The relation between leadecho and sales/marketing domain could be more specifically 'applies_to_domain' or 'used_in' if such relation types were allowed.",
+      "supporting_entity_ids": [
+        "e1",
+        "e7"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:31:34.784427676+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "agent brain",
+      "rationale": "The agent brain is described as a structured, persistent knowledge base with defined properties and interactions, suggesting it could be modeled more specifically as a 'KnowledgeBase' artifact if such a type were available.",
+      "supporting_entity_ids": [
+        "e1"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:31:34.784427676+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "read-write loop",
+      "rationale": "The read-write loop is a process with defined steps; it could be classified as a 'Process' or 'Workflow' if such types were available.",
+      "supporting_entity_ids": [
+        "e4"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:31:34.784427676+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "depends_on",
+      "rationale": "Instead of 'uses', the relation between AI agent and agent brain might better be 'depends_on' or 'maintains' to reflect bidirectional interaction.",
+      "supporting_entity_ids": [
+        "e5",
+        "e1"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8999999761581421,
+    "logged_at": "2026-05-14T12:31:48.459371592+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Artifact",
+      "rationale": "ai-dynamo/dynamo is a specific integration library, not a general concept",
+      "supporting_entity_ids": [
+        "e10"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8999999761581421,
+    "logged_at": "2026-05-14T12:31:48.459371592+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "depends_on",
+      "rationale": "Candle uses ai-dynamo/dynamo for HuggingFace model hub integration, indicating a dependency",
+      "supporting_entity_ids": [
+        "e1",
+        "e10"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8999999761581421,
+    "logged_at": "2026-05-14T12:31:48.459371592+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "related_to",
+      "rationale": "Candle provides a PyTorch-like API, suggesting API similarity rather than direct dependence",
+      "supporting_entity_ids": [
+        "e1",
+        "e5"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8999999761581421,
+    "logged_at": "2026-05-14T12:33:39.182594531+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Rust",
+      "rationale": "Rust is a programming language, so a more specific type could be 'ProgrammingLanguage' if supported.",
+      "supporting_entity_ids": [
+        "e2"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8999999761581421,
+    "logged_at": "2026-05-14T12:33:39.182594531+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "mcp-servers",
+      "rationale": "mcp-servers refers to a protocol; a more specific type could be 'Protocol' if supported.",
+      "supporting_entity_ids": [
+        "e7"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8999999761581421,
+    "logged_at": "2026-05-14T12:33:39.182594531+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "agent-brain",
+      "rationale": "agent-brain is a software architecture concept; could be specialized to 'ArchitecturePattern' if supported.",
+      "supporting_entity_ids": [
+        "e9"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8500000238418579,
+    "logged_at": "2026-05-14T12:33:59.078497251+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "pseudonymization",
+      "rationale": "Pseudonymization is a specific data protection technique; could be elevated to 'Process' if such a type existed.",
+      "supporting_entity_ids": [
+        "e5"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8500000238418579,
+    "logged_at": "2026-05-14T12:33:59.078497251+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "encrypted vaults",
+      "rationale": "Refers to a secure storage mechanism; could be 'System' or 'Component' if more specific types were available.",
+      "supporting_entity_ids": [
+        "e6"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8500000238418579,
+    "logged_at": "2026-05-14T12:33:59.078497251+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "depends_on",
+      "rationale": "cloakpipe is described as complementary or adjacent to wardn, ctxgraph, and credential-isolation, suggesting a dependency or interoperability rather than just a general relation.",
+      "supporting_entity_ids": [
+        "e8",
+        "e9",
+        "e10"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:34:13.647396336+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "Shinn et al.",
+      "rationale": "Likely refers to a research group or academic authors; 'Organization' may be acceptable but 'Person' or 'ResearchTeam' could be more precise if supported.",
+      "supporting_entity_ids": [
+        "e3"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:34:13.647396336+00:00",
+    "suggestion": {
+      "kind": "relation_type",
+      "name": "reflect",
+      "rationale": "The relation between 'reflect' and 'Reflexion framework' could be more specifically 'implements' instead of 'related_to'.",
+      "supporting_entity_ids": [
+        "e1",
+        "e2"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:34:13.647396336+00:00",
+    "suggestion": {
+      "kind": "relation_type",
+      "name": "ctxgraph",
+      "rationale": "The relation 'mentions' could be upgraded to 'related_to' or 'compares_with' if context confirms comparative analysis, especially given the link to gbrain-vs-ctxgraph-reflect.",
+      "supporting_entity_ids": [
+        "e1",
+        "e6"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:34:45.388768065+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "agent brain",
+      "rationale": "The agent brain is described as a structured, persistent knowledge base with defined properties and interactions, suggesting it could be modeled more specifically as a 'KnowledgeBase' artifact if such a type were available.",
+      "supporting_entity_ids": [
+        "e1"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:34:45.388768065+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "read-write loop",
+      "rationale": "The read-write loop is a process with defined steps; it could be classified as a 'Process' or 'Workflow' if such types were available.",
+      "supporting_entity_ids": [
+        "e4"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:34:45.388768065+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "depends_on",
+      "rationale": "Instead of 'uses', the relation between AI agent and agent brain might better be 'depends_on' or 'maintains' to reflect bidirectional interaction.",
+      "supporting_entity_ids": [
+        "e5",
+        "e1"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:35:00.239878434+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "A4B MoE architecture",
+      "rationale": "The text explicitly describes 'A4B MoE' as a Mixture-of-Experts architecture with 26B total and ~4B active parameters, suggesting it could be more specifically typed as 'Architecture' if such a type were available.",
+      "supporting_entity_ids": [
+        "e7"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:35:00.239878434+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "oscillator physics pipeline",
+      "rationale": "Described as a method for compressing the model, this may qualify as a 'Technique' or 'Process', but 'Concept' is used as fallback.",
+      "supporting_entity_ids": [
+        "e8"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:35:00.239878434+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "depends_on",
+      "rationale": "Gemma 4 running on MacBook M1 suggests a dependency on hardware capability; 'participated_in' is used but 'depends_on' may be more accurate.",
+      "supporting_entity_ids": [
+        "e10",
+        "e1"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:35:14.849127304+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "agent-brain",
+      "rationale": "The term 'agent-brain' appears to refer to a software architecture pattern, so a more specific type like 'Idea' or 'Concept' could be justified. 'Concept' is already used, which is appropriate.",
+      "supporting_entity_ids": [
+        "e3"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:35:14.849127304+00:00",
+    "suggestion": {
+      "kind": "entity_type",
+      "name": "MCP servers",
+      "rationale": "'MCP servers' likely refers to a set of microservices or tools for agent interaction; could be more specifically typed as 'Organization' or 'Service' if clarified, but 'Concept' is safe for now.",
+      "supporting_entity_ids": [
+        "e5"
+      ]
+    }
+  },
+  {
+    "extraction_confidence": 0.8799999952316284,
+    "logged_at": "2026-05-14T12:35:14.849127304+00:00",
+    "suggestion": {
+      "kind": "relation",
+      "name": "implements",
+      "rationale": "The text says GBrain 'implements the agent-brain pattern', so 'implements' would be a more precise relation than 'related_to'.",
+      "supporting_entity_ids": [
+        "e1",
+        "e3"
+      ]
+    }
+  }
+]
