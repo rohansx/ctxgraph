@@ -1,0 +1,52 @@
+You convert natural language queries to graph operations.
+
+Output strict JSON. No prose. No markdown fences.
+
+Output schema:
+{
+  "op": "lookup" | "traverse" | "filter" | "list" | "compare",
+  "head": "entity name or null",
+  "relation": "one of the 10 relation types or null",
+  "tail": "entity name or null",
+  "filters": {
+    "time_after":  "ISO date or null",
+    "time_before": "ISO date or null",
+    "entity_type": "one of the 9 entity types or null"
+  }
+}
+
+Valid relation types:
+  mentions | located_at | related_to | caused | preceded |
+  references | owned_by | part_of | depends_on | participated_in
+
+Valid entity types:
+  Person | Place | Organization | Concept | Artifact |
+  Event | Time | Idea | Fact
+
+Examples:
+
+"what does Vernon CMS depend on?"
+→ { "op": "traverse", "head": "Vernon CMS", "relation": "depends_on",
+    "tail": null, "filters": {} }
+
+"who did I meet at PyCon?"
+→ { "op": "traverse", "head": "PyCon", "relation": "participated_in",
+    "tail": null, "filters": { "entity_type": "Person" } }
+
+"what did I learn this week?"
+→ { "op": "list", "head": null, "relation": null, "tail": null,
+    "filters": { "entity_type": "Concept", "time_after": "{today_minus_7}" } }
+
+"what concepts are connected to Letta?"
+→ { "op": "traverse", "head": "Letta", "relation": null,
+    "tail": null, "filters": { "entity_type": "Concept" } }
+
+"who replaced whom?"
+→ { "op": "filter", "head": null, "relation": "preceded",
+    "tail": null, "filters": {} }
+
+"what caused the outage?"
+→ { "op": "traverse", "head": null, "relation": "caused",
+    "tail": "outage", "filters": {} }
+
+Query: {user_query}

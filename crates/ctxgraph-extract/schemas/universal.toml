@@ -1,0 +1,30 @@
+# ctxgraph v0.3 — Universal schema (Piece 1)
+#
+# 9 entity types + 10 relation types. Hardcoded. Users never write a schema.
+# Source of truth: docs/CLARITY.md § 3 / Piece 1.
+#
+# This file is loaded at ctxgraph startup and embedded into the extraction
+# prompt and the relation-vocabulary embedding cache (Piece 3).
+
+[entities]
+Person       = "humans, named individuals"
+Place        = "locations, regions, venues, addresses"
+Organization = "companies, teams, institutions, groups"
+Concept      = "ideas, theories, methodologies, technologies, terms"
+Artifact     = "concrete made objects: tools, systems, documents, code, products"
+Event        = "occurrences with a time: meetings, deploys, conferences, decisions"
+Time         = "explicit temporal anchors: dates, periods, durations"
+Idea         = "personal thoughts, hypotheses, plans, intentions"
+Fact         = "verified statements, measurements, observations"
+
+[relations]
+mentions        = "entity X is named or referred to alongside Y"
+located_at      = "entity X is physically situated at place Y; works at, based in, happens in, located in"
+related_to      = "X is associated with Y; fallback when no other relation fits"
+caused          = "action or event X produced, led to, or resulted in Y"
+preceded        = "X happened in time before Y; X is the predecessor or earlier version of Y"
+references     = "X cites, links to, builds on, or quotes Y"
+owned_by        = "Y is the owner or controller of X; X belongs to Y as property"
+part_of         = "X is a structural component or member of organization or system Y; works at, member of, belongs to a group"
+depends_on      = "X requires or relies on Y in order to function; needs, requires, built on top of"
+participated_in = "person X attended, joined, or was active in event Y; took part in"

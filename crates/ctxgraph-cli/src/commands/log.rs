@@ -30,11 +30,10 @@ pub fn run(text: String, source: Option<String>, tags: Option<String>) -> ctxgra
     }
 
     // Auto-infer schema after enough episodes (if no schema.toml exists yet)
-    if let Some(models_dir) = super::find_models_dir(graph.db_path()) {
-        if let Ok(true) = graph.maybe_infer_schema(&models_dir) {
+    if let Some(models_dir) = super::find_models_dir(graph.db_path())
+        && let Ok(true) = graph.maybe_infer_schema(&models_dir) {
             println!("  Schema auto-inferred from logged episodes!");
         }
-    }
 
     Ok(())
 }

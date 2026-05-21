@@ -18,11 +18,11 @@ const DEFAULT_URL: &str = "https://api.openai.com/v1/chat/completions";
 /// Preferred local models for Ollama auto-detection (tried in order).
 /// These are small models that run on 6-8GB VRAM GPUs.
 const OLLAMA_PREFERRED_MODELS: &[&str] = &[
-    "gemma3n:e4b",  // Gemma 3n E4B — best extraction quality at 6GB, native tool calling
-    "gemma4:e4b",   // Gemma 4 E4B — newer but may need more VRAM
-    "gemma3n:e2b",  // Gemma 3n E2B — lighter fallback, ~3GB
-    "gemma4:e2b",   // Gemma 4 E2B — lighter fallback, ~5GB
-    "llama3.2:3b",  // Llama 3.2 3B — widely available
+    "gemma3n:e4b", // Gemma 3n E4B — best extraction quality at 6GB, native tool calling
+    "gemma4:e4b",  // Gemma 4 E4B — newer but may need more VRAM
+    "gemma3n:e2b", // Gemma 3n E2B — lighter fallback, ~3GB
+    "gemma4:e2b",  // Gemma 4 E2B — lighter fallback, ~5GB
+    "llama3.2:3b", // Llama 3.2 3B — widely available
 ];
 
 /// LLM extraction engine — works with any OpenAI-compatible endpoint.
@@ -236,15 +236,15 @@ impl LlmExtractor {
     /// Returns `None` if no LLM backend is available.
     pub fn from_env() -> Option<Self> {
         // Respect explicit disable
-        if std::env::var("CTXGRAPH_NO_LLM").map_or(false, |v| v == "1" || v == "true") {
+        if std::env::var("CTXGRAPH_NO_LLM").is_ok_and(|v| v == "1" || v == "true") {
             return None;
         }
 
         // Tier 0: Explicit config (overrides everything)
-        if let Ok(key) = std::env::var("CTXGRAPH_LLM_KEY") {
-            if !key.is_empty() {
-                let url = std::env::var("CTXGRAPH_LLM_URL")
-                    .unwrap_or_else(|_| DEFAULT_URL.to_string());
+        if let Ok(key) = std::env::var("CTXGRAPH_LLM_KEY")
+            && !key.is_empty() {
+                let url =
+                    std::env::var("CTXGRAPH_LLM_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());
                 let model = std::env::var("CTXGRAPH_LLM_MODEL")
                     .unwrap_or_else(|_| DEFAULT_MODEL.to_string());
                 let client = reqwest::blocking::Client::builder()
@@ -258,14 +258,12 @@ impl LlmExtractor {
                     url,
                 });
             }
-        }
 
         // Tier 1: Ollama local (auto-detect — free, private, no API key needed)
-        if !std::env::var("CTXGRAPH_NO_OLLAMA").map_or(false, |v| v == "1" || v == "true") {
-            if let Some(extractor) = Self::detect_ollama() {
+        if !std::env::var("CTXGRAPH_NO_OLLAMA").is_ok_and(|v| v == "1" || v == "true")
+            && let Some(extractor) = Self::detect_ollama() {
                 return Some(extractor);
             }
-        }
 
         // Tier 2: Cloud providers (need API keys)
         let (api_key, default_url) = if let Ok(key) = std::env::var("OPENAI_API_KEY") {
@@ -327,10 +325,7 @@ impl LlmExtractor {
             .ok()?;
 
         // Probe Ollama API
-        let resp = client
-            .get("http://localhost:11434/api/tags")
-            .send()
-            .ok()?;
+        let resp = client.get("http://localhost:11434/api/tags").send().ok()?;
 
         if !resp.status().is_success() {
             return None;
@@ -353,12 +348,14 @@ impl LlmExtractor {
             .iter()
             .find(|&&pref| {
                 available.iter().any(|a| {
-                    a == pref || a == &format!("{pref}:latest") || a.starts_with(&format!("{pref}:"))
+                    a == pref
+                        || a == &format!("{pref}:latest")
+                        || a.starts_with(&format!("{pref}:"))
                 })
             })
             .copied()
             // Fall back to any available model
-            .unwrap_or_else(|| {
+            .unwrap_or({
                 // Use the first available model (as &str via leak — acceptable for a one-time init)
                 // We can't return a reference to `available` so use a known fallback
                 "qwen2.5:3b"
@@ -366,9 +363,7 @@ impl LlmExtractor {
 
         // Check that chosen model is actually available
         let model_available = available.iter().any(|a| {
-            a == chosen
-                || a == &format!("{chosen}:latest")
-                || a.starts_with(&format!("{chosen}:"))
+            a == chosen || a == &format!("{chosen}:latest") || a.starts_with(&format!("{chosen}:"))
         });
 
         if !model_available {
@@ -765,6 +760,55 @@ Text: "{text}"
             entities,
             relations,
         })
+    }
+
+    /// Send a system+user prompt to the LLM and return the raw response content.
+    ///
+    /// This is the low-level escape hatch used by the universal v0.3 pipeline,
+    /// which supplies its own prompt template (`prompts/extract.txt`) instead of
+    /// going through `extract_strict` / `extract_prompt_json`.
+    pub fn chat_completion(
+        &self,
+        system_prompt: &str,
+        user_prompt: &str,
+    ) -> Result<String, LlmError> {
+        let request = ChatRequest {
+            model: self.model.clone(),
+            messages: vec![
+                ChatMessage {
+                    role: "system".into(),
+                    content: system_prompt.to_string(),
+                },
+                ChatMessage {
+                    role: "user".into(),
+                    content: user_prompt.to_string(),
+                },
+            ],
+            response_format: None,
+            temperature: 0.0,
+            max_tokens: 2048,
+        };
+
+        let response = self
+            .client
+            .post(&self.url)
+            .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Content-Type", "application/json")
+            .json(&request)
+            .send()?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            return Err(LlmError::Api(format!("{status}: {body}")));
+        }
+
+        let chat_resp: ChatResponse = response.json()?;
+        chat_resp
+            .choices
+            .first()
+            .and_then(|c| c.message.content.clone())
+            .ok_or_else(|| LlmError::Parse("empty response".into()))
     }
 }
 

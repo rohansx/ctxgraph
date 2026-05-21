@@ -32,6 +32,14 @@ enum Commands {
         /// Comma-separated tags
         #[arg(short, long)]
         tags: Option<String>,
+
+        /// Use the v0.3 universal schema + LLM-first pipeline
+        /// (loads schemas/universal.toml + prompts/extract.txt instead of
+        /// the legacy GLiNER + tech-schema path). Requires an LLM env var:
+        /// OPENROUTER_API_KEY / CEREBRAS_API_KEY / OPENAI_API_KEY /
+        /// ANTHROPIC_API_KEY, or a running Ollama instance.
+        #[arg(long)]
+        universal: bool,
     },
 
     /// Search the context graph
@@ -50,6 +58,12 @@ enum Commands {
         /// Filter by source
         #[arg(long)]
         source: Option<String>,
+
+        /// Use the v0.3 universal read path (verb → typed relation via
+        /// embedding match, then deterministic SQL traversal). Falls back to
+        /// fused search if the verb/entity can't be resolved.
+        #[arg(long)]
+        universal: bool,
     },
 
     /// List and show entities
@@ -146,13 +160,31 @@ fn main() {
 
     let result = match cli.command {
         Commands::Init { name } => commands::init::run(name),
-        Commands::Log { text, source, tags } => commands::log::run(text, source, tags),
+        Commands::Log {
+            text,
+            source,
+            tags,
+            universal,
+        } => {
+            if universal {
+                commands::log_universal::run(text, source, tags)
+            } else {
+                commands::log::run(text, source, tags)
+            }
+        }
         Commands::Query {
             text,
             limit,
             after,
             source,
-        } => commands::query::run(text, limit, after, source),
+            universal,
+        } => {
+            if universal {
+                commands::query_universal::run(text, limit)
+            } else {
+                commands::query::run(text, limit, after, source)
+            }
+        }
         Commands::Entities { action } => match action {
             EntitiesAction::List { entity_type, limit } => {
                 commands::entities::list(entity_type, limit)

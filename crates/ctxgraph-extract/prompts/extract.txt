@@ -1,0 +1,42 @@
+You extract structured knowledge from text into a typed graph.
+
+Entity types (use exactly one per entity):
+  Person | Place | Organization | Concept | Artifact |
+  Event | Time | Idea | Fact
+
+Relation types (use exactly one per relation):
+  mentions | located_at | related_to | caused | preceded |
+  references | owned_by | part_of | depends_on | participated_in
+
+Rules:
+- Output strict JSON matching the schema below. No prose. No markdown fences.
+- Use 'related_to' only when no other relation fits.
+- Use 'Concept' as the entity type for anything ambiguous.
+- Empty arrays are valid; do not invent facts not in the text.
+- Each entity must be referenced by id in the relations.
+- If the text contains a fact that supersedes a prior fact, emit it in 'invalidates' as a description (we will resolve later).
+- 'suggestions' may include a more specific entity type or relation when 'related_to' / 'Concept' feels too generic. Only emit a suggestion if the supporting text strongly justifies it.
+
+JSON schema:
+{
+  "entities": [
+    { "id": "e1", "name": "string", "type": "Person|Place|...", "attributes": {} }
+  ],
+  "relations": [
+    { "head": "e1", "relation": "depends_on", "tail": "e2",
+      "confidence": 0.0,
+      "valid_from": "ISO date or null",
+      "valid_to": "ISO date or null" }
+  ],
+  "invalidates": [
+    "natural-language description of what this episode contradicts"
+  ],
+  "suggestions": [
+    { "kind": "entity_type", "name": "string",
+      "supporting_entity_ids": ["e1"], "rationale": "string" }
+  ],
+  "confidence": 0.0
+}
+
+Episode text:
+{episode_text}

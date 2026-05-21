@@ -2,15 +2,24 @@ pub mod decisions;
 pub mod entities;
 pub mod init;
 pub mod log;
+pub mod log_universal;
 pub mod mcp;
 pub mod models;
 pub mod query;
+pub mod query_universal;
 pub mod stats;
 
 use std::env;
 use std::path::PathBuf;
 
 use ctxgraph::Graph;
+
+/// Open the nearest .ctxgraph/graph.db without loading any extraction
+/// pipeline. Used by `log_universal` which supplies its own pipeline.
+pub fn open_graph_no_extraction() -> ctxgraph::Result<Graph> {
+    let db_path = find_db()?;
+    Graph::open(&db_path)
+}
 
 /// Find and open the nearest .ctxgraph/graph.db, searching up from cwd.
 /// If extraction models are available, loads the extraction pipeline.
@@ -21,8 +30,8 @@ pub fn open_graph() -> ctxgraph::Result<Graph> {
     if let Some(models_dir) = find_models_dir(&db_path) {
         // Look for ctxgraph.toml next to .ctxgraph/ directory
         let config_path = db_path
-            .parent()                    // .ctxgraph/
-            .and_then(|p| p.parent())    // project root
+            .parent() // .ctxgraph/
+            .and_then(|p| p.parent()) // project root
             .map(|p| p.join("ctxgraph.toml"));
 
         let result = if let Some(ref cfg) = config_path {
@@ -48,13 +57,6 @@ pub fn open_graph() -> ctxgraph::Result<Graph> {
     }
 
     Ok(graph)
-}
-
-/// Get models directory for a graph (used by log command for schema inference).
-#[cfg(feature = "extract")]
-pub fn find_models_dir_from_graph(graph: &Graph) -> Option<PathBuf> {
-    let db_path = graph.db_path();
-    find_models_dir(db_path)
 }
 
 /// Locate models directory by checking (in order):

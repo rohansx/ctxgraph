@@ -43,6 +43,14 @@ struct RelationSpecToml {
     description: String,
 }
 
+/// Flat-format universal schema (no `[schema]` wrapper, no head/tail constraints).
+/// Matches `crates/ctxgraph-extract/schemas/universal.toml`.
+#[derive(Debug, Deserialize)]
+struct UniversalSchemaToml {
+    entities: BTreeMap<String, String>,
+    relations: BTreeMap<String, String>,
+}
+
 impl ExtractionSchema {
     /// Load schema from a TOML file.
     pub fn load(path: &Path) -> Result<Self, SchemaError> {
@@ -79,6 +87,61 @@ impl ExtractionSchema {
             entity_types: parsed.schema.entities,
             relation_types,
         })
+    }
+
+    /// Parse a flat-format universal schema TOML — Piece 1 from `docs/CLARITY.md`.
+    ///
+    /// Expected layout (no `[schema]` wrapper, no head/tail constraints):
+    ///
+    /// ```toml
+    /// [entities]
+    /// Person = "humans, named individuals"
+    /// ...
+    ///
+    /// [relations]
+    /// depends_on = "X requires Y to function"
+    /// ...
+    /// ```
+    ///
+    /// All relations are treated as applicable to every entity pair (head/tail
+    /// = all entity types). Use [`Self::from_toml`] for the legacy schema-with-
+    /// constraints format.
+    pub fn from_universal_toml(content: &str) -> Result<Self, SchemaError> {
+        let parsed: UniversalSchemaToml =
+            toml::from_str(content).map_err(|e| SchemaError::Parse(e.to_string()))?;
+
+        let all_entity_types: Vec<String> = parsed.entities.keys().cloned().collect();
+
+        let relation_types = parsed
+            .relations
+            .into_iter()
+            .map(|(name, description)| {
+                (
+                    name,
+                    RelationSpec {
+                        head: all_entity_types.clone(),
+                        tail: all_entity_types.clone(),
+                        description,
+                    },
+                )
+            })
+            .collect();
+
+        Ok(Self {
+            name: "universal".into(),
+            entity_types: parsed.entities,
+            relation_types,
+        })
+    }
+
+    /// Load a universal-format schema from disk. Convenience wrapper around
+    /// [`Self::from_universal_toml`].
+    pub fn load_universal(path: &Path) -> Result<Self, SchemaError> {
+        let content = std::fs::read_to_string(path).map_err(|e| SchemaError::Io {
+            path: path.display().to_string(),
+            source: e,
+        })?;
+        Self::from_universal_toml(&content)
     }
 
     /// Entity label strings for GLiNER input.
@@ -436,9 +499,7 @@ Return ONLY valid JSON:
         }
 
         if entity_types.is_empty() {
-            return Err(SchemaError::Parse(
-                "LLM returned empty entity types".into(),
-            ));
+            return Err(SchemaError::Parse("LLM returned empty entity types".into()));
         }
 
         eprintln!(
@@ -466,7 +527,7 @@ Return ONLY valid JSON:
         }
 
         if !self.relation_types.is_empty() {
-            toml.push_str("\n");
+            toml.push('\n');
             for (k, v) in &self.relation_types {
                 let head: Vec<String> = v.head.iter().map(|h| format!("\"{h}\"")).collect();
                 let tail: Vec<String> = v.tail.iter().map(|t| format!("\"{t}\"")).collect();

@@ -1,0 +1,484 @@
+[
+  {
+    "kind": "new_wiki",
+    "domain": "journal",
+    "text": "Had coffee with Priya at Verve Coffee in San Francisco on Tuesday. She's the new Head of Engineering at Sundae and wants me to interview for their staff role. The team is six people, mostly ex-Stripe. They depend heavily on Temporal for their billing pipeline.",
+    "expected_entities": [
+      {"name": "Priya", "type": "Person"},
+      {"name": "Verve Coffee", "type": "Place"},
+      {"name": "San Francisco", "type": "Place"},
+      {"name": "Tuesday", "type": "Time"},
+      {"name": "Sundae", "type": "Organization"},
+      {"name": "Stripe", "type": "Organization"},
+      {"name": "Temporal", "type": "Artifact"},
+      {"name": "billing pipeline", "type": "Artifact"}
+    ],
+    "expected_relations": [
+      {"head": "Priya", "relation": "located_at", "tail": "Verve Coffee"},
+      {"head": "Verve Coffee", "relation": "located_at", "tail": "San Francisco"},
+      {"head": "Priya", "relation": "part_of", "tail": "Sundae"},
+      {"head": "billing pipeline", "relation": "depends_on", "tail": "Temporal"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "recipe",
+    "text": "Tried Marco Pierre White's mushroom risotto recipe tonight. Used arborio rice from Whole Foods and dried porcini instead of fresh. The key technique is toasting the rice in butter before adding stock. Will make again with truffle oil drizzled on top.",
+    "expected_entities": [
+      {"name": "Marco Pierre White", "type": "Person"},
+      {"name": "mushroom risotto", "type": "Concept"},
+      {"name": "arborio rice", "type": "Concept"},
+      {"name": "Whole Foods", "type": "Organization"},
+      {"name": "dried porcini", "type": "Concept"},
+      {"name": "toast rice in butter before stock", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "mushroom risotto", "relation": "references", "tail": "Marco Pierre White"},
+      {"head": "mushroom risotto", "relation": "depends_on", "tail": "arborio rice"},
+      {"head": "mushroom risotto", "relation": "depends_on", "tail": "dried porcini"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "research_notes",
+    "text": "Read the Letta paper from Berkeley today. They argue agent memory should be three-tier: working, episodic, archival. Cited MemGPT as the predecessor. Their LongMemEval score is 74%, lower than Mem0's 87% but they note Mem0 uses GPT-4o while Letta uses Llama 3.3. The benchmark is from August 2025.",
+    "expected_entities": [
+      {"name": "Letta paper", "type": "Artifact"},
+      {"name": "Berkeley", "type": "Organization"},
+      {"name": "Letta", "type": "Artifact"},
+      {"name": "three-tier agent memory: working, episodic, archival", "type": "Idea"},
+      {"name": "MemGPT", "type": "Artifact"},
+      {"name": "LongMemEval", "type": "Concept"},
+      {"name": "Mem0", "type": "Artifact"},
+      {"name": "GPT-4o", "type": "Artifact"},
+      {"name": "Llama 3.3", "type": "Artifact"},
+      {"name": "August 2025", "type": "Time"},
+      {"name": "Letta LongMemEval 74%", "type": "Fact"},
+      {"name": "Mem0 LongMemEval 87%", "type": "Fact"}
+    ],
+    "expected_relations": [
+      {"head": "Letta paper", "relation": "owned_by", "tail": "Berkeley"},
+      {"head": "Letta", "relation": "references", "tail": "MemGPT"},
+      {"head": "Mem0", "relation": "depends_on", "tail": "GPT-4o"},
+      {"head": "Letta", "relation": "depends_on", "tail": "Llama 3.3"}
+    ]
+  },
+  {
+    "kind": "relabeled_cross_domain",
+    "domain": "finance",
+    "text": "The risk management team chose Bloomberg Terminal over Refinitiv Eikon for real-time market data. Bloomberg's API integrates with our Python-based trading engine. The decision was constrained by a $50K annual budget cap and SOX compliance requirements.",
+    "expected_entities": [
+      {"name": "risk management team", "type": "Organization"},
+      {"name": "Bloomberg Terminal", "type": "Artifact"},
+      {"name": "Refinitiv Eikon", "type": "Artifact"},
+      {"name": "Python", "type": "Concept"},
+      {"name": "trading engine", "type": "Artifact"},
+      {"name": "$50K annual budget cap", "type": "Fact"},
+      {"name": "SOX compliance", "type": "Concept"}
+    ],
+    "expected_relations": [
+      {"head": "risk management team", "relation": "owned_by", "tail": "Bloomberg Terminal"},
+      {"head": "trading engine", "relation": "depends_on", "tail": "Python"},
+      {"head": "Bloomberg Terminal", "relation": "related_to", "tail": "$50K annual budget cap"}
+    ]
+  },
+  {
+    "kind": "relabeled_cross_domain",
+    "domain": "healthcare",
+    "text": "The CTO deprecated the on-premise Cerner EHR after a ransomware incident caused two days of downtime. They introduced Epic on Microsoft Azure, constrained by a 99.99% uptime SLA mandated by the hospital board.",
+    "expected_entities": [
+      {"name": "CTO", "type": "Person"},
+      {"name": "Cerner EHR", "type": "Artifact"},
+      {"name": "Epic", "type": "Artifact"},
+      {"name": "Microsoft Azure", "type": "Artifact"},
+      {"name": "99.99% uptime SLA", "type": "Fact"},
+      {"name": "ransomware incident", "type": "Event"},
+      {"name": "hospital board", "type": "Organization"}
+    ],
+    "expected_relations": [
+      {"head": "ransomware incident", "relation": "caused", "tail": "Cerner EHR"},
+      {"head": "Epic", "relation": "preceded", "tail": "Cerner EHR"},
+      {"head": "Epic", "relation": "depends_on", "tail": "Microsoft Azure"},
+      {"head": "99.99% uptime SLA", "relation": "owned_by", "tail": "hospital board"}
+    ]
+  },
+  {
+    "kind": "relabeled_cross_domain",
+    "domain": "manufacturing",
+    "text": "The plant manager chose Siemens MindSphere over PTC ThingWorx for IoT monitoring across 50 CNC machines. The decision was constrained by a 100ms latency requirement for real-time vibration analysis. MindSphere depends on Apache Kafka for sensor data streaming.",
+    "expected_entities": [
+      {"name": "plant manager", "type": "Person"},
+      {"name": "Siemens MindSphere", "type": "Artifact"},
+      {"name": "PTC ThingWorx", "type": "Artifact"},
+      {"name": "CNC machines", "type": "Artifact"},
+      {"name": "100ms latency requirement", "type": "Fact"},
+      {"name": "Apache Kafka", "type": "Artifact"}
+    ],
+    "expected_relations": [
+      {"head": "plant manager", "relation": "owned_by", "tail": "Siemens MindSphere"},
+      {"head": "Siemens MindSphere", "relation": "depends_on", "tail": "Apache Kafka"},
+      {"head": "Siemens MindSphere", "relation": "related_to", "tail": "100ms latency requirement"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "journal",
+    "text": "Long walk along Baker Beach with Sam this morning. Talked about whether to leave Anthropic after the equity vest cliff in March 2027. He thinks the API team is going to absorb the Claude Code team. I disagreed — Claude Code is too consumer-facing to fold in.",
+    "expected_entities": [
+      {"name": "Baker Beach", "type": "Place"},
+      {"name": "Sam", "type": "Person"},
+      {"name": "Anthropic", "type": "Organization"},
+      {"name": "March 2027", "type": "Time"},
+      {"name": "API team", "type": "Organization"},
+      {"name": "Claude Code team", "type": "Organization"},
+      {"name": "Claude Code is too consumer-facing to fold in", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "Sam", "relation": "located_at", "tail": "Baker Beach"},
+      {"head": "API team", "relation": "part_of", "tail": "Anthropic"},
+      {"head": "Claude Code team", "relation": "part_of", "tail": "Anthropic"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "meeting_notes",
+    "text": "Q2 product review with Mariana, Diego, and Lin. We're killing the Workspaces beta — only 200 weekly actives, far below the 5K MAU bar. Diego will lead a postmortem next Friday. Lin pointed out we never wired Workspaces into the onboarding funnel, which probably caused the low adoption.",
+    "expected_entities": [
+      {"name": "Q2 product review", "type": "Event"},
+      {"name": "Mariana", "type": "Person"},
+      {"name": "Diego", "type": "Person"},
+      {"name": "Lin", "type": "Person"},
+      {"name": "Workspaces beta", "type": "Artifact"},
+      {"name": "5K MAU bar", "type": "Fact"},
+      {"name": "next Friday", "type": "Time"},
+      {"name": "onboarding funnel", "type": "Artifact"},
+      {"name": "we never wired Workspaces into the onboarding funnel", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "Mariana", "relation": "participated_in", "tail": "Q2 product review"},
+      {"head": "Diego", "relation": "participated_in", "tail": "Q2 product review"},
+      {"head": "Lin", "relation": "participated_in", "tail": "Q2 product review"},
+      {"head": "Workspaces beta", "relation": "related_to", "tail": "5K MAU bar"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "recipe",
+    "text": "Made Diana Kennedy's mole poblano from her Oaxaca al Gusto cookbook for Saturday dinner. Took six hours. The chiles ancho, mulato, and pasilla have to be toasted dry, not fried like most recipes say. Used dark chocolate from Tcho instead of the abuelita brick.",
+    "expected_entities": [
+      {"name": "Diana Kennedy", "type": "Person"},
+      {"name": "mole poblano", "type": "Concept"},
+      {"name": "Oaxaca al Gusto", "type": "Artifact"},
+      {"name": "Saturday", "type": "Time"},
+      {"name": "chiles ancho", "type": "Concept"},
+      {"name": "mulato", "type": "Concept"},
+      {"name": "pasilla", "type": "Concept"},
+      {"name": "Tcho", "type": "Organization"},
+      {"name": "toast chiles dry, don't fry", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "mole poblano", "relation": "references", "tail": "Diana Kennedy"},
+      {"head": "mole poblano", "relation": "depends_on", "tail": "chiles ancho"},
+      {"head": "Oaxaca al Gusto", "relation": "owned_by", "tail": "Diana Kennedy"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "research_notes",
+    "text": "GLiNER2 paper from Fastino. Single forward pass for NER + RE + hierarchical JSON. 205M params. F1 0.590 on CrossNER vs GPT-4o's 0.599 — essentially tied, at 1/100th the compute. Apache 2.0 license. The trick is a unified prompt encoder that lets one model emit typed spans plus type-constrained edges.",
+    "expected_entities": [
+      {"name": "GLiNER2 paper", "type": "Artifact"},
+      {"name": "Fastino", "type": "Organization"},
+      {"name": "GLiNER2", "type": "Artifact"},
+      {"name": "GPT-4o", "type": "Artifact"},
+      {"name": "CrossNER", "type": "Concept"},
+      {"name": "Apache 2.0", "type": "Concept"},
+      {"name": "GLiNER2 CrossNER F1 0.590", "type": "Fact"},
+      {"name": "GPT-4o CrossNER F1 0.599", "type": "Fact"}
+    ],
+    "expected_relations": [
+      {"head": "GLiNER2 paper", "relation": "owned_by", "tail": "Fastino"},
+      {"head": "GLiNER2 paper", "relation": "references", "tail": "GLiNER2"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "travel",
+    "text": "Three days in Lisbon. Stayed at Hotel da Estrela. The pastel de nata at Manteigaria in Chiado is better than the original at Belém — fight me. Took the train to Sintra on Wednesday; Pena Palace was overrated but Quinta da Regaleira's wells made the trip worth it.",
+    "expected_entities": [
+      {"name": "Lisbon", "type": "Place"},
+      {"name": "Hotel da Estrela", "type": "Place"},
+      {"name": "Manteigaria", "type": "Place"},
+      {"name": "Chiado", "type": "Place"},
+      {"name": "Belém", "type": "Place"},
+      {"name": "Sintra", "type": "Place"},
+      {"name": "Wednesday", "type": "Time"},
+      {"name": "Pena Palace", "type": "Place"},
+      {"name": "Quinta da Regaleira", "type": "Place"},
+      {"name": "pastel de nata at Manteigaria is better than at Belém", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "Hotel da Estrela", "relation": "located_at", "tail": "Lisbon"},
+      {"head": "Manteigaria", "relation": "located_at", "tail": "Chiado"},
+      {"head": "Pena Palace", "relation": "located_at", "tail": "Sintra"},
+      {"head": "Quinta da Regaleira", "relation": "located_at", "tail": "Sintra"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "book_notes",
+    "text": "Finished Annie Duke's Thinking in Bets. Core idea: separate the quality of a decision from the quality of its outcome. She calls this 'resulting' when people confuse the two. She cites Daniel Kahneman's System 1/System 2 framework as the underpinning. Felt similar to Phil Tetlock's Superforecasting but more practical.",
+    "expected_entities": [
+      {"name": "Annie Duke", "type": "Person"},
+      {"name": "Thinking in Bets", "type": "Artifact"},
+      {"name": "decision quality separate from outcome quality", "type": "Idea"},
+      {"name": "resulting", "type": "Concept"},
+      {"name": "Daniel Kahneman", "type": "Person"},
+      {"name": "System 1/System 2", "type": "Concept"},
+      {"name": "Phil Tetlock", "type": "Person"},
+      {"name": "Superforecasting", "type": "Artifact"}
+    ],
+    "expected_relations": [
+      {"head": "Thinking in Bets", "relation": "owned_by", "tail": "Annie Duke"},
+      {"head": "Thinking in Bets", "relation": "references", "tail": "Daniel Kahneman"},
+      {"head": "Superforecasting", "relation": "owned_by", "tail": "Phil Tetlock"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "code_pr",
+    "text": "Opened PR #482: rewrite the OrderRouter to use Kafka exactly-once semantics instead of the homegrown idempotency table. Resolves the duplicate-charge bug from incident #1198. Depends on upgrading kafka-clients to 4.0+. Reviewed by Anjali and Tomás.",
+    "expected_entities": [
+      {"name": "PR #482", "type": "Artifact"},
+      {"name": "OrderRouter", "type": "Artifact"},
+      {"name": "Kafka exactly-once semantics", "type": "Concept"},
+      {"name": "homegrown idempotency table", "type": "Artifact"},
+      {"name": "duplicate-charge bug", "type": "Event"},
+      {"name": "incident #1198", "type": "Event"},
+      {"name": "kafka-clients 4.0", "type": "Artifact"},
+      {"name": "Anjali", "type": "Person"},
+      {"name": "Tomás", "type": "Person"}
+    ],
+    "expected_relations": [
+      {"head": "PR #482", "relation": "caused", "tail": "duplicate-charge bug"},
+      {"head": "PR #482", "relation": "depends_on", "tail": "kafka-clients 4.0"},
+      {"head": "duplicate-charge bug", "relation": "part_of", "tail": "incident #1198"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "research_notes",
+    "text": "HippoRAG 2 from CMU. They use Personalized PageRank over an entity-fact graph for retrieval, claiming associative memory. SOTA on MuSiQue at 47% EM. The trick: instead of dense vector lookup, do graph walks weighted by entity overlap with the question. Cited as inspired by hippocampal indexing theory in neuroscience.",
+    "expected_entities": [
+      {"name": "HippoRAG 2", "type": "Artifact"},
+      {"name": "CMU", "type": "Organization"},
+      {"name": "Personalized PageRank", "type": "Concept"},
+      {"name": "associative memory", "type": "Concept"},
+      {"name": "MuSiQue", "type": "Concept"},
+      {"name": "47% EM on MuSiQue", "type": "Fact"},
+      {"name": "graph walks weighted by entity overlap", "type": "Idea"},
+      {"name": "hippocampal indexing theory", "type": "Concept"}
+    ],
+    "expected_relations": [
+      {"head": "HippoRAG 2", "relation": "owned_by", "tail": "CMU"},
+      {"head": "HippoRAG 2", "relation": "depends_on", "tail": "Personalized PageRank"},
+      {"head": "HippoRAG 2", "relation": "references", "tail": "hippocampal indexing theory"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "meeting_notes",
+    "text": "Onboarding call with new hire Kojo. He came from Datadog and is going to lead the observability stream. We agreed he'd report to Eli for the first quarter, then we'll re-evaluate. Concerns: our metrics stack is a Frankenstein of Prometheus, Honeycomb, and a homegrown Lambda — he'll need a month just to understand it.",
+    "expected_entities": [
+      {"name": "Kojo", "type": "Person"},
+      {"name": "Datadog", "type": "Organization"},
+      {"name": "observability stream", "type": "Concept"},
+      {"name": "Eli", "type": "Person"},
+      {"name": "first quarter", "type": "Time"},
+      {"name": "Prometheus", "type": "Artifact"},
+      {"name": "Honeycomb", "type": "Artifact"},
+      {"name": "homegrown Lambda", "type": "Artifact"},
+      {"name": "metrics stack is a Frankenstein of three tools", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "Kojo", "relation": "preceded", "tail": "Datadog"},
+      {"head": "Kojo", "relation": "owned_by", "tail": "Eli"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "journal",
+    "text": "Caught the late train back from Cambridge after the Watts Towers lecture. Notes on the talk: William Watts spent 33 years building those towers in LA without permits. He never accepted help. The city tried to demolish them in 1959 but they survived a stress test that put 10,000 lbs of lateral force on the tallest tower.",
+    "expected_entities": [
+      {"name": "Cambridge", "type": "Place"},
+      {"name": "Watts Towers", "type": "Place"},
+      {"name": "William Watts", "type": "Person"},
+      {"name": "LA", "type": "Place"},
+      {"name": "1959", "type": "Time"},
+      {"name": "Watts Towers stress test held 10,000 lbs lateral force", "type": "Fact"}
+    ],
+    "expected_relations": [
+      {"head": "Watts Towers", "relation": "located_at", "tail": "LA"},
+      {"head": "Watts Towers", "relation": "owned_by", "tail": "William Watts"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "travel",
+    "text": "Hiked the Tour du Mont Blanc segment from Les Houches to Les Contamines on Saturday. Eight hours, 1200m elevation gain. Rain through the col de Voza. Stayed at Refuge Nant Borrant — the half-board dinner was a tartiflette big enough for three people.",
+    "expected_entities": [
+      {"name": "Tour du Mont Blanc", "type": "Concept"},
+      {"name": "Les Houches", "type": "Place"},
+      {"name": "Les Contamines", "type": "Place"},
+      {"name": "Saturday", "type": "Time"},
+      {"name": "col de Voza", "type": "Place"},
+      {"name": "Refuge Nant Borrant", "type": "Place"},
+      {"name": "1200m elevation gain on Les Houches to Les Contamines segment", "type": "Fact"}
+    ],
+    "expected_relations": [
+      {"head": "col de Voza", "relation": "part_of", "tail": "Tour du Mont Blanc"},
+      {"head": "Refuge Nant Borrant", "relation": "located_at", "tail": "Les Contamines"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "code_pr",
+    "text": "Investigated the migration-timeout incident from yesterday. Root cause: Flyway tried to add a NOT NULL column without a default, blocking on row backfill for 18 minutes before the deploy job killed it. Naomi fixed it in PR #503 by splitting the migration into ADD NULLABLE + BACKFILL + ALTER NOT NULL. Worth a runbook entry.",
+    "expected_entities": [
+      {"name": "migration-timeout incident", "type": "Event"},
+      {"name": "Flyway", "type": "Artifact"},
+      {"name": "NOT NULL column without a default blocked on row backfill for 18 minutes", "type": "Fact"},
+      {"name": "Naomi", "type": "Person"},
+      {"name": "PR #503", "type": "Artifact"},
+      {"name": "split the migration into ADD NULLABLE + BACKFILL + ALTER NOT NULL", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "Flyway", "relation": "caused", "tail": "migration-timeout incident"},
+      {"head": "PR #503", "relation": "caused", "tail": "migration-timeout incident"},
+      {"head": "PR #503", "relation": "owned_by", "tail": "Naomi"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "book_notes",
+    "text": "Started Robert Caro's The Power Broker. 1300 pages on Robert Moses. The thesis: Moses built modern New York's roads, parks, and bridges by becoming the master of bureaucratic procedure — he wrote the bills he then enforced. Caro's research method was reading every word of every memo Moses ever signed.",
+    "expected_entities": [
+      {"name": "Robert Caro", "type": "Person"},
+      {"name": "The Power Broker", "type": "Artifact"},
+      {"name": "Robert Moses", "type": "Person"},
+      {"name": "New York", "type": "Place"},
+      {"name": "Moses built modern New York by mastering bureaucratic procedure", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "The Power Broker", "relation": "owned_by", "tail": "Robert Caro"},
+      {"head": "The Power Broker", "relation": "references", "tail": "Robert Moses"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "journal",
+    "text": "Therapy session with Ruth. We talked about why I keep starting side projects instead of finishing the book. She framed it as a fear of public commitment rather than laziness. Homework: pick the one project that scares me most, ship the worst possible version of it within two weeks.",
+    "expected_entities": [
+      {"name": "Ruth", "type": "Person"},
+      {"name": "therapy session", "type": "Event"},
+      {"name": "side projects vs finishing the book", "type": "Idea"},
+      {"name": "fear of public commitment", "type": "Concept"},
+      {"name": "two weeks", "type": "Time"}
+    ],
+    "expected_relations": [
+      {"head": "fear of public commitment", "relation": "caused", "tail": "side projects vs finishing the book"}
+    ]
+  },
+  {
+    "kind": "relabeled_cross_domain",
+    "domain": "legal",
+    "text": "The legal ops team replaced Relativity with Everlaw for e-discovery. Everlaw's cloud-native architecture fixed the document review backlog. The platform depends on AWS GovCloud for FedRAMP compliance.",
+    "expected_entities": [
+      {"name": "legal ops team", "type": "Organization"},
+      {"name": "Relativity", "type": "Artifact"},
+      {"name": "Everlaw", "type": "Artifact"},
+      {"name": "document review backlog", "type": "Event"},
+      {"name": "AWS GovCloud", "type": "Artifact"},
+      {"name": "FedRAMP compliance", "type": "Concept"}
+    ],
+    "expected_relations": [
+      {"head": "Everlaw", "relation": "preceded", "tail": "Relativity"},
+      {"head": "Everlaw", "relation": "caused", "tail": "document review backlog"},
+      {"head": "Everlaw", "relation": "depends_on", "tail": "AWS GovCloud"}
+    ]
+  },
+  {
+    "kind": "relabeled_cross_domain",
+    "domain": "agriculture",
+    "text": "The cooperative replaced manual irrigation scheduling with John Deere Operations Center after a drought caused 30% crop loss. Operations Center depends on Trimble GPS for field mapping.",
+    "expected_entities": [
+      {"name": "cooperative", "type": "Organization"},
+      {"name": "manual irrigation scheduling", "type": "Concept"},
+      {"name": "John Deere Operations Center", "type": "Artifact"},
+      {"name": "drought", "type": "Event"},
+      {"name": "30% crop loss", "type": "Fact"},
+      {"name": "Trimble GPS", "type": "Artifact"}
+    ],
+    "expected_relations": [
+      {"head": "John Deere Operations Center", "relation": "preceded", "tail": "manual irrigation scheduling"},
+      {"head": "drought", "relation": "caused", "tail": "30% crop loss"},
+      {"head": "John Deere Operations Center", "relation": "depends_on", "tail": "Trimble GPS"}
+    ]
+  },
+  {
+    "kind": "relabeled_cross_domain",
+    "domain": "hospitality",
+    "text": "Marriott replaced its homegrown property management system with Oracle OPERA Cloud across 8,000 properties. The migration fixed the overnight reservation sync delays. GDPR compliance constrained guest data residency to EU regions.",
+    "expected_entities": [
+      {"name": "Marriott", "type": "Organization"},
+      {"name": "homegrown property management system", "type": "Artifact"},
+      {"name": "Oracle OPERA Cloud", "type": "Artifact"},
+      {"name": "reservation sync delays", "type": "Event"},
+      {"name": "GDPR compliance", "type": "Concept"},
+      {"name": "guest data residency to EU regions", "type": "Fact"}
+    ],
+    "expected_relations": [
+      {"head": "Oracle OPERA Cloud", "relation": "preceded", "tail": "homegrown property management system"},
+      {"head": "Oracle OPERA Cloud", "relation": "caused", "tail": "reservation sync delays"},
+      {"head": "Oracle OPERA Cloud", "relation": "related_to", "tail": "GDPR compliance"}
+    ]
+  },
+  {
+    "kind": "relabeled_cross_domain",
+    "domain": "biotech",
+    "text": "Genentech's discovery team rejected AlphaFold 3 for protein-ligand docking in favor of Schrödinger's FEP+ workflow after benchmarking on 200 known binders. FEP+ depends on Glide for initial pose generation. FDA 21 CFR Part 11 constrained electronic signature workflows on the resulting design pipeline.",
+    "expected_entities": [
+      {"name": "Genentech", "type": "Organization"},
+      {"name": "AlphaFold 3", "type": "Artifact"},
+      {"name": "Schrödinger FEP+", "type": "Artifact"},
+      {"name": "Glide", "type": "Artifact"},
+      {"name": "FDA 21 CFR Part 11", "type": "Concept"},
+      {"name": "design pipeline", "type": "Artifact"}
+    ],
+    "expected_relations": [
+      {"head": "Schrödinger FEP+", "relation": "preceded", "tail": "AlphaFold 3"},
+      {"head": "Schrödinger FEP+", "relation": "depends_on", "tail": "Glide"},
+      {"head": "design pipeline", "relation": "related_to", "tail": "FDA 21 CFR Part 11"}
+    ]
+  },
+  {
+    "kind": "new_wiki",
+    "domain": "meeting_notes",
+    "text": "Founder coffee with Ana from Mira AI. She's six months in, raised a $2M seed from Sequoia. Their thesis: voice-first customer support for European banks, languages where Anglo-centric models choke (Czech, Hungarian, Estonian). They use Whisper Turbo for ASR and a fine-tuned Mistral Small 3 for response.",
+    "expected_entities": [
+      {"name": "Ana", "type": "Person"},
+      {"name": "Mira AI", "type": "Organization"},
+      {"name": "Sequoia", "type": "Organization"},
+      {"name": "$2M seed", "type": "Fact"},
+      {"name": "Whisper Turbo", "type": "Artifact"},
+      {"name": "Mistral Small 3", "type": "Artifact"},
+      {"name": "voice-first customer support for European banks", "type": "Idea"}
+    ],
+    "expected_relations": [
+      {"head": "Ana", "relation": "part_of", "tail": "Mira AI"},
+      {"head": "Mira AI", "relation": "depends_on", "tail": "Whisper Turbo"},
+      {"head": "Mira AI", "relation": "depends_on", "tail": "Mistral Small 3"},
+      {"head": "$2M seed", "relation": "owned_by", "tail": "Sequoia"}
+    ]
+  }
+]

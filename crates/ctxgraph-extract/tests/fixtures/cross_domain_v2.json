@@ -1,0 +1,506 @@
+[
+  {
+    "domain": "finance",
+    "text": "The risk management team chose Bloomberg Terminal over Refinitiv Eikon for real-time market data. Bloomberg's API integrates with our Python-based trading engine. The decision was constrained by a $50K annual budget cap and SOX compliance requirements.",
+    "expected_entities": [
+      {"name": "Bloomberg Terminal", "entity_type": "Component"},
+      {"name": "Refinitiv Eikon", "entity_type": "Component"},
+      {"name": "Python", "entity_type": "Language"},
+      {"name": "trading engine", "entity_type": "Service"},
+      {"name": "$50K annual budget cap", "entity_type": "Constraint"},
+      {"name": "SOX compliance", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "risk management team", "relation": "chose", "tail": "Bloomberg Terminal"},
+      {"head": "risk management team", "relation": "rejected", "tail": "Refinitiv Eikon"},
+      {"head": "trading engine", "relation": "depends_on", "tail": "Python"},
+      {"head": "Bloomberg Terminal", "relation": "constrained_by", "tail": "$50K annual budget cap"}
+    ]
+  },
+  {
+    "domain": "finance",
+    "text": "We replaced our legacy COBOL-based clearing system with a Kotlin microservices architecture on AWS. The migration fixed the T+3 settlement bottleneck that caused failed trades during peak volume. The new system depends on Apache Kafka for event streaming.",
+    "expected_entities": [
+      {"name": "COBOL", "entity_type": "Language"},
+      {"name": "Kotlin", "entity_type": "Language"},
+      {"name": "clearing system", "entity_type": "Service"},
+      {"name": "AWS", "entity_type": "Infrastructure"},
+      {"name": "T+3 settlement bottleneck", "entity_type": "Constraint"},
+      {"name": "Apache Kafka", "entity_type": "Component"}
+    ],
+    "expected_relations": [
+      {"head": "Kotlin", "relation": "replaced", "tail": "COBOL"},
+      {"head": "Kotlin", "relation": "fixed", "tail": "T+3 settlement bottleneck"},
+      {"head": "clearing system", "relation": "depends_on", "tail": "Apache Kafka"}
+    ]
+  },
+  {
+    "domain": "finance",
+    "text": "The compliance officer deprecated the manual PDF report generation process after introducing an automated dashboard built on Tableau. The SEC audit requirement constrained the dashboard to retain 7 years of transaction history.",
+    "expected_entities": [
+      {"name": "compliance officer", "entity_type": "Person"},
+      {"name": "PDF report generation", "entity_type": "Component"},
+      {"name": "Tableau", "entity_type": "Component"},
+      {"name": "SEC audit requirement", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "compliance officer", "relation": "deprecated", "tail": "PDF report generation"},
+      {"head": "compliance officer", "relation": "introduced", "tail": "Tableau"},
+      {"head": "Tableau", "relation": "constrained_by", "tail": "SEC audit requirement"}
+    ]
+  },
+  {
+    "domain": "healthcare",
+    "text": "The radiology department chose MONAI over TensorFlow for medical image segmentation. MONAI's DICOM integration depends on the OHIF Viewer. The decision was constrained by HIPAA data residency requirements, so all inference runs on-premise GPU servers.",
+    "expected_entities": [
+      {"name": "MONAI", "entity_type": "Component"},
+      {"name": "TensorFlow", "entity_type": "Component"},
+      {"name": "OHIF Viewer", "entity_type": "Component"},
+      {"name": "HIPAA", "entity_type": "Constraint"},
+      {"name": "GPU servers", "entity_type": "Infrastructure"}
+    ],
+    "expected_relations": [
+      {"head": "radiology department", "relation": "chose", "tail": "MONAI"},
+      {"head": "radiology department", "relation": "rejected", "tail": "TensorFlow"},
+      {"head": "MONAI", "relation": "depends_on", "tail": "OHIF Viewer"},
+      {"head": "MONAI", "relation": "constrained_by", "tail": "HIPAA"}
+    ]
+  },
+  {
+    "domain": "healthcare",
+    "text": "We replaced the HL7v2 messaging interface with FHIR R4 APIs for patient data exchange. The migration fixed the lab result delays that caused diagnostic errors. The new APIs depend on a Mirth Connect integration engine.",
+    "expected_entities": [
+      {"name": "HL7v2", "entity_type": "Component"},
+      {"name": "FHIR R4", "entity_type": "Component"},
+      {"name": "lab result delays", "entity_type": "Constraint"},
+      {"name": "Mirth Connect", "entity_type": "Component"}
+    ],
+    "expected_relations": [
+      {"head": "FHIR R4", "relation": "replaced", "tail": "HL7v2"},
+      {"head": "FHIR R4", "relation": "fixed", "tail": "lab result delays"},
+      {"head": "FHIR R4", "relation": "depends_on", "tail": "Mirth Connect"}
+    ]
+  },
+  {
+    "domain": "healthcare",
+    "text": "The CTO deprecated the on-premise Cerner EHR after a ransomware incident caused two days of downtime. They introduced Epic on Microsoft Azure, constrained by a 99.99% uptime SLA mandated by the hospital board.",
+    "expected_entities": [
+      {"name": "CTO", "entity_type": "Person"},
+      {"name": "Cerner EHR", "entity_type": "Component"},
+      {"name": "Epic", "entity_type": "Component"},
+      {"name": "Microsoft Azure", "entity_type": "Infrastructure"},
+      {"name": "99.99% uptime SLA", "entity_type": "Constraint"},
+      {"name": "ransomware incident", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "CTO", "relation": "deprecated", "tail": "Cerner EHR"},
+      {"head": "CTO", "relation": "introduced", "tail": "Epic"},
+      {"head": "Epic", "relation": "depends_on", "tail": "Microsoft Azure"},
+      {"head": "Epic", "relation": "constrained_by", "tail": "99.99% uptime SLA"},
+      {"head": "ransomware incident", "relation": "caused", "tail": "Cerner EHR"}
+    ]
+  },
+  {
+    "domain": "legal",
+    "text": "The legal ops team replaced Relativity with Everlaw for e-discovery. Everlaw's cloud-native architecture fixed the document review backlog that constrained case turnaround. The platform depends on AWS GovCloud for FedRAMP compliance.",
+    "expected_entities": [
+      {"name": "Relativity", "entity_type": "Component"},
+      {"name": "Everlaw", "entity_type": "Component"},
+      {"name": "document review backlog", "entity_type": "Constraint"},
+      {"name": "AWS GovCloud", "entity_type": "Infrastructure"},
+      {"name": "FedRAMP", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Everlaw", "relation": "replaced", "tail": "Relativity"},
+      {"head": "Everlaw", "relation": "fixed", "tail": "document review backlog"},
+      {"head": "Everlaw", "relation": "depends_on", "tail": "AWS GovCloud"},
+      {"head": "Everlaw", "relation": "constrained_by", "tail": "FedRAMP"}
+    ]
+  },
+  {
+    "domain": "manufacturing",
+    "text": "The plant manager chose Siemens MindSphere over PTC ThingWorx for IoT monitoring across 50 CNC machines. The decision was constrained by a 100ms latency requirement for real-time vibration analysis. MindSphere depends on Apache Kafka for sensor data streaming.",
+    "expected_entities": [
+      {"name": "plant manager", "entity_type": "Person"},
+      {"name": "Siemens MindSphere", "entity_type": "Component"},
+      {"name": "PTC ThingWorx", "entity_type": "Component"},
+      {"name": "CNC machines", "entity_type": "Infrastructure"},
+      {"name": "100ms latency requirement", "entity_type": "Constraint"},
+      {"name": "Apache Kafka", "entity_type": "Component"}
+    ],
+    "expected_relations": [
+      {"head": "plant manager", "relation": "chose", "tail": "Siemens MindSphere"},
+      {"head": "plant manager", "relation": "rejected", "tail": "PTC ThingWorx"},
+      {"head": "Siemens MindSphere", "relation": "constrained_by", "tail": "100ms latency requirement"},
+      {"head": "Siemens MindSphere", "relation": "depends_on", "tail": "Apache Kafka"}
+    ]
+  },
+  {
+    "domain": "education",
+    "text": "The university replaced Blackboard LMS with Canvas after student satisfaction surveys showed 60% dissatisfaction. Canvas was chosen for native LTI 1.3 support. The migration depends on Banner SIS for grade synchronization and is constrained by FERPA privacy requirements.",
+    "expected_entities": [
+      {"name": "Blackboard LMS", "entity_type": "Component"},
+      {"name": "Canvas", "entity_type": "Component"},
+      {"name": "LTI 1.3", "entity_type": "Component"},
+      {"name": "Banner SIS", "entity_type": "Component"},
+      {"name": "FERPA", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Canvas", "relation": "replaced", "tail": "Blackboard LMS"},
+      {"head": "Canvas", "relation": "depends_on", "tail": "Banner SIS"},
+      {"head": "Canvas", "relation": "constrained_by", "tail": "FERPA"}
+    ]
+  },
+  {
+    "domain": "government",
+    "text": "The agency chose Palantir Foundry for intelligence analysis, rejecting AWS GovCloud's native analytics suite. Foundry's ontology-based modeling fixed the data fragmentation across legacy DoD systems. The deployment was constrained by IL5 accreditation requirements.",
+    "expected_entities": [
+      {"name": "Palantir Foundry", "entity_type": "Component"},
+      {"name": "AWS GovCloud", "entity_type": "Infrastructure"},
+      {"name": "DoD systems", "entity_type": "Component"},
+      {"name": "data fragmentation", "entity_type": "Constraint"},
+      {"name": "IL5 accreditation", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "agency", "relation": "chose", "tail": "Palantir Foundry"},
+      {"head": "agency", "relation": "rejected", "tail": "AWS GovCloud"},
+      {"head": "Palantir Foundry", "relation": "fixed", "tail": "data fragmentation"},
+      {"head": "Palantir Foundry", "relation": "constrained_by", "tail": "IL5 accreditation"}
+    ]
+  },
+  {
+    "domain": "agriculture",
+    "text": "The cooperative replaced manual irrigation scheduling with John Deere Operations Center after a drought caused 30% crop loss. Operations Center depends on Trimble GPS for field mapping. USDA organic certification constrained the choice of pesticide modules.",
+    "expected_entities": [
+      {"name": "John Deere Operations Center", "entity_type": "Component"},
+      {"name": "manual irrigation scheduling", "entity_type": "Component"},
+      {"name": "Trimble GPS", "entity_type": "Component"},
+      {"name": "drought", "entity_type": "Constraint"},
+      {"name": "USDA organic certification", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "John Deere Operations Center", "relation": "replaced", "tail": "manual irrigation scheduling"},
+      {"head": "John Deere Operations Center", "relation": "depends_on", "tail": "Trimble GPS"},
+      {"head": "John Deere Operations Center", "relation": "constrained_by", "tail": "USDA organic certification"},
+      {"head": "drought", "relation": "caused", "tail": "manual irrigation scheduling"}
+    ]
+  },
+  {
+    "domain": "hospitality",
+    "text": "Marriott replaced its homegrown property management system with Oracle OPERA Cloud across 8,000 properties. The migration was led by the VP of Technology and fixed the overnight reservation sync delays. GDPR compliance constrained guest data residency to EU regions.",
+    "expected_entities": [
+      {"name": "Marriott", "entity_type": "Person"},
+      {"name": "Oracle OPERA Cloud", "entity_type": "Component"},
+      {"name": "property management system", "entity_type": "Component"},
+      {"name": "VP of Technology", "entity_type": "Person"},
+      {"name": "reservation sync delays", "entity_type": "Constraint"},
+      {"name": "GDPR", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Oracle OPERA Cloud", "relation": "replaced", "tail": "property management system"},
+      {"head": "VP of Technology", "relation": "introduced", "tail": "Oracle OPERA Cloud"},
+      {"head": "Oracle OPERA Cloud", "relation": "fixed", "tail": "reservation sync delays"},
+      {"head": "Oracle OPERA Cloud", "relation": "constrained_by", "tail": "GDPR"}
+    ]
+  },
+  {
+    "domain": "telecom",
+    "text": "Verizon's network operations team deprecated the Cisco ASR 9000 routers in favor of Nokia FP5-based platforms. The migration depends on a custom NETCONF orchestrator. FCC 6G spectrum allocation rules constrained the deployment timeline to Q4 2026.",
+    "expected_entities": [
+      {"name": "Verizon", "entity_type": "Person"},
+      {"name": "Cisco ASR 9000", "entity_type": "Infrastructure"},
+      {"name": "Nokia FP5", "entity_type": "Infrastructure"},
+      {"name": "NETCONF orchestrator", "entity_type": "Component"},
+      {"name": "FCC 6G spectrum allocation rules", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Verizon", "relation": "deprecated", "tail": "Cisco ASR 9000"},
+      {"head": "Verizon", "relation": "introduced", "tail": "Nokia FP5"},
+      {"head": "Nokia FP5", "relation": "depends_on", "tail": "NETCONF orchestrator"},
+      {"head": "Nokia FP5", "relation": "constrained_by", "tail": "FCC 6G spectrum allocation rules"}
+    ]
+  },
+  {
+    "domain": "energy",
+    "text": "The grid operator chose Schneider Electric EcoStruxure ADMS over GE PowerOn Fusion for distribution management. The Texas freeze in February caused a cascading outage that the new system fixed via predictive load shedding. NERC CIP-014 constrained the physical security architecture.",
+    "expected_entities": [
+      {"name": "grid operator", "entity_type": "Person"},
+      {"name": "Schneider Electric EcoStruxure ADMS", "entity_type": "Component"},
+      {"name": "GE PowerOn Fusion", "entity_type": "Component"},
+      {"name": "Texas freeze", "entity_type": "Constraint"},
+      {"name": "cascading outage", "entity_type": "Constraint"},
+      {"name": "NERC CIP-014", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "grid operator", "relation": "chose", "tail": "Schneider Electric EcoStruxure ADMS"},
+      {"head": "grid operator", "relation": "rejected", "tail": "GE PowerOn Fusion"},
+      {"head": "Schneider Electric EcoStruxure ADMS", "relation": "fixed", "tail": "cascading outage"},
+      {"head": "Texas freeze", "relation": "caused", "tail": "cascading outage"},
+      {"head": "Schneider Electric EcoStruxure ADMS", "relation": "constrained_by", "tail": "NERC CIP-014"}
+    ]
+  },
+  {
+    "domain": "retail",
+    "text": "Shopify Plus migrated its merchant analytics from Looker to Snowflake-native dashboards after Looker's price hike. The new stack depends on dbt for transformations. PCI DSS constrained how payment card aggregates could be exposed in dashboards.",
+    "expected_entities": [
+      {"name": "Shopify Plus", "entity_type": "Person"},
+      {"name": "Looker", "entity_type": "Component"},
+      {"name": "Snowflake", "entity_type": "Component"},
+      {"name": "dbt", "entity_type": "Component"},
+      {"name": "PCI DSS", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Snowflake", "relation": "replaced", "tail": "Looker"},
+      {"head": "Snowflake", "relation": "depends_on", "tail": "dbt"},
+      {"head": "Snowflake", "relation": "constrained_by", "tail": "PCI DSS"}
+    ]
+  },
+  {
+    "domain": "ngo",
+    "text": "Médecins Sans Frontières replaced KoBoToolbox with CommCare for field data collection in conflict zones. CommCare's offline-first sync fixed the data loss issues over patchy satellite uplinks. The choice was constrained by GDPR for European staff data.",
+    "expected_entities": [
+      {"name": "Médecins Sans Frontières", "entity_type": "Person"},
+      {"name": "KoBoToolbox", "entity_type": "Component"},
+      {"name": "CommCare", "entity_type": "Component"},
+      {"name": "data loss issues", "entity_type": "Constraint"},
+      {"name": "GDPR", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "CommCare", "relation": "replaced", "tail": "KoBoToolbox"},
+      {"head": "CommCare", "relation": "fixed", "tail": "data loss issues"},
+      {"head": "CommCare", "relation": "constrained_by", "tail": "GDPR"}
+    ]
+  },
+  {
+    "domain": "sports",
+    "text": "The Manchester City data science team chose StatsBomb 360 over Wyscout for opponent analysis. StatsBomb's freeze-frame data depends on Hawk-Eye tracking infrastructure. Premier League broadcast rights constrained data sharing with external scouts.",
+    "expected_entities": [
+      {"name": "Manchester City", "entity_type": "Person"},
+      {"name": "StatsBomb 360", "entity_type": "Component"},
+      {"name": "Wyscout", "entity_type": "Component"},
+      {"name": "Hawk-Eye", "entity_type": "Infrastructure"},
+      {"name": "Premier League broadcast rights", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Manchester City", "relation": "chose", "tail": "StatsBomb 360"},
+      {"head": "Manchester City", "relation": "rejected", "tail": "Wyscout"},
+      {"head": "StatsBomb 360", "relation": "depends_on", "tail": "Hawk-Eye"},
+      {"head": "StatsBomb 360", "relation": "constrained_by", "tail": "Premier League broadcast rights"}
+    ]
+  },
+  {
+    "domain": "journalism",
+    "text": "Reuters introduced an automated Russian-language news translation pipeline using DeepL Pro, deprecating the manual translator pool for breaking news. The pipeline depends on a custom AP style enforcer. Editorial bias guidelines constrained which sentence patterns DeepL could autocorrect.",
+    "expected_entities": [
+      {"name": "Reuters", "entity_type": "Person"},
+      {"name": "DeepL Pro", "entity_type": "Component"},
+      {"name": "manual translator pool", "entity_type": "Person"},
+      {"name": "AP style enforcer", "entity_type": "Component"},
+      {"name": "editorial bias guidelines", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Reuters", "relation": "introduced", "tail": "DeepL Pro"},
+      {"head": "Reuters", "relation": "deprecated", "tail": "manual translator pool"},
+      {"head": "DeepL Pro", "relation": "depends_on", "tail": "AP style enforcer"},
+      {"head": "DeepL Pro", "relation": "constrained_by", "tail": "editorial bias guidelines"}
+    ]
+  },
+  {
+    "domain": "transportation",
+    "text": "Maersk replaced its homegrown vessel routing engine with Sedna Systems' optimization platform across the Asia-Europe trade lanes. Sedna's models depend on AIS satellite feeds and ECMWF weather data. IMO 2030 carbon intensity rules constrained route choices to minimize fuel burn.",
+    "expected_entities": [
+      {"name": "Maersk", "entity_type": "Person"},
+      {"name": "vessel routing engine", "entity_type": "Component"},
+      {"name": "Sedna Systems", "entity_type": "Component"},
+      {"name": "AIS satellite feeds", "entity_type": "Infrastructure"},
+      {"name": "ECMWF weather data", "entity_type": "Component"},
+      {"name": "IMO 2030 carbon intensity rules", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Sedna Systems", "relation": "replaced", "tail": "vessel routing engine"},
+      {"head": "Sedna Systems", "relation": "depends_on", "tail": "AIS satellite feeds"},
+      {"head": "Sedna Systems", "relation": "depends_on", "tail": "ECMWF weather data"},
+      {"head": "Sedna Systems", "relation": "constrained_by", "tail": "IMO 2030 carbon intensity rules"}
+    ]
+  },
+  {
+    "domain": "biotech",
+    "text": "Genentech's discovery team rejected AlphaFold 3 for protein-ligand docking in favor of Schrödinger's FEP+ workflow after benchmarking on 200 known binders. FEP+ depends on Glide for initial pose generation. FDA 21 CFR Part 11 constrained electronic signature workflows on the resulting design pipeline.",
+    "expected_entities": [
+      {"name": "Genentech", "entity_type": "Person"},
+      {"name": "AlphaFold 3", "entity_type": "Component"},
+      {"name": "Schrödinger FEP+", "entity_type": "Component"},
+      {"name": "Glide", "entity_type": "Component"},
+      {"name": "FDA 21 CFR Part 11", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Genentech", "relation": "rejected", "tail": "AlphaFold 3"},
+      {"head": "Genentech", "relation": "chose", "tail": "Schrödinger FEP+"},
+      {"head": "Schrödinger FEP+", "relation": "depends_on", "tail": "Glide"},
+      {"head": "Schrödinger FEP+", "relation": "constrained_by", "tail": "FDA 21 CFR Part 11"}
+    ]
+  },
+  {
+    "domain": "real_estate",
+    "text": "JLL replaced VTS for portfolio management with MRI Software after a tenant-data leak caused a $2M settlement. MRI depends on Yardi Voyager for accounting integration. SOC 2 Type II constrained the tenant of the multi-tenant deployment to large enterprise customers only.",
+    "expected_entities": [
+      {"name": "JLL", "entity_type": "Person"},
+      {"name": "VTS", "entity_type": "Component"},
+      {"name": "MRI Software", "entity_type": "Component"},
+      {"name": "tenant-data leak", "entity_type": "Constraint"},
+      {"name": "Yardi Voyager", "entity_type": "Component"},
+      {"name": "SOC 2 Type II", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "MRI Software", "relation": "replaced", "tail": "VTS"},
+      {"head": "tenant-data leak", "relation": "caused", "tail": "VTS"},
+      {"head": "MRI Software", "relation": "depends_on", "tail": "Yardi Voyager"},
+      {"head": "MRI Software", "relation": "constrained_by", "tail": "SOC 2 Type II"}
+    ]
+  },
+  {
+    "domain": "entertainment",
+    "text": "Netflix's encoding team deprecated x264 for high-bitrate masters in favor of AV1 via the SVT-AV1 encoder. The move fixed compression efficiency on 4K HDR content. Encoding pipelines depend on Amazon S3 for chunk shuffling. Dolby Vision licensing constrained which AV1 profile could be used for premium tier titles.",
+    "expected_entities": [
+      {"name": "Netflix", "entity_type": "Person"},
+      {"name": "x264", "entity_type": "Component"},
+      {"name": "AV1", "entity_type": "Component"},
+      {"name": "SVT-AV1", "entity_type": "Component"},
+      {"name": "Amazon S3", "entity_type": "Infrastructure"},
+      {"name": "Dolby Vision licensing", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Netflix", "relation": "deprecated", "tail": "x264"},
+      {"head": "Netflix", "relation": "introduced", "tail": "AV1"},
+      {"head": "AV1", "relation": "depends_on", "tail": "Amazon S3"},
+      {"head": "AV1", "relation": "constrained_by", "tail": "Dolby Vision licensing"}
+    ]
+  },
+  {
+    "domain": "food_service",
+    "text": "Chipotle's digital ordering team chose Olo Engage over Toast for off-premise order routing. The decision fixed the order-handoff failures during peak burrito hours. Olo depends on Square for payment tokenization. Allergen disclosure regulations constrained how menu items render in third-party marketplaces.",
+    "expected_entities": [
+      {"name": "Chipotle", "entity_type": "Person"},
+      {"name": "Olo Engage", "entity_type": "Component"},
+      {"name": "Toast", "entity_type": "Component"},
+      {"name": "order-handoff failures", "entity_type": "Constraint"},
+      {"name": "Square", "entity_type": "Component"},
+      {"name": "Allergen disclosure regulations", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Chipotle", "relation": "chose", "tail": "Olo Engage"},
+      {"head": "Chipotle", "relation": "rejected", "tail": "Toast"},
+      {"head": "Olo Engage", "relation": "fixed", "tail": "order-handoff failures"},
+      {"head": "Olo Engage", "relation": "depends_on", "tail": "Square"},
+      {"head": "Olo Engage", "relation": "constrained_by", "tail": "Allergen disclosure regulations"}
+    ]
+  },
+  {
+    "domain": "gaming",
+    "text": "Riot Games replaced their custom DDoS protection with Cloudflare Magic Transit after the 2026 Worlds opening day outage. The new edge layer fixed BGP route flapping that caused match-start delays. Magic Transit depends on Anycast. ESRB streaming guidelines constrained how telemetry could be shared with content creators.",
+    "expected_entities": [
+      {"name": "Riot Games", "entity_type": "Person"},
+      {"name": "custom DDoS protection", "entity_type": "Component"},
+      {"name": "Cloudflare Magic Transit", "entity_type": "Component"},
+      {"name": "BGP route flapping", "entity_type": "Constraint"},
+      {"name": "match-start delays", "entity_type": "Constraint"},
+      {"name": "Anycast", "entity_type": "Component"},
+      {"name": "ESRB streaming guidelines", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Cloudflare Magic Transit", "relation": "replaced", "tail": "custom DDoS protection"},
+      {"head": "Cloudflare Magic Transit", "relation": "fixed", "tail": "BGP route flapping"},
+      {"head": "BGP route flapping", "relation": "caused", "tail": "match-start delays"},
+      {"head": "Cloudflare Magic Transit", "relation": "depends_on", "tail": "Anycast"},
+      {"head": "Cloudflare Magic Transit", "relation": "constrained_by", "tail": "ESRB streaming guidelines"}
+    ]
+  },
+  {
+    "domain": "automotive",
+    "text": "Ford's BlueCruise team rejected NVIDIA DRIVE Thor for in-cabin perception, choosing Mobileye EyeQ6 High instead due to better thermal envelope. EyeQ6 depends on the REM crowdsourced map layer. UNECE WP.29 cybersecurity regulations constrained the OTA update channel for the perception stack.",
+    "expected_entities": [
+      {"name": "Ford", "entity_type": "Person"},
+      {"name": "NVIDIA DRIVE Thor", "entity_type": "Component"},
+      {"name": "Mobileye EyeQ6 High", "entity_type": "Component"},
+      {"name": "REM crowdsourced map", "entity_type": "Component"},
+      {"name": "UNECE WP.29", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Ford", "relation": "rejected", "tail": "NVIDIA DRIVE Thor"},
+      {"head": "Ford", "relation": "chose", "tail": "Mobileye EyeQ6 High"},
+      {"head": "Mobileye EyeQ6 High", "relation": "depends_on", "tail": "REM crowdsourced map"},
+      {"head": "Mobileye EyeQ6 High", "relation": "constrained_by", "tail": "UNECE WP.29"}
+    ]
+  },
+  {
+    "domain": "publishing",
+    "text": "Penguin Random House deprecated InDesign-based ebook production after introducing a Pandoc-driven Markdown pipeline. The new workflow fixed the EPUB validation errors that delayed launches by weeks. Pandoc depends on a custom CSS theme set. Apple Books accessibility audits constrained the use of fixed-layout formats.",
+    "expected_entities": [
+      {"name": "Penguin Random House", "entity_type": "Person"},
+      {"name": "InDesign", "entity_type": "Component"},
+      {"name": "Pandoc", "entity_type": "Component"},
+      {"name": "EPUB validation errors", "entity_type": "Constraint"},
+      {"name": "Apple Books accessibility audits", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Penguin Random House", "relation": "deprecated", "tail": "InDesign"},
+      {"head": "Penguin Random House", "relation": "introduced", "tail": "Pandoc"},
+      {"head": "Pandoc", "relation": "fixed", "tail": "EPUB validation errors"},
+      {"head": "Pandoc", "relation": "constrained_by", "tail": "Apple Books accessibility audits"}
+    ]
+  },
+  {
+    "domain": "museum",
+    "text": "The British Museum chose Vernon CMS over The Museum System for collection management after a digitization grant from the Arts Council. Vernon depends on the IIIF image API for high-resolution access. ICOM Code of Ethics constrained the publication of provenance metadata for contested objects.",
+    "expected_entities": [
+      {"name": "British Museum", "entity_type": "Person"},
+      {"name": "Vernon CMS", "entity_type": "Component"},
+      {"name": "The Museum System", "entity_type": "Component"},
+      {"name": "IIIF image API", "entity_type": "Component"},
+      {"name": "ICOM Code of Ethics", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "British Museum", "relation": "chose", "tail": "Vernon CMS"},
+      {"head": "British Museum", "relation": "rejected", "tail": "The Museum System"},
+      {"head": "Vernon CMS", "relation": "depends_on", "tail": "IIIF image API"},
+      {"head": "Vernon CMS", "relation": "constrained_by", "tail": "ICOM Code of Ethics"}
+    ]
+  },
+  {
+    "domain": "construction",
+    "text": "Skanska replaced Autodesk BIM 360 with Procore for jobsite collaboration on the Stockholm metro project. The migration fixed RFI response delays that caused a 3-week schedule slip. Procore depends on Revit model exports. EU Buildings Directive 2030 constrained which energy modeling plugins were acceptable.",
+    "expected_entities": [
+      {"name": "Skanska", "entity_type": "Person"},
+      {"name": "Autodesk BIM 360", "entity_type": "Component"},
+      {"name": "Procore", "entity_type": "Component"},
+      {"name": "RFI response delays", "entity_type": "Constraint"},
+      {"name": "schedule slip", "entity_type": "Constraint"},
+      {"name": "Revit", "entity_type": "Component"},
+      {"name": "EU Buildings Directive 2030", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Procore", "relation": "replaced", "tail": "Autodesk BIM 360"},
+      {"head": "Procore", "relation": "fixed", "tail": "RFI response delays"},
+      {"head": "RFI response delays", "relation": "caused", "tail": "schedule slip"},
+      {"head": "Procore", "relation": "depends_on", "tail": "Revit"},
+      {"head": "Procore", "relation": "constrained_by", "tail": "EU Buildings Directive 2030"}
+    ]
+  },
+  {
+    "domain": "insurance",
+    "text": "Allianz introduced Shift Technology for claims fraud detection, deprecating the rule-based SAS Fraud Framework. The model depends on the EU Data Hub feed. NAIC Model Audit Rule constrained how reviewer overrides could be logged for regulatory audit.",
+    "expected_entities": [
+      {"name": "Allianz", "entity_type": "Person"},
+      {"name": "Shift Technology", "entity_type": "Component"},
+      {"name": "SAS Fraud Framework", "entity_type": "Component"},
+      {"name": "EU Data Hub feed", "entity_type": "Component"},
+      {"name": "NAIC Model Audit Rule", "entity_type": "Constraint"}
+    ],
+    "expected_relations": [
+      {"head": "Allianz", "relation": "introduced", "tail": "Shift Technology"},
+      {"head": "Allianz", "relation": "deprecated", "tail": "SAS Fraud Framework"},
+      {"head": "Shift Technology", "relation": "depends_on", "tail": "EU Data Hub feed"},
+      {"head": "Shift Technology", "relation": "constrained_by", "tail": "NAIC Model Audit Rule"}
+    ]
+  }
+]
