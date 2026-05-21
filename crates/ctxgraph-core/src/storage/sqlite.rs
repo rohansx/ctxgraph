@@ -554,8 +554,13 @@ impl Storage {
             return Ok(Vec::new());
         }
 
-        let placeholders: Vec<String> = (1..=entity_ids.len()).map(|i| format!("?{i}")).collect();
-        let in_clause = placeholders.join(", ");
+        // Use distinct numbered placeholders for each IN clause so we can bind
+        // entity_ids twice without collision: source IN (?1..?N) AND target IN (?N+1..?2N).
+        let n = entity_ids.len();
+        let source_placeholders: Vec<String> = (1..=n).map(|i| format!("?{i}")).collect();
+        let target_placeholders: Vec<String> = (n + 1..=2 * n).map(|i| format!("?{i}")).collect();
+        let source_in = source_placeholders.join(", ");
+        let target_in = target_placeholders.join(", ");
         let valid_clause = if current_only {
             "AND valid_until IS NULL"
         } else {
@@ -566,7 +571,7 @@ impl Storage {
             "SELECT id, source_id, target_id, relation, fact,
                     valid_from, valid_until, recorded_at, confidence, episode_id, metadata
              FROM edges
-             WHERE source_id IN ({in_clause}) AND target_id IN ({in_clause})
+             WHERE source_id IN ({source_in}) AND target_id IN ({target_in})
              {valid_clause}
              ORDER BY recorded_at DESC"
         );

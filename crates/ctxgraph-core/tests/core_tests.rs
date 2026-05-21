@@ -9,7 +9,7 @@ fn test_graph() -> Graph {
 
 #[test]
 fn test_episode_insert_and_retrieve() {
-    let graph = test_graph();
+    let mut graph = test_graph();
     let episode = Episode::builder("Chose Postgres over SQLite for billing").build();
     let id = episode.id.clone();
 
@@ -22,7 +22,7 @@ fn test_episode_insert_and_retrieve() {
 
 #[test]
 fn test_episode_with_source_and_tags() {
-    let graph = test_graph();
+    let mut graph = test_graph();
     let episode = Episode::builder("Priya approved the discount")
         .source("slack")
         .tag("finance")
@@ -44,7 +44,7 @@ fn test_episode_with_source_and_tags() {
 
 #[test]
 fn test_episode_with_metadata() {
-    let graph = test_graph();
+    let mut graph = test_graph();
     let episode = Episode::builder("Budget approved for Q3")
         .meta("author", "rohan")
         .meta("confidence", serde_json::json!(0.95))
@@ -60,7 +60,7 @@ fn test_episode_with_metadata() {
 
 #[test]
 fn test_list_episodes() {
-    let graph = test_graph();
+    let mut graph = test_graph();
 
     for i in 0..5 {
         let ep = Episode::builder(&format!("Decision {i}")).build();
@@ -223,7 +223,7 @@ fn test_invalidate_nonexistent_edge() {
 
 #[test]
 fn test_episode_entity_link() {
-    let graph = test_graph();
+    let mut graph = test_graph();
 
     let episode = Episode::builder("Chose Postgres for billing").build();
     let ep_id = episode.id.clone();
@@ -247,7 +247,7 @@ fn test_episode_entity_link() {
 
 #[test]
 fn test_fts5_search_episodes() {
-    let graph = test_graph();
+    let mut graph = test_graph();
 
     graph
         .add_episode(Episode::builder("Chose Postgres over SQLite for billing").build())
@@ -269,7 +269,7 @@ fn test_fts5_search_episodes() {
 
 #[test]
 fn test_fts5_search_empty_results() {
-    let graph = test_graph();
+    let mut graph = test_graph();
     graph
         .add_episode(Episode::builder("Chose Postgres").build())
         .unwrap();
@@ -332,7 +332,7 @@ fn test_entity_context() {
 
 #[test]
 fn test_stats() {
-    let graph = test_graph();
+    let mut graph = test_graph();
 
     graph
         .add_episode(Episode::builder("Decision 1").source("manual").build())
@@ -391,7 +391,7 @@ fn test_graph_open_nonexistent() {
 
 #[test]
 fn test_store_and_retrieve_embedding() {
-    let graph = test_graph();
+    let mut graph = test_graph();
     let episode = Episode::builder("Embedding test episode").build();
     let ep_id = episode.id.clone();
     graph.add_episode(episode).unwrap();
@@ -424,7 +424,7 @@ fn test_get_embeddings_empty() {
 
 #[test]
 fn test_search_fused_no_embeddings() {
-    let graph = test_graph();
+    let mut graph = test_graph();
 
     graph
         .add_episode(Episode::builder("Chose Postgres for billing").build())
@@ -446,7 +446,7 @@ fn test_search_fused_no_embeddings() {
 
 #[test]
 fn test_search_fused_with_embeddings() {
-    let graph = test_graph();
+    let mut graph = test_graph();
 
     let ep1 = Episode::builder("Chose Postgres for billing").build();
     let ep2 = Episode::builder("Switched from REST to gRPC").build();
