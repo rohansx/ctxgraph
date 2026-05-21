@@ -34,7 +34,10 @@ fn main() {
         )
     };
 
-    eprintln!("Inferring schema from {} samples using {model}...", samples.len());
+    eprintln!(
+        "Inferring schema from {} samples using {model}...",
+        samples.len()
+    );
 
     match ExtractionSchema::infer_from_text(&sample_refs, url, key, &model) {
         Ok(schema) => {

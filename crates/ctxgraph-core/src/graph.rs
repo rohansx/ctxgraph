@@ -203,10 +203,7 @@ impl Graph {
         config_path: &Path,
     ) -> Result<()> {
         let config_content = std::fs::read_to_string(config_path).map_err(|e| {
-            CtxGraphError::Extraction(format!(
-                "failed to read {}: {e}",
-                config_path.display()
-            ))
+            CtxGraphError::Extraction(format!("failed to read {}: {e}", config_path.display()))
         })?;
 
         // Parse the full TOML
@@ -224,10 +221,7 @@ impl Graph {
         // Load LLM config section
         let llm_config: ctxgraph_extract::llm_extract::LlmConfig =
             if let Some(llm_table) = toml_value.get("llm") {
-                llm_table
-                    .clone()
-                    .try_into()
-                    .unwrap_or_default()
+                llm_table.clone().try_into().unwrap_or_default()
             } else {
                 Default::default()
             };
@@ -238,13 +232,9 @@ impl Graph {
             .and_then(|v| v.as_float())
             .unwrap_or(0.5);
 
-        let pipeline = ExtractionPipeline::with_llm_config(
-            schema,
-            models_dir,
-            confidence,
-            &llm_config,
-        )
-        .map_err(|e| CtxGraphError::Extraction(e.to_string()))?;
+        let pipeline =
+            ExtractionPipeline::with_llm_config(schema, models_dir, confidence, &llm_config)
+                .map_err(|e| CtxGraphError::Extraction(e.to_string()))?;
 
         self.pipeline = Some(pipeline);
         Ok(())
@@ -621,10 +611,9 @@ fn detect_llm_for_schema_inference() -> Result<(String, String, String)> {
     if let Ok(client) = reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(3))
         .build()
-    {
-        if let Ok(resp) = client.get("http://localhost:11434/api/tags").send() {
-            if resp.status().is_success() {
-                if let Ok(body) = resp.json::<serde_json::Value>() {
+        && let Ok(resp) = client.get("http://localhost:11434/api/tags").send()
+            && resp.status().is_success()
+                && let Ok(body) = resp.json::<serde_json::Value>() {
                     let models = body["models"]
                         .as_array()
                         .map(|m| {
@@ -640,9 +629,6 @@ fn detect_llm_for_schema_inference() -> Result<(String, String, String)> {
                         model,
                     ));
                 }
-            }
-        }
-    }
 
     // Try cloud providers
     for (env_key, url, default_model) in [
@@ -657,11 +643,10 @@ fn detect_llm_for_schema_inference() -> Result<(String, String, String)> {
             "google/gemma-4-31b-it",
         ),
     ] {
-        if let Ok(key) = std::env::var(env_key) {
-            if !key.is_empty() {
+        if let Ok(key) = std::env::var(env_key)
+            && !key.is_empty() {
                 return Ok((url.into(), key, default_model.into()));
             }
-        }
     }
 
     Err(CtxGraphError::Extraction(

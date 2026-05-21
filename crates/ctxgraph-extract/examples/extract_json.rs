@@ -23,7 +23,9 @@ fn main() {
     .expect("Failed to create pipeline");
 
     let mut text = String::new();
-    std::io::stdin().read_to_string(&mut text).expect("Failed to read stdin");
+    std::io::stdin()
+        .read_to_string(&mut text)
+        .expect("Failed to read stdin");
     let text = text.trim();
 
     if text.is_empty() {
