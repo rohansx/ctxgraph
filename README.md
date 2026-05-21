@@ -1,239 +1,163 @@
 # ctxgraph
 
-**Privacy-first knowledge graph engine for AI agents.**
-
-Extracts entities and relations from any text. Builds a temporal knowledge graph. Works locally with zero API keys — and when it does call an LLM, it makes one call per episode instead of Graphiti's six.
+**Typed knowledge graph for AI agents. Single Rust binary. Single SQLite file. One LLM call per write. Zero LLM calls for 90% of reads.**
 
 ```bash
 brew install rohansx/tap/ctxgraph
-ctxgraph init && ctxgraph models download
+ctxgraph init
 ctxgraph log "Migrated auth from Redis sessions to JWT. Chose JWT for stateless scaling."
-ctxgraph query "Why did we move away from Redis?"
+ctxgraph query "why did we move away from Redis?"
 ```
 
+> **Working spec**: [`docs/CLARITY.md`](docs/CLARITY.md) — product, decisions, the 5 pieces to build, launch pitch.
+> **Architecture**: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — as-built (§1-4) + v0.3 target (§5-14).
+> **Roadmap**: [`docs/ROADMAP.md`](docs/ROADMAP.md) — 5 pieces + 12-week schedule + this-weekend todo.
+> **Benchmarks**: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) — measured F1 numbers + hostile-reader audit.
+
 ---
 
-## Why ctxgraph?
+## Headline result (measured 2026-05-13)
 
-Every knowledge graph engine requires an LLM for every operation. Graphiti makes 6 API calls per episode. Mem0 calls GPT-4 on every add/search. Microsoft GraphRAG is so expensive they put a cost warning in their README.
+Same LLM, same fixture, same scoring code. ctxgraph's single-call schema-typed prompt vs Graphiti's 6-call pipeline:
 
-ctxgraph runs a tiered extraction pipeline: local ONNX models handle most episodes at zero cost, and only escalates to an LLM when local confidence is low. One call, not six. PII stripped before it leaves your machine.
-
-**Benchmarked on 20 random real-world texts (GPT-4o judge, 10-point scale):**
-
-| | ctxgraph (local) | ctxgraph + Ollama | Graphiti (Neo4j+GPT-4o) |
+| Metric (Gemma 4 26B-A4B in both columns) | ctxgraph | Graphiti | Δ |
 |---|---|---|---|
-| **Quality score** | 5.0/10 | **7.6/10** | 8.2/10 |
-| **With cloud LLM (26B)** | — | — | **8.4/10** |
-| LLM calls per episode | **0** | **0-1** | **5-6** |
-| Works without LLM? | **Yes** | **Yes** | No |
-| Works offline? | **Yes** | **Yes** | No |
-| Query latency | **<15ms** | **<15ms** | ~300ms |
-| Infrastructure | **SQLite** | **SQLite + Ollama** | Neo4j+Docker |
-| Cost per 1000 episodes | **$0** | **$0** | ~$2-5 |
-| Language | **Rust** | **Rust** | Python |
-| Privacy (PII protection) | **Full** | **Full** | None |
+| entity F1 (pair-fuzzy) | 0.819 | 0.824 | -0.005 |
+| **relation F1 (pair-fuzzy)** | **0.555** | 0.096 | **+0.459 (5.8×)** |
+| **combined F1** | **0.687** | 0.460 | **+0.227** |
 
-ctxgraph's local ONNX tier handles tech-domain text at 0.800 F1. For cross-domain, the Ollama tier (auto-detected) uses Gemma 3n E4B at zero cost. Cloud escalation to Gemma 4 26B MoE hits 8.4/10 quality at $0.13/1M tokens.
+The win **replicates** with Gemma 4 31B (ctxgraph 0.739 vs Graphiti 0.467, +0.272 combined / +0.499 relation). It's architectural, not model-specific. Graphiti's 6-call pipeline tops out at combined F1 ≈ 0.46 regardless of which Gemma you feed it.
+
+Fixture: 29 hand-labeled cross-domain episodes covering 25 domains (`crates/ctxgraph-extract/tests/fixtures/cross_domain_v2.json`). Scoring code: `scripts/openrouter_bench.py` + `scripts/graphiti_openrouter_bench.py`. Raw per-episode outputs: `scripts/results/v0.9_cross_domain_v2/*.json`. Total cost to reproduce: ~$0.15.
+
+[Full benchmark detail → docs/BENCHMARKS.md](docs/BENCHMARKS.md)
 
 ---
 
-## How It Works
+## How it works
 
 ```
-Text comes in
-    │
-    ▼
-[Tier 1] GLiNER + GLiREL (local ONNX, FREE, ~30ms)
-    │
-    ▼ confidence < threshold?
-    │
-[Tier 2] Ollama auto-detected (Gemma 3n E4B, FREE, ~18s, 3.8GB VRAM)
-    │
-    ▼ Ollama not available?
-    │
-[Tier 3] Cloud API + CloakPipe PII stripping ($0.13/1M tokens)
+                 ┌──────────────────────────────────────┐
+                 │       WRITE PATH (one LLM call)       │
+                 │  Tier 1: GLiNER2 ONNX (CPU, ~30ms)    │
+                 │  Tier 2: NuExtract 2.0 (local Ollama) │
+                 │  Tier 3: Cloud (only if needed)       │
+                 │    Mode B default: Cerebras free       │
+                 │    Paid: DeepInfra Gemma-4-26B-A4B    │
+                 └──────────────────────────────────────┘
+                                  │
+                                  ▼
+                 ┌──────────────────────────────────────┐
+                 │       SQLite + FTS5 + sqlite-vec      │
+                 │       bi-temporal edges, RRF search   │
+                 └──────────────────────────────────────┘
+                                  ▲
+                                  │
+                 ┌──────────────────────────────────────┐
+                 │   READ PATH (zero LLM in 90% cases)   │
+                 │  Simple (90%):                        │
+                 │    verb → typed relation via cosine   │
+                 │    embedding match (~30 LOC)          │
+                 │    then deterministic SQL             │
+                 │  Complex (10%):                       │
+                 │    local Qwen3-1.5B parses NL →       │
+                 │    graph op, then SQL                 │
+                 │  NO cloud LLM ever in read path       │
+                 └──────────────────────────────────────┘
 ```
 
-| Tier | What | Cost | Latency | Quality |
-|---|---|---|---|---|
-| **Local ONNX** | GLiNER (entities) + GLiREL (relations) | $0 | ~30ms | 5.0/10 cross-domain, 0.800 F1 tech |
-| **Local Ollama** | Gemma 3n E4B (auto-detected if installed) | $0 | ~18s | 7.6/10 cross-domain |
-| **Cloud LLM** | Gemma 4 26B MoE via OpenRouter | $0.13/1M | ~5s | 8.4/10 cross-domain |
-| **Dedup** | Jaro-Winkler similarity + alias table | $0 | <1ms | — |
-| **Search** | FTS5 + semantic + graph walk, fused via RRF | $0 | <15ms | — |
+Two architectural bets:
 
-**Auto-schema inference**: Log 3 episodes → ctxgraph infers domain-specific entity/relation types automatically. No manual schema definition needed.
+1. **One LLM call per write.** Tiered escalation: local ONNX handles ~70% of episodes, local LLM another 25%, cloud only when both fail. Compare to Graphiti's 6 calls per episode.
+2. **Zero LLM calls in the read path for 90% of queries.** The universal schema's 10 typed relations are a closed set — your user verb cosine-matches to one of them, then SQL runs deterministically. Only multi-hop / time-filter / conjunction queries (~10%) call a tiny **local** Qwen3-1.5B. No cloud LLM ever sees a read.
 
-Graphiti does ALL of these via LLM: entity extraction, deduplication, relation extraction, contradiction detection, summarization, community detection. Five calls. Every episode.
+This is the bit competitors can't match. Graphiti, Mem0, Letta all need an LLM at read time because their relation types are free-form text the SQL engine can't reason about.
 
 ---
 
-## Competitive Landscape
+## The universal schema (v0.3 target)
 
-### Knowledge Graph Engines
+9 entity types, 10 relations, hardcoded. Users **never write a schema**.
 
-| | ctxgraph | Graphiti | Cognee | WhyHow.AI |
-|---|---|---|---|---|
-| **Extraction** | Local ONNX + LLM fallback | LLM only (6 calls/ep) | LLM only | LLM only (OpenAI) |
-| **Graph DB** | SQLite (embedded) | Neo4j/FalkorDB | Neo4j/Kuzu | MongoDB Atlas |
-| **Works offline?** | **Yes** | No | No | No |
-| **Temporal queries** | **Bi-temporal** | Bi-temporal | No | No |
-| **MCP support** | Yes | Yes | Yes | No |
-| **Language** | Rust (single binary) | Python | Python | Python |
-| **Schema-driven** | Yes (ctxgraph.toml) | Yes (prescribed ontology) | Yes | Yes |
-| **Cost/1000 eps** | **$0.30** | $1.80 | ~$1.50 | ~$2+ |
-| **Stars** | Early | 24K | 15K | 900 |
+| Entity types | Relation types |
+|---|---|
+| Person, Place, Organization, Concept, Artifact, Event, Time, Idea, Fact | mentions, located_at, related_to, caused, preceded, references, owned_by, part_of, depends_on, participated_in |
 
-### Agent Memory Systems
+Broad enough to handle personal wikis, work notes, research, recipes, code, journal entries — anything text-shaped. Edge-case domains (recipes need "Ingredient", scientific datasets need "Measurement") get handled by an **automatic schema-improvement loop**: the LLM logs suggestions to a side-table; a nightly cron promotes types that show up across ≥ 5 distinct episodes with cosine-similarity < 0.85 to any existing type. Users see this as a one-line notice the next time they invoke the CLI.
 
-| | ctxgraph | Mem0 | Basic Memory | mcp-memory-service |
-|---|---|---|---|---|
-| **Entity extraction** | **Automated (ONNX+LLM)** | LLM-only | None (manual) | None (manual) |
-| **Relation extraction** | **Automated (GLiREL+LLM)** | Limited | None | Manual typed edges |
-| **Knowledge graph** | **Yes (temporal)** | Optional (Neptune) | Semantic links | Basic typed edges |
-| **Works without LLM?** | **Yes** | No | Yes | Yes |
-| **Query latency** | **<15ms** | ~100ms | ~10ms | ~5ms |
-| **Dedup** | Jaro-Winkler + aliases | LLM-based | None | None |
-| **Cost** | **$0 (local) / $0.30 (hybrid)** | LLM cost per op | $0 | $0 |
-| **Stars** | Early | 51K | 2.7K | 1.6K |
-
-### Graph-Enhanced RAG
-
-| | ctxgraph | LightRAG | Microsoft GraphRAG | nano-graphrag |
-|---|---|---|---|---|
-| **Purpose** | Knowledge graph engine | RAG retrieval | Document summarization | Lightweight GraphRAG |
-| **Incremental updates** | **Yes** | Yes | **No** (batch only) | No |
-| **Temporal awareness** | **Yes (bi-temporal)** | No | No | No |
-| **LLM per query** | **No** | Yes | Yes | Yes |
-| **Offline capable** | **Yes** | Partial (Ollama) | No | Partial |
-| **Cost/1000 docs** | **$0.30** | ~$1-5 | ~$10-50 | ~$1-5 |
-| **Stars** | Early | 31K | 32K | 3.8K |
-
-### What Makes ctxgraph Unique
-
-**No other tool has all of these:**
-1. **Zero-config schema inference** — Log 3 episodes, ctxgraph auto-infers domain-specific entity/relation types. No manual schema definition.
-2. **Tiered local-first pipeline** — ONNX handles ~70% of extractions at $0. Ollama auto-detection adds cross-domain quality at $0. Cloud LLM only when needed.
-3. **5x fewer LLM calls** — 0-1 calls per episode vs Graphiti's 5. Same quality, fraction of the cost.
-4. **Runs on a laptop GPU** — Gemma 3n E4B fits in 3.8GB VRAM (RTX 4050), scores 7.6/10 on cross-domain extraction.
-5. **Bi-temporal history** — Only ctxgraph and Graphiti have this. Every other tool is current-state only.
-6. **PII protection** — CloakPipe strips PII before cloud LLM calls (`--features cloakpipe`). No competitor offers this.
-7. **Single Rust binary** — Every competitor is Python with pip/Docker/Neo4j. ctxgraph is `cargo install`.
+[Full schema rationale → docs/CLARITY.md § 3](docs/CLARITY.md)
 
 ---
 
-## Benchmarks
+## Three modes
 
-### Real-World Extraction (GPT-4o judge, 20 random texts, 10-point scale)
+You pick one at `ctxgraph init`. All three keep reads local.
 
-| System | Score | Time | Cost | Infrastructure |
-|---|---|---|---|---|
-| ctxgraph + Gemma 4 26B (cloud) | **8.4/10** | ~25s/ep | $0.13/1M | SQLite |
-| Graphiti + GPT-4o | 8.2/10 | ~16s/ep | ~$2-5/batch | Neo4j + Docker |
-| ctxgraph + Gemma 3n E4B (local) | 7.6/10 | ~18s/ep | **$0** | **SQLite only** |
-| ctxgraph local ONNX only | 5.0/10 | ~30ms/ep | **$0** | **SQLite only** |
-
-### LLM Model Comparison (10 random texts, GPT-4o judge)
-
-| LLM | Hostable locally? | Score | Cost/1M tokens |
+| Mode | Writes | Cost / 1k eps | Best for |
 |---|---|---|---|
-| Gemma 4 26B MoE | 24GB GPU | **8.4/10** | $0.13 |
-| Gemma 4 31B | 24GB GPU | 8.2/10 | $0.14 |
-| GPT-4o-mini | Cloud only | 8.2/10 | $0.15 |
-| **Gemma 3n E4B** | **6GB GPU** | **7.6/10** | **$0 (local)** |
-| GPT-4o | Cloud only | 7.0/10 | $2.50 |
+| **`local-only`** | GLiNER2 → NuExtract 2.0 → Qwen3-8B (all local) | $0 | Privacy / offline / sensitive data |
+| **`cloud-fallback`** (default) | Local first; Cerebras free tier when local is stuck | $0 in practice* | Most users |
+| **`cloud-quality`** | Skip local; every episode goes to Cerebras Qwen3-32B or DeepInfra Gemma-4-26B-A4B | $0–$0.11 | Long-form text, research papers |
 
-### Schema-Typed Extraction (50 tech-domain episodes, F1 scores)
+\* Cerebras free tier = 1M tokens/day, 30 RPM. Enough for ~1 250 episodes/day. DeepInfra Gemma-4-26B-A4B ($0.07 in / $0.34 out, ~$0.11/1k eps) is the paid fallback when Cerebras rate-limits.
 
-| System | Entity F1 | Relation F1 | Combined F1 |
-|---|---|---|---|
-| ctxgraph local ONNX | **0.837** | **0.763** | **0.800** |
-| Gemma 4 31B (best LLM) | 0.658 | 0.374 | 0.516 |
-| GPT-4o-mini | 0.625 | 0.191 | 0.408 |
-| Graphiti + GPT-4o | 0.570 | 0.104 | 0.337 |
+`allow_cloud = false` in `~/.ctxgraph/config.toml` forces Mode A regardless of `mode` — the privacy override.
 
-### Query Performance
+---
 
-| | ctxgraph | Graphiti |
+## Competitive landscape
+
+| | ctxgraph | Graphiti / Zep | Mem0 | Letta | Cognee |
+|---|---|---|---|---|---|
+| Distribution | **single Rust binary** | Python + Neo4j + Docker | Python SDK | Python | Python + Neo4j |
+| Local-only mode | **yes** | no | no | yes (Apache 2.0) | no |
+| LLM calls per write | **1** | 6 | N | varies | varies |
+| LLM in read path | **no (90% of queries)** | yes | yes | yes | yes |
+| Schema-typed extraction | **yes (universal 9/10)** | free-form verbs | free-form | typed but manual | typed but manual |
+| Bi-temporal edges | **yes** | yes | no | no | no |
+| Verified $/1k eps (Gemma 4 26B) | **$0.11** | ~$0.66 (6×) | N/A | N/A | N/A |
+| Apples-to-apples combined F1 vs ctxgraph (same model) | **0.687** | 0.460 | not measured | not measured | not measured |
+| Stars (rough, May 2026) | early | ~20K | ~50K | ~30K | ~15K |
+
+[More competitor analysis → docs/ROADMAP.md § "Competitive landscape"](docs/ROADMAP.md)
+
+---
+
+## What's in the box today (v0.8.0)
+
+| Component | Status | Lines |
 |---|---|---|
-| Full-text search | **<1ms** | ~50ms |
-| Semantic search | **3-5ms** | ~100ms |
-| Graph traversal (2-3 hops) | **<5ms** | 5-50ms |
-| Fused search (RRF) | **<15ms** | ~300ms |
+| `ctxgraph-core` — SQLite + FTS5 + bi-temporal graph | shipped | ~2 000 |
+| `ctxgraph-extract` — tiered extraction (current: GLiNER + GLiREL + LLM gate) | shipped | ~8 500 |
+| `ctxgraph-embed` — fastembed wrapper, all-MiniLM-L6-v2 (384-dim) | shipped | ~70 |
+| `ctxgraph-cli` — init, log, query, entities, stats, models, mcp start | shipped | ~600 |
+| `ctxgraph-mcp` — MCP server, 6 tools | shipped | ~870 |
+
+**v0.3 is the next launch** — see [`docs/ROADMAP.md`](docs/ROADMAP.md). It swaps GLiNER + GLiREL for GLiNER2 (single forward pass), adopts the universal schema, adds the no-LLM read path, defaults to Cerebras free tier, and re-runs the 29-episode benchmark to confirm the headline lands at ≥ 0.745 combined F1 with a fully local stack.
 
 ---
 
-## Key Features
-
-- **Tiered extraction** — Local ONNX first → Ollama auto-detected → Cloud LLM fallback
-- **Auto-schema inference** — Domain-specific entity/relation types inferred from first 3 episodes
-- **Privacy** — CloakPipe strips PII before cloud LLM calls (enable with `--features cloakpipe`)
-- **Zero infrastructure** — One binary, one SQLite file. No Docker, no Neo4j
-- **Ollama auto-detection** — Finds local Ollama and picks the best model automatically
-- **Any LLM** — Ollama (Gemma 3n/4), OpenRouter, OpenAI, Anthropic
-- **Bi-temporal** — Time-travel queries, fact invalidation
-- **Schema-driven** — Auto-inferred or manual via `ctxgraph.toml`
-- **MCP server** — Claude Code, Cursor, Cline, any MCP client
-- **Embeddable** — Rust library, CLI, or MCP server
-- **Entity dedup** — Jaro-Winkler + alias table across episodes
-
----
-
-## Installation
+## Install
 
 ```bash
-# Homebrew
+# macOS + Linux (prebuilt binaries via Homebrew)
 brew install rohansx/tap/ctxgraph
 
-# Or build from source (Rust 1.85+)
+# or from source (Rust 1.85+)
 cargo install ctxgraph-cli
 ```
 
-## Quick Start
+## Quick start
 
 ```bash
-ctxgraph models download              # one-time ONNX model download
-ctxgraph init                         # initialize graph in current dir
-ctxgraph log "Alice chose PostgreSQL"  # extract + store
-ctxgraph query "why PostgreSQL?"       # search the graph
+ctxgraph init
+ctxgraph log "Alice chose PostgreSQL over MySQL for the new billing service."
+ctxgraph log "PostgreSQL replaced MySQL in prod on 2026-04-12."
+ctxgraph query "what did Alice choose?"
+ctxgraph query "what was replaced?"
 ```
 
-### Optional: Local LLM for cross-domain quality
-
-```bash
-# Install Ollama + Gemma 3n E4B (one-time, 7.5GB download)
-ollama pull gemma3n:e4b
-
-# ctxgraph auto-detects Ollama — no config needed!
-# You'll see: [ctxgraph] Ollama detected with model 'gemma3n:e4b' (local, free)
-```
-
-### Optional: Cloud LLM for maximum quality
-
-```toml
-# ctxgraph.toml
-[llm]
-provider = "openrouter"
-model = "google/gemma-4-26b-a4b-it"   # 8.4/10 quality, $0.13/1M tokens
-api_key_env = "OPENROUTER_API_KEY"
-```
-
-### Auto-schema inference
-
-No need to define entity types manually. After 3 episodes, ctxgraph automatically infers domain-specific types:
-
-```bash
-ctxgraph log "Pfizer's Ozempic generated $28B revenue..."
-ctxgraph log "FDA approved Casgevy gene therapy..."
-ctxgraph log "NHS launched Federated Data Platform by Palantir..."
-# [ctxgraph] Schema inferred: domain='Healthcare', 9 entity types, 10 relation types
-# Saved to .ctxgraph/schema.toml — all future extractions use this schema
-```
-
----
-
-## MCP Server
+## MCP server (Claude Code / Cursor / Cline)
 
 ```json
 {
@@ -245,7 +169,7 @@ ctxgraph log "NHS launched Federated Data Platform by Palantir..."
 
 | Tool | Description |
 |---|---|
-| `ctxgraph_add_episode` | Record a decision or event |
+| `ctxgraph_add_episode` | Record an event or decision |
 | `ctxgraph_search` | Fused FTS5 + semantic + graph search |
 | `ctxgraph_traverse` | Walk the graph from an entity |
 | `ctxgraph_find_precedents` | Find similar past events |
@@ -255,26 +179,55 @@ ctxgraph log "NHS launched Federated Data Platform by Palantir..."
 ## Rust SDK
 
 ```rust
-let graph = ctxgraph::Graph::init(".ctxgraph")?;
-graph.add_episode(Episode::builder("Chose Postgres for billing").build())?;
+use ctxgraph::{Graph, Episode};
+
+let mut graph = Graph::init(".ctxgraph")?;
+graph.add_episode(
+    Episode::builder("Chose Postgres over Mongo for the billing rewrite").build()
+)?;
 let results = graph.search("why Postgres?", 10)?;
 ```
 
-## Project Structure
+## Project structure
 
 ```
 crates/
-+-- ctxgraph-core/       Types, storage, query, temporal
-+-- ctxgraph-extract/    Tiered extraction (ONNX + LLM)
-+-- ctxgraph-embed/      Local embeddings
-+-- ctxgraph-cli/        CLI binary
-+-- ctxgraph-mcp/        MCP server
-+-- ctxgraph-sdk/        Rust SDK
+├── ctxgraph-core/      types, storage, query, temporal
+├── ctxgraph-extract/   tiered extraction (ONNX + LLM)
+├── ctxgraph-embed/     local embeddings (384-dim)
+├── ctxgraph-cli/       CLI binary
+└── ctxgraph-mcp/       MCP server
 ```
+
+## Reproducing the benchmark
+
+```bash
+export OPENROUTER_API_KEY=sk-or-...
+python scripts/openrouter_bench.py \
+  --model google/gemma-4-26b-a4b-it \
+  --out bench.json \
+  --skip-tech \
+  --cd-fixture crates/ctxgraph-extract/tests/fixtures/cross_domain_v2.json
+
+# Spin up Neo4j for Graphiti
+docker run -d --name neo4j-bench -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/benchpass123 neo4j:5.26-community
+
+# Graphiti through OpenRouter (needs Python 3.12 venv)
+python3.12 -m venv /tmp/graphiti_venv
+/tmp/graphiti_venv/bin/pip install graphiti-core neo4j openai
+/tmp/graphiti_venv/bin/python scripts/graphiti_openrouter_bench.py \
+  --model google/gemma-4-26b-a4b-it \
+  --out graphiti.json
+
+python scripts/compare_v2.py
+```
+
+Total cost: ~$0.15. Total wall-clock: ~90 minutes.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). For design discussions, [`docs/CLARITY.md`](docs/CLARITY.md) is the working doc — propose changes against it.
 
 ## License
 

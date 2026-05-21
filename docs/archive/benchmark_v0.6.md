@@ -1,4 +1,13 @@
-# Extraction Benchmark
+# Extraction Benchmark (v0.6.0, ARCHIVED)
+
+> ⚠️ **DEPRECATED — superseded by `../BENCHMARKS.md`.**
+> This is the original 50-tech-episode F1 comparison vs. Graphiti + GPT-4o (combined F1 0.800 vs. 0.337). Tech text is ctxgraph's home turf; the canonical headline now uses the 29-episode cross-domain v2 fixture with same-LLM-vs-Graphiti scoring. The 0.800 / 0.337 numbers below remain valid; they're just **secondary** evidence now, not the headline.
+>
+> **Current authoritative benchmark: `../BENCHMARKS.md`**
+
+---
+
+# Original content below
 
 ctxgraph's extraction pipeline is benchmarked against 50 gold-labeled episodes covering real-world architectural decision records (ADRs), incident reports, PR descriptions, and migration plans.
 

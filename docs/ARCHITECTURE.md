@@ -1,781 +1,629 @@
 # ctxgraph — Architecture
 
-> Privacy-first knowledge graph engine. Better quality, 6x cheaper, 3x faster than Graphiti — and when it does call an LLM, CloakPipe strips PII first.
+> **Status**: Authoritative architecture document as of 2026-05-14.
+> **Master working doc**: `CLARITY.md` — this file is the technical deep-dive that elaborates it.
+> **Supersedes**: `archive/ARCHITECTURE_v1.md` (aspirational pre-research version, kept for history).
+> **Synthesizes**: actual codebase state (v0.8.0 in Cargo.toml, v0.9.0 features unmerged), measured benchmarks (`docs/research_brief.md`), and deep-research findings (`docs/deep-research/FINAL.md`).
+>
+> Two architectures live in this doc, clearly labeled:
+> - **§ 1–4 — As-built**: what's in `crates/` today.
+> - **§ 5–14 — Target v0.3**: what the post-research-synthesis architecture moves to before HN. Mirrors the **5 pieces to build** in `CLARITY.md` § 3.
+>
+> If a section header is **§-T** it's target. **§-A** is as-built.
 
 ---
 
-## System Overview
+## TL;DR
 
-ctxgraph is a tiered knowledge graph engine that extracts entities and relations from text using local ONNX models first, and only escalates to an LLM when local confidence is low — with PII stripped via CloakPipe before any cloud call. In fair head-to-head testing (same model, same data, same evaluation), ctxgraph scores 0.846 combined F1 vs Graphiti's 0.601 on tech text, while making 6x fewer LLM calls and querying 20x faster.
+ctxgraph is a **single-binary, SQLite-only typed knowledge-graph engine** for AI agents. Two architectural bets:
 
-It can be used as a Rust library, a CLI tool, an MCP server for AI coding tools, or a background daemon that indexes developer activity.
+1. **One LLM call per write** (tiered escalation: local ONNX → local LLM → cloud only as fallback). Measured headline: same model, same fixture — ctxgraph's single-call prompt beats Graphiti's 6-call pipeline by **+0.227 combined F1 (Gemma 4 26B) and +0.272 (Gemma 4 31B)**.
+2. **Zero LLM calls in the read path for ~90% of queries.** Simple lookups embed-match the user's verb to one of 10 typed relations, then run deterministic SQL. Only multi-hop / conjunction / time-filter queries (~10%) call a tiny local Qwen3-1.5B to parse NL → graph op. **No cloud LLM ever touches a read in any mode.**
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Source Layer                                │
-│  [Git]  [Shell History]  [FS Watcher]  [Browser]  [Screenpipe]  │
-└────┬──────────┬──────────────┬────────────┬───────────┬─────────┘
-     │          │              │            │           │
-     ▼          ▼              ▼            ▼           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                 ctxgraph-ingest (Connectors)                     │
-│                                                                  │
-│  GitConnector    ShellConnector    FsConnector    BrowserConnector│
-│  (git2-rs)      (bash/zsh/fish)   (notify)       (Chrome/FF)    │
-│                                                                  │
-│  Structured data → Episodes with source tags                     │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   ctxgraph-core (Engine)                          │
-│                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐  │
-│  │ Graph API    │  │ Query Engine │  │ Temporal Engine         │  │
-│  │              │  │              │  │                         │  │
-│  │ add_episode  │  │ FTS5         │  │ bi-temporal edges       │  │
-│  │ add_entity   │  │ semantic     │  │ invalidation            │  │
-│  │ add_edge     │  │ graph walk   │  │ time-travel query       │  │
-│  │ traverse     │  │ RRF fusion   │  │ temporal window filter  │  │
-│  └──────────────┘  └──────────────┘  └────────────────────────┘  │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │                Storage (SQLite + FTS5 + WAL)              │    │
-│  │  episodes │ entities │ edges │ aliases │ communities      │    │
-│  └──────────────────────────────────────────────────────────┘    │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-          ┌────────────────────┼────────────────────┐
-          │                    │                    │
-          ▼                    ▼                    ▼
-┌──────────────────┐  ┌────────────────┐  ┌──────────────────┐
-│ ctxgraph-extract │  │ ctxgraph-embed │  │ Interface Layer  │
-│                  │  │                │  │                  │
-│ Tier 1: ONNX     │  │ all-MiniLM-L6  │  │ MCP Server       │
-│  GLiNER2 (NER)   │  │ 384-dim vectors│  │ CLI              │
-│  GLiREL (RE)     │  │ cosine sim     │  │ TUI (ratatui)    │
-│                  │  │                │  │                  │
-│ Tier 2: Local    │  └────────────────┘  └──────────────────┘
-│  coref+dedup     │
-│  +temporal       │
-│                  │
-│ Tier 3: LLM      │
-│  ollama/API      │
-│  (optional)      │
-└──────────────────┘
-```
+The v0.3 target architecture: replace GLiNER + GLiREL with GLiNER2 (single forward pass for NER + RE), introduce NuExtract 2.0 as the Tier-2 local extractive decoder, swap the schema from the legacy 10/9 tech taxonomy to a **universal 9/10 schema** (Person, Place, Organization, Concept, Artifact, Event, Time, Idea, Fact + 10 broad relations), default cloud writes to DeepInfra `google/gemma-4-26b-a4b-it` ($0.07 in / $0.34 out, with Cerebras free tier as the practical default), and treat host-memory prompt caching as a first-class concern.
 
-### Key Insight: Don't Call an LLM When You Don't Have To
-
-Graphiti calls GPT-4o on every episode — even when the entities are obvious. "Alice chose PostgreSQL" doesn't need a $0.01 API call.
-
-ctxgraph's tiered pipeline handles 80%+ of episodes locally (free, <10ms), and only escalates when local confidence is low. CloakPipe PII stripping coming in v0.8, and caches entity resolutions so the same pattern never costs twice.
-
-For developer workflows specifically, structured ingestion (git, shell, FS) provides entities directly — no ML needed at all. NER is only needed for unstructured text like commit messages, terminal output, and free-form decision logs.
+The product spec lives in [`CLARITY.md`](./CLARITY.md). The five concrete pieces to build are listed there.
 
 ---
 
-## Crate Structure
+## 1. As-built (§-A): crate layout
 
 ```
-ctxgraph-cli ──────┐
-ctxgraph-mcp ──────┤
-ctxgraph-sdk ──────┤
-                   ▼
-             ctxgraph-core
-                   │
-          ┌────────┼────────────────┐
-          ▼        ▼                ▼
-  ctxgraph-extract  ctxgraph-embed  ctxgraph-ingest
-          │                              │
-     ort + tokenizers              git2 + notify
-     (ONNX Runtime)                (connectors)
+crates/                                   ~12 000 lines of Rust
+├── ctxgraph-core/         SQLite + FTS5 + bi-temporal graph engine
+│   ├── graph.rs            685 lines — add_episode, search, traverse, time-travel
+│   ├── storage/sqlite.rs   648 lines — DDL, migrations, query backends
+│   └── types.rs                       — Episode, Entity, Edge, schema enums
+├── ctxgraph-extract/      Tiered extraction pipeline (current)
+│   ├── pipeline.rs         438 lines — NER → coref → remap → LLM gate → relations
+│   ├── ner.rs                         — GLiNER ONNX wrapper
+│   ├── rel.rs             1792 lines — relation extraction (GLiREL ONNX + heuristics)
+│   ├── glirel.rs           717 lines — GLiREL zero-shot RE
+│   ├── llm_extract.rs     1012 lines — Ollama/OpenRouter/OpenAI/Anthropic client + tiered autodetect
+│   ├── schema.rs           596 lines — entity/relation taxonomy + auto-inference
+│   ├── remap.rs           1262 lines — dictionary-based entity-type fixups
+│   ├── coref.rs                       — pronoun resolution
+│   ├── temporal.rs                    — date / duration parsing
+│   └── model_manager.rs               — ONNX model download + cache
+├── ctxgraph-embed/        fastembed wrapper, all-MiniLM-L6-v2 (384-dim)
+├── ctxgraph-cli/          init, log, query, entities, stats, models, mcp start
+└── ctxgraph-mcp/          MCP server, 6 tools
 ```
 
-| Crate | Purpose | Key deps | Status |
-|---|---|---|---|
-| `ctxgraph-core` | Engine: types, storage, query, temporal logic | rusqlite, chrono, uuid, serde | Shipped (v0.8.0) |
-| `ctxgraph-extract` | Three-tier extraction pipeline | ort, tokenizers, strsim, reqwest | Shipped (v0.8.0) |
-| `ctxgraph-embed` | Local embedding generation (384-dim) | fastembed | Shipped (v0.8.0) |
-| `ctxgraph-ingest` | Connectors: git, shell, FS, browser, Screenpipe | git2, notify, rusqlite (browser) | **New — Phase 1** |
-| `ctxgraph-mcp` | MCP server for AI coding tools | tokio, serde_json | Shipped (v0.8.0) |
-| `ctxgraph-cli` | CLI + daemon mode + TUI dashboard | clap, colored, ratatui | Partial (CLI shipped, daemon + TUI in Phase 2) |
-| `ctxgraph-sdk` | Re-export crate for embedding in Rust apps | — | Shipped |
-| `ctxgraph-privacy` | PII detection and entity redaction (CloakPipe) | — | Phase 4 |
+No `ctxgraph-ingest`, no `ctxgraph-sdk` separate crate, no `ctxgraph-privacy` — those exist only in the older `ARCHITECTURE.md` as aspirational. CloakPipe is wired in via a `cloakpipe` feature flag on `ctxgraph-extract`, not a separate crate.
 
----
+### 1.1 Distribution
 
-## Data Model
+- `brew install rohansx/tap/ctxgraph` (macOS + Linux prebuilt)
+- `cargo install ctxgraph-cli` (Rust 1.85+)
+- `ctxgraph-mcp` binary for MCP clients (Claude Code, Cursor, Cline)
 
-### Entity Types (Developer-Specific)
+### 1.2 Active schema (taxonomy, legacy tech-focused)
 
-The entity schema is purpose-built for developer workflows. Most entities are extracted directly from structured sources — no NER required.
+10 entity types, 9 relation types, hard-coded in `crates/ctxgraph-extract/src/schema.rs`. This is the **tech-decision-record taxonomy**, tuned for ADRs, postmortems, and migration plans:
 
-| Entity Type | Source | Example | NER Required? |
-|---|---|---|---|
-| `File` | Git, FS watcher | `src/auth/middleware.rs` | No — direct from structured data |
-| `Function` | ctxgraph-extract (ONNX NER) | `validate_jwt_token()` | Yes — extracted from terminal output, commit messages |
-| `Error` | Terminal history, ctxgraph-extract | `ECONNREFUSED`, `panic at thread main` | Partial — structured from exit codes, NER for stack traces |
-| `Package` | ctxgraph-extract, lockfiles | `tokio@1.35`, `express@4.18` | No — parsed from Cargo.toml, package.json |
-| `PR` | Git remote, browser history | `PR #142` | No — parsed from git refs, URLs |
-| `Issue` | Browser history, commit messages | `JIRA-1234`, `GH-42` | Partial — regex from commit messages |
-| `Person` | Git author field | `sarah <sarah@company.com>` | No — direct from git |
-| `Command` | Shell history | `cargo test --release` | No — direct from history file |
-| `URL` | Browser history (filtered) | `github.com/org/repo/pull/142` | No — direct from browser DB |
-| `Branch` | Git | `feature/auth-migration` | No — direct from git |
-| `Commit` | Git | `a1b2c3d` | No — direct from git |
-
-**Key observation**: 8 of 11 entity types need zero NER. They come directly from structured sources. This is why structured ingestion beats screen capture for developer workflows.
-
-### Relationship Types
-
-| Relationship | Between | Example | Source |
-|---|---|---|---|
-| `modified_in` | File → Commit | `middleware.rs` modified in `a1b2c3d` | Git diff |
-| `authored_by` | Commit → Person | Commit `a1b2c3d` authored by sarah | Git log |
-| `caused_by` | Error → File/Commit | `ECONNREFUSED` caused by changes in `db.rs` | Temporal correlation |
-| `depends_on` | File → Package | `middleware.rs` depends on `jsonwebtoken@9.2` | Lockfile parsing |
-| `referenced_in` | Issue → Commit/PR | `JIRA-1234` referenced in PR #142 | Commit message regex |
-| `resolved_by` | Error → Commit | Panic resolved by hotfix `f4e5d6a` | Temporal: error disappears after commit |
-| `browsed_while` | URL → File/Error | SO answer browsed while debugging auth error | Temporal overlap |
-| `branched_from` | Branch → Branch | `feature/auth-migration` branched from `main` | Git reflog |
-| `ran_in` | Command → File/Branch | `cargo test` ran in `feature/auth` context | Shell history + git state |
-| `reviewed_in` | File → PR | `middleware.rs` reviewed in PR #142 | Git remote |
-
-### Temporal Properties
-
-Every edge carries temporal metadata:
-
-| Field | Purpose | Example |
-|---|---|---|
-| `valid_from` | When the relationship was established | Commit timestamp, file save time |
-| `valid_until` | When it was superseded (NULL if still active) | File refactored, error resolved |
-| `recorded_at` | When ctxgraph recorded this fact (system time) | Daemon ingestion timestamp |
-| `source_event` | Raw event that produced this relationship | Commit hash, shell history line, FS event |
-
-This enables temporal queries:
-- **Current view**: `WHERE valid_until IS NULL` — only facts still true
-- **Time-travel**: `WHERE valid_from <= ?t AND (valid_until IS NULL OR valid_until > ?t)` — what was true at time `t`
-- **Activity window**: `WHERE recorded_at BETWEEN ?start AND ?end` — what happened in a time range
-
-Facts are never deleted — they are invalidated by setting `valid_until`.
-
----
-
-## Ingestion Layer
-
-### Architecture
-
-Each connector runs as an async task within the daemon, producing `Episode` events that flow into the core graph engine.
-
-```
-┌──────────────────────────────────────────────────────────┐
-│                   ctxgraph-ingest                          │
-│                                                           │
-│  ┌─────────────┐  Watches repos for commits, branch      │
-│  │ Git         │  switches, merges. Parses diffs for      │
-│  │ Connector   │  file→commit→author relationships.       │
-│  │ (git2-rs)   │  No NER needed — all structured.         │
-│  └──────┬──────┘                                          │
-│         │                                                 │
-│  ┌──────┴──────┐  Reads bash/zsh/fish history files.      │
-│  │ Shell       │  Extracts commands, detects errors        │
-│  │ Connector   │  (non-zero exit, stderr patterns).        │
-│  │ (history)   │  NER on stack traces only.                │
-│  └──────┬──────┘                                          │
-│         │                                                 │
-│  ┌──────┴──────┐  Watches project directories via inotify/ │
-│  │ FS          │  kqueue. Tracks open/save/rename/delete.   │
-│  │ Connector   │  Correlates with git state for context.   │
-│  │ (notify)    │                                          │
-│  └──────┬──────┘                                          │
-│         │                                                 │
-│  ┌──────┴──────┐  Reads Chrome/Firefox SQLite history DB.  │
-│  │ Browser     │  Filters to dev-relevant domains:         │
-│  │ Connector   │  GitHub, SO, docs, Jira, Linear.          │
-│  │ (rusqlite)  │  Phase 3.                                │
-│  └──────┬──────┘                                          │
-│         │                                                 │
-│  ┌──────┴──────┐  Ingests Screenpipe output, filtered to   │
-│  │ Screenpipe  │  terminal/IDE/browser windows only.        │
-│  │ Pipe        │  Phase 3.                                 │
-│  └──────┬──────┘                                          │
-│         │                                                 │
-│         ▼                                                 │
-│  ┌─────────────────────────────────────────────────┐      │
-│  │ Episode Builder                                  │      │
-│  │ source → tag → metadata → Episode → Graph.add()  │      │
-│  └─────────────────────────────────────────────────┘      │
-└──────────────────────────────────────────────────────────┘
-```
-
-### Connector Details
-
-**Git Connector (Phase 1)**
-- Uses `git2-rs` to read repository state
-- Watches for: commits, branch switches, merges, tag creation
-- Extracts: files modified, author, commit message, diff stats, branch context
-- Entities created directly (no NER): File, Person, Commit, Branch, PR (from message refs)
-- Relationships created directly: `modified_in`, `authored_by`, `branched_from`, `referenced_in`
-- Bootstrapping: import last N commits on first run
-
-**Shell History Connector (Phase 1)**
-- Reads history files: `~/.bash_history`, `~/.zsh_history`, `~/.local/share/fish/fish_history`
-- Watches for new entries via file polling or inotify
-- Extracts: command text, working directory (if available), timestamp
-- Entities: Command (direct), Error (from exit codes + NER on stderr patterns)
-- NER used for: stack traces, error messages in terminal output
-- Relationships: `ran_in` (command → project context), `caused_by` (error → command)
-
-**FS Watcher Connector (Phase 1)**
-- Uses `notify` crate for cross-platform file system events
-- Watches project directories (configured paths)
-- Tracks: file create, modify, rename, delete events
-- Entities: File (direct from path)
-- Correlates with current git branch for context
-- Deduplicates rapid save events (debounce window)
-
-**Browser History Connector (Phase 3)**
-- Reads Chrome `History` or Firefox `places.sqlite` (both are SQLite)
-- Filters to developer-relevant domains (configurable allowlist):
-  - `github.com`, `gitlab.com` — PRs, issues, code
-  - `stackoverflow.com` — debugging research
-  - `docs.rs`, `doc.rust-lang.org`, `developer.mozilla.org` — documentation
-  - `linear.app`, `jira.atlassian.com` — issue trackers
-  - Custom domains via config
-- Entities: URL (direct), Issue/PR (parsed from URL patterns)
-- Relationships: `browsed_while` (temporal overlap with file edits or errors)
-
-**Screenpipe Pipe (Phase 3)**
-- Ingests Screenpipe's structured output
-- Filters to terminal, IDE, and browser window contexts only
-- Enriches existing graph with screen-capture context where structured sources have gaps
-
----
-
-## Extraction Pipeline
-
-The extraction pipeline converts raw episode text into structured graph nodes and edges.
-
-For developer memory, most extraction is **structural** (parsing structured data), not **NER** (machine learning on text). The ONNX NER pipeline fires only for unstructured content like terminal output, commit messages, and stack traces.
-
-### Tier Breakdown
-
-```
-Episode (from connector)
-    │
-    ▼
-┌─────────────────────────────────────────┐
-│ Tier 0: Structural Extraction (always)  │
-│ Cost: $0 | Latency: <1ms               │
-│                                         │
-│ Git fields → entities + relations       │
-│ Shell history → command entities        │
-│ FS events → file entities               │
-│ URL parsing → URL/PR/Issue entities     │
-│ Lockfile parsing → Package entities     │
-│                                         │
-│ NO ML — just parsing structured data    │
-└─────────────┬───────────────────────────┘
-              │
-              ▼ (only for unstructured content)
-┌─────────────────────────────────────────┐
-│ Tier 1: Schema-Driven Local (as needed) │
-│ Cost: $0 | Latency: 2-10ms             │
-│                                         │
-│ GLiNER2 (ONNX) → entities + relations  │
-│ Regex/dateparser → temporal expressions │
-│                                         │
-│ Used for: stack traces, error messages, │
-│ commit message body, PR descriptions    │
-│                                         │
-│ Optional: GLiREL precision mode         │
-└─────────────┬───────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────────────┐
-│ Tier 2: Enhanced Local (default on)     │
-│ Cost: $0 | Latency: 15-50ms            │
-│                                         │
-│ Coreference → pronoun resolution        │
-│ Jaro-Winkler → fuzzy entity dedup       │
-│ Context temporal → relative-to-event    │
-└─────────────┬───────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────────────┐
-│ Tier 3: LLM-Enhanced (opt-in)           │
-│ Cost: $0 (Ollama) / $0.01+ (API)       │
-│ Latency: 500-2000ms                    │
-│                                         │
-│ Contradiction detection                 │
-│ Complex temporal reasoning              │
-│ Community summarization                 │
-│ Natural language query interpretation   │
-└─────────────────────────────────────────┘
-```
-
-### Confidence Gate (Automatic LLM Escalation)
-
-The engine automatically decides when local extraction is insufficient and escalates to an LLM:
-
-```
-Tier 1 output (GLiNER + GLiREL)
-    │
-    ▼
-┌───────────────────────────────────────┐
-│ Confidence Gate                       │
-│                                       │
-│ Escalate to LLM if ANY of:           │
-│  - Avg entity confidence < 0.4       │
-│  - Zero relations found              │
-│  - GLiREL confidence < 0.5           │
-│  - Entity count < expected for text  │
-│                                       │
-│ If no LLM configured → use local as-is│
-└───────────────┬───────────────────────┘
-                │
-    ┌───────────┴───────────┐
-    │                       │
- Confident              Not confident
-    │                       │
- Use local result      CloakPipe → LLM
-    │                       │
-    └───────────┬───────────┘
-                │
-              Graph
-```
-
-No user intervention needed. No LLM configured? Works fully local. LLM configured? Fills gaps automatically.
-
-### CloakPipe Privacy Layer
-
-When the confidence gate triggers LLM escalation, CloakPipe (planned for v0.8) ensures privacy:
-
-1. **PII scan** — Detects API keys, passwords, emails, tokens, IP addresses in the text
-2. **Reversible redaction** — Replaces PII with deterministic placeholders (`[EMAIL_1]`, `[KEY_1]`)
-3. **Sanitized LLM call** — Only the redacted text reaches the LLM provider
-4. **Entity mapping** — Maps LLM-extracted entities back through the placeholder table
-5. **Encrypted cache** — AES-256-GCM vault stores entity type resolutions, so repeated patterns cost $0
-
-**Cost impact**: The cache means a pattern like "company name → Organization" is resolved once and cached forever. Over time, the LLM escalation rate drops as the cache grows.
-
-### Why Local ONNX Works for Most Cases
-
-The ONNX NER model (GLiNER2) is tuned for tech/code domains. For the common use case of software decision logs, it performs well:
-
-| Text Type | Extraction Method | Local Quality | LLM Needed? |
-|---|---|---|---|
-| Software architecture decisions | GLiNER + GLiREL | High (0.800 F1) | Rarely |
-| Git data | Fully structured — no NER | N/A (100% accurate) | Never |
-| Terminal output / stack traces | GLiNER (tech-optimized) | High | Rarely |
-| Cross-domain text (finance, legal, healthcare) | GLiNER (low confidence) | Low (0.230 F1) | Yes — auto-escalated |
-| Commit messages | GLiNER + regex | Medium-High | Sometimes |
-
-The hybrid approach means tech-domain users get free extraction, and cross-domain users pay only for what the local models can't handle.
-
----
-
-## Query Architecture
-
-### Natural Language Query Resolution
-
-These queries are resolved by graph traversal, not LLM inference:
-
-| Query | Resolution Strategy |
+| Entity types | Relation types |
 |---|---|
-| "What was I debugging 2 hours ago?" | Error entities in terminal history (time filter) → connected files → related commits |
-| "What's related to the auth migration?" | Entity name match "auth" → all connected nodes (files, PRs, issues, errors, commands) |
-| "Show me everything @sarah touched this sprint" | Person entity → commits (time filter) → files → connected issues and PRs |
-| "What broke after the last deploy?" | Git diff at deploy tag → error entities timestamped after deploy → causal chain |
-| "How is this error connected to that PR?" | Multi-hop traversal: error → file → commit → PR → related discussions |
-| "What SO answers did I read about this?" | File/error entity → browser history URLs (temporal overlap) |
+| Person, Component, Service, Language, Database, Infrastructure, Decision, Constraint, Metric, Pattern | chose, rejected, replaced, depends_on, fixed, introduced, deprecated, caused, constrained_by |
 
-### Search Modes (RRF Fusion)
+**Auto-schema inference** (v0.9, currently unmerged in commit `9dcb574` + `83f3487`): after the first 3 episodes, an LLM call infers a domain-specific taxonomy and writes it to `.ctxgraph/schema.toml`. All subsequent extractions use the inferred schema.
 
-Three search modes, fused via Reciprocal Rank Fusion:
+> **v0.3 target replaces this with a single universal schema** — see § 6. The auto-schema-inference behavior is replaced by a "track unmapped entities/relations, promote conservatively over time" mechanism (§ 9 / Piece 5).
+
+---
+
+## 2. As-built (§-A): extraction pipeline (current)
 
 ```
-Query: "what was I debugging yesterday?"
-         │
-    ┌────┼────────────────────┐
-    ▼    ▼                    ▼
-  FTS5  Semantic          Graph Walk
-  │     │                    │
-  │  cosine sim on        rCTE traversal
-  │  384-dim embeddings   from matched entity
-  │     │                    │
-  └──┬──┘                    │
-     ▼                       │
-  ┌──────────────────────────┘
-  │
-  ▼
- RRF Fusion
-  score = Σ 1/(k + rank_i) across all modes
-  │
-  ▼
- Ranked SearchResults
-```
-
-| Mode | Catches | Misses |
-|---|---|---|
-| FTS5 | Exact keyword matches | Synonyms, paraphrases |
-| Semantic | Meaning similarity | Exact names, IDs |
-| Graph walk | Structural relationships | Disconnected episodes |
-
-### Time-Travel Queries
-
-```rust
-graph.search_at("who was working on auth?", as_of: "2026-03-15")
-```
-
-Filters edges by `valid_from <= as_of AND (valid_until IS NULL OR valid_until > as_of)`, returning the graph state at that point in time.
-
-### Graph Traversal via Recursive CTEs
-
-Multi-hop traversal uses `WITH RECURSIVE`:
-
-```sql
-WITH RECURSIVE traversal(entity_id, depth, path) AS (
-    SELECT id, 0, json_array(id) FROM entities WHERE name = ?
-    UNION ALL
-    SELECT
-        CASE WHEN e.source_id = t.entity_id THEN e.target_id ELSE e.source_id END,
-        t.depth + 1,
-        json_insert(t.path, '$[#]', ...)
-    FROM traversal t
-    JOIN edges e ON (e.source_id = t.entity_id OR e.target_id = t.entity_id)
-    WHERE t.depth < ?max_hops
-      AND e.valid_until IS NULL
-)
-SELECT DISTINCT ent.*, t.depth FROM traversal t
-JOIN entities ent ON ent.id = t.entity_id ORDER BY t.depth;
+Episode text in
+     │
+     ▼
+┌── Tier 1 — Local ONNX (always runs) ─────────────────────────────┐
+│  GLiNER NER (~30 ms)                                              │
+│   ↓ coref → dictionary supplement → entity-type remap →           │
+│   canonicalization → de-overlap → article stripping               │
+└───────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+[Confidence gate — pipeline.rs:242–246]
+   Escalate if any of:
+     - entity density < 1.5 per 10 words
+     - avg confidence < 0.4
+     - <60% of entities map to valid schema types
+     - >25 words & <5 unique entities
+     - text contains complexity markers (@, v2, ::, outage, …)
+     │
+     ▼
+┌── Tier 2 — Ollama (auto-detected, free, local) ─────────────────┐
+│  detect_ollama() probes http://localhost:11434/api/tags          │
+│  Preferred models in order:                                       │
+│   gemma3n:e4b → gemma4:e4b → gemma3n:e2b → gemma4:e2b →           │
+│   llama3.2:3b                                                     │
+│  CloakPipe strips PII before send (feature "cloakpipe")           │
+└──────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+┌── Tier 3 — Cloud LLM (only if Ollama absent + cloud key set) ───┐
+│  OpenAI / Anthropic / OpenRouter (OpenAI-compat endpoint)         │
+│  Default in code (llm_extract.rs:15): gpt-4o-mini                 │
+│  graph.rs:657 uses google/gemma-4-31b-it for schema inference     │
+│  CloakPipe strips PII before any cloud call                       │
+└──────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+[Merge] LLM entities not already in local results are added;
+        LLM relations merged with GLiREL relations
+     │
+     ▼
+[Relation extraction layer] GLiREL ONNX runs over all entities
+     │
+     ▼
+[Schema validation] entity types and relation types filtered
+        against active schema (manual or auto-inferred)
+     │
+     ▼
+Episode + entities + edges → SQLite (bi-temporal: valid_from, valid_until)
 ```
 
 ---
 
-## Storage Architecture
+## 3. As-built (§-A): storage model
 
-Single SQLite file: `.ctxgraph/graph.db`
+SQLite + WAL + FTS5. Single file, embeddable.
 
-### Why SQLite (not Neo4j, not RuVector, not anything else)
-
-| Factor | SQLite | Neo4j | RuVector |
-|---|---|---|---|
-| Deployment | Embedded, zero config | Requires Docker or server | 90+ crate dependency tree |
-| Graph traversal | Recursive CTEs | Native Cypher | HNSW (not graph traversal) |
-| Full-text search | FTS5 (built-in) | Requires Lucene plugin | Custom |
-| Temporal queries | Native SQL on bi-temporal columns | Custom | Not built for this |
-| Concurrency | Single-writer, multi-reader (WAL) | Full ACID | Unknown at scale |
-| Scale ceiling | ~100K-1M entities | Millions+ | Unverified |
-| Operational cost | Zero | $$$$ | Dependency risk |
-| Binary size impact | Bundled via rusqlite | N/A | Massive |
-
-For a developer's activity graph (~10K-100K nodes over months of use), SQLite with recursive CTEs provides sub-5ms graph traversal without any infrastructure overhead.
-
-### Scaling Strategy
-
-If traversal becomes a bottleneck at scale (unlikely for single-developer graphs):
-1. **petgraph** for in-memory graph — hydrate from SQLite on startup, traverse in memory
-2. **usearch** for HNSW vector index — if brute-force cosine exceeds 50ms at 100K+ episodes
-
-Both are drop-in additions. Neither is needed for Phase 1-4.
-
-### Pragmas
-
-```sql
-PRAGMA journal_mode = WAL;          -- Concurrent reads during daemon writes
-PRAGMA synchronous = NORMAL;        -- Balanced durability/performance
-PRAGMA foreign_keys = ON;           -- Referential integrity
-```
-
----
-
-## Interface Layer
-
-### MCP Server
-
-Exposes graph queries to any MCP-compatible AI coding tool (Claude Code, Cursor, Cline, Continue):
-
-| Tool | Purpose |
+| Table | Key columns |
 |---|---|
-| `add_episode` | Record a new event (manual logging) |
-| `search` | Fused FTS5 + semantic search with temporal filters |
-| `traverse` | Multi-hop graph walk from an entity |
-| `traverse_batch` | Walk from multiple entities, merge results |
-| `find_precedents` | Find similar past events (semantic similarity) |
-| `list_entities` | List entities with type/time filters |
-| `export_graph` | Export entities and edges |
-| `query_activity` | Natural language query over dev activity (Phase 2) |
+| `episodes` | text, source, tags, created_at |
+| `entities` | name, entity_type, attributes JSON |
+| `aliases` | canonical entity ↔ Jaro-Winkler fuzzy match table |
+| `edges` | head, relation, tail, fact, **valid_from**, **valid_until** (bi-temporal) |
+| `embeddings` | episode_id → 384-dim vector blob |
 
-Transport: stdio JSON-RPC 2.0 (protocol version 2024-11-05).
+FTS5 virtual tables on episode text + entity names. Search is **RRF-fused**: FTS5 + cosine semantic + recursive-CTE graph walk, combined via Reciprocal Rank Fusion. Median fused-search latency **<15 ms** on a million-row graph.
 
-### CLI
+### 3.1 Temporal model
 
-```
-ctxgraph init                    — Initialize .ctxgraph/ in project directory
-ctxgraph daemon start            — Start background daemon (ingestion + MCP)
-ctxgraph daemon stop             — Stop background daemon
-ctxgraph daemon status           — Show daemon status and connector health
-ctxgraph log <text>              — Manually add an episode
-ctxgraph query <text>            — Search the graph (FTS + semantic + traversal)
-ctxgraph entities [--type TYPE]  — List entities
-ctxgraph activity [--since 2h]   — Show recent dev activity timeline
-ctxgraph traverse <entity>       — Walk the graph from an entity
-ctxgraph stats                   — Graph statistics
-ctxgraph models download         — Download ONNX models
-ctxgraph mcp start               — Run as MCP server (stdio)
-ctxgraph config                  — Show/set configuration
-```
+Every edge carries `valid_from` and `valid_until`:
 
-### TUI Dashboard (Phase 2)
+- **Current view**: `WHERE valid_until IS NULL`
+- **Time-travel**: `WHERE valid_from <= ?t AND (valid_until IS NULL OR valid_until > ?t)`
+- **Activity window**: `WHERE created_at BETWEEN ?start AND ?end`
 
-ratatui-based interactive dashboard showing:
-- Recent activity timeline (commits, commands, file edits)
-- Entity graph visualization (ASCII)
-- Active connections and relationship explorer
-- Search with live results
-
-### Web Dashboard (Future)
-
-Graph visualization for the browser, inspired by [Rowboat Labs](https://github.com/rowboatlabs/rowboat) (Apache 2.0) — their knowledge graph UI shows smooth entity connections and relationship exploration. For ctxgraph, candidate libraries:
-- **reagraph** (WebGL, React) — performant 3D graph rendering
-- **react-force-graph** — force-directed layout, 2D/3D
-- **cytoscape.js** — framework-agnostic, rich graph algorithms
+Facts are never deleted. They are invalidated by setting `valid_until`.
 
 ---
 
-## Daemon Architecture
+## 4. As-built (§-A): interfaces
 
-The daemon runs as a lightweight background process (~15MB RSS target):
+### 4.1 MCP tools (shipped)
+
+`ctxgraph_add_episode`, `ctxgraph_search`, `ctxgraph_traverse`, `ctxgraph_find_precedents`, `ctxgraph_list_entities`, `ctxgraph_export_graph`. Roadmapped but not yet built: `ctxgraph_reflect`, `ctxgraph_reflect_on`, `ctxgraph_suggest`.
+
+### 4.2 CLI subcommands (shipped)
+
+`init`, `log`, `query`, `entities`, `decisions`, `stats`, `models download`, `mcp start`.
+
+### 4.3 Rust SDK
+
+`ctxgraph-core` is the public crate. `Graph::init(path)`, `graph.add_episode(Episode)`, `graph.search(query, limit)`, `graph.traverse(entity, depth)`.
+
+---
+
+## 5. Target v0.3 (§-T): new write pipeline
+
+> Source: `CLARITY.md` § 4 + `deep-research/FINAL.md` § 2.
 
 ```
-┌────────────────────────────────────────────┐
-│              ctxgraph daemon                │
-│                                            │
-│  ┌──────────────────────────────────┐      │
-│  │ Connector Manager (tokio tasks)  │      │
-│  │                                  │      │
-│  │  [Git]  [Shell]  [FS]  [Browser] │      │
-│  │    ↓       ↓      ↓       ↓     │      │
-│  │  Episode stream (mpsc channel)   │      │
-│  └──────────────┬───────────────────┘      │
-│                 │                          │
-│                 ▼                          │
-│  ┌──────────────────────────────────┐      │
-│  │ Ingestion Pipeline               │      │
-│  │                                  │      │
-│  │ Episode → Extract → Dedup → Store│      │
-│  └──────────────┬───────────────────┘      │
-│                 │                          │
-│                 ▼                          │
-│  ┌──────────────────────────────────┐      │
-│  │ Graph Engine (ctxgraph-core)     │      │
-│  │ SQLite + FTS5 + embeddings       │      │
-│  └──────────────┬───────────────────┘      │
-│                 │                          │
-│                 ▼                          │
-│  ┌──────────────────────────────────┐      │
-│  │ MCP Server (stdio)               │      │
-│  │ Serves queries from AI tools     │      │
-│  └──────────────────────────────────┘      │
-└────────────────────────────────────────────┘
+Episode text in
+     │
+     ▼
+┌── Tier 1 — GLiNER2 ONNX (single pass) ───────────────────────────┐
+│  Replaces GLiNER + GLiREL split                                   │
+│  ~205M params, single forward pass for NER + typed RE +           │
+│  hierarchical JSON                                                │
+│  CPU-runnable, <20 ms                                             │
+│  Schema-aware: emits the universal 9/10 taxonomy natively (§6)    │
+│  Model: fastino-ai/GLiNER2 (Apache-2.0)                           │
+└───────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+[Confidence gate — unchanged from §-A]
+     │
+     ▼
+┌── Tier 2 — Local extractive decoder ────────────────────────────┐
+│  VRAM-autodetect routing:                                         │
+│    < 4 GB → GLiNER2 only (skip Tier 2)                            │
+│    4–8 GB → NuExtract 2.0-2B (Apache 2.0)                         │
+│    8–16 GB → NuExtract 2.0-4B or Qwen3-8B-LoRA                    │
+│    16–24 GB → Hermes-4-14B-LoRA Q4_K_M                            │
+│  Host-memory prompt cache enabled by default                      │
+│    Ollama: keep_alive=-1                                          │
+│    llama.cpp: --cram 256 --system-prompt-file ./schema.txt        │
+│    SWA models: --override-kv to disable sliding window            │
+└──────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+┌── Tier 3 — Cloud (mode-dependent, see § 8) ──────────────────────┐
+│  Mode B default: Cerebras free tier — Qwen3-32B → gpt-oss-120B    │
+│    Free up to 1 M tok/day, 30 RPM                                 │
+│  Paid fallback: DeepInfra google/gemma-4-26b-a4b-it               │
+│    $0.07/M in, $0.34/M out (~$0.11/1k episodes)                   │
+│  Premium / IE-quality: OpenRouter Hermes 4 70B                    │
+│  CloakPipe PII stripping pre-call (feature "cloakpipe")           │
+└──────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+┌── Tier 4 — Graph Judge (offline, nightly cron) ─────────────────┐
+│  arXiv 2411.17388 — binary keep/reject on each stored triple      │
+│  ~1.5B model fine-tuned on (text, triple, gold) pairs             │
+│  Runs on the previous day's writes, marks low-confidence edges    │
+└──────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+Bi-temporal SQLite + FTS5 + (planned) sqlite-vec
 ```
 
-Process management: systemd (Linux), launchd (macOS), or simple PID file.
+**Why this structure:**
+
+1. **GLiNER2 replaces the GLiNER + GLiREL split.** One model, schema-aware, CPU-runnable. The encoder forward pass produces typed RE natively. Retires `rel.rs` (1792 lines) and `glirel.rs` (717 lines) — about 2 500 lines of code.
+2. **NuExtract 2.0 trained with negative sampling** (empty-string outputs for absent facts) — eliminates an entire class of JSON-validation bugs that the current pipeline hand-codes around.
+3. **Cerebras free tier** is the recommended default for non-privacy users (Mode B). 1 M tokens/day is enough for ~1 250 episodes/day; effectively free at any reasonable personal scale.
+4. **DeepInfra Gemma 4 26B-A4B** as paid fallback: clean cloud / local parity — the same model family runs in Tier 2 (locally quantized) and Tier 3 (DeepInfra-hosted), so behavior is consistent across tiers.
+5. **Graph Judge** is the quality safety net. Runs offline so it never adds latency to writes.
+
+### 5.1 The single-call schema, bi-temporally aware
+
+A v0.3 addition: the LLM emits **`invalidates:`** directly, as part of the same JSON, instead of a separate post-hoc pass. Full prompt + JSON contract is `CLARITY.md` § 3 / Piece 2. Summary:
+
+```json
+{
+  "entities":    [{"id": "e1", "name": "...", "type": "Person|Place|...", "attributes": {}}],
+  "relations":   [{"head": "e1", "relation": "depends_on", "tail": "e2",
+                   "confidence": 0.0, "valid_from": null, "valid_to": null}],
+  "invalidates": ["natural-language description of what this episode contradicts"],
+  "suggestions": [...],
+  "confidence":  0.87
+}
+```
+
+The current-facts context is bounded by retrieving top-K facts touching each entity mentioned in the episode (5–10 facts × N entities, well within 4 k context). This is what competitors literally cannot copy without retraining their models — bi-temporal-aware single-call extraction is unique to ctxgraph.
 
 ---
 
-## Model Strategy
+## 6. Target v0.3 (§-T): the universal schema (Piece 1)
 
-### Local Models (ONNX Runtime — no GPU required)
+> Source: `CLARITY.md` § 3 / Piece 1. **Replaces the legacy tech-focused 10/9 schema from § 1.2.**
 
-| Model | Purpose | Size | Latency (CPU) | Always loaded? |
-|---|---|---|---|---|
-| GLiNER2-large | Entity extraction | ~653MB (INT8) | 2-10ms | Yes |
-| GLiREL-large | Zero-shot relation extraction | ~1GB (split: encoder + scoring head) | ~5s | Yes (when available) |
-| all-MiniLM-L6-v2 | Embedding generation (384-dim) | ~80MB | 3-5ms | Yes |
+A single hardcoded taxonomy that ships with ctxgraph. Broad enough to handle personal wikis, work notes, technical content, recipes — anything. Lives at `crates/ctxgraph-extract/schemas/universal.toml`.
 
-Models download on first use, cached at `~/.cache/ctxgraph/models/`.
+### 6.1 The 9 entity types
 
-### LLM Fallback (Ollama or Cloud — optional)
+| Type | Description |
+|---|---|
+| Person | humans, named individuals |
+| Place | locations, regions, venues, addresses |
+| Organization | companies, teams, institutions, groups |
+| Concept | ideas, theories, methodologies, technologies, terms |
+| Artifact | concrete made objects: tools, systems, documents, code, products |
+| Event | occurrences with a time: meetings, deploys, conferences, decisions |
+| Time | explicit temporal anchors: dates, periods, durations |
+| Idea | personal thoughts, hypotheses, plans, intentions |
+| Fact | verified statements, measurements, observations |
 
-When the confidence gate fires, ONE LLM call extracts entities + relations:
+### 6.2 The 10 relation types
 
-| Provider | Model | Quality (cross-domain F1) | Cost per episode | Local? |
-|---|---|---|---|---|
-| None | — | 0.325 | $0 | Yes |
-| Ollama | llama3.2:3b | 0.472 | $0 | Yes |
-| Ollama | qwen2.5:7b | 0.508 | $0 | Yes |
-| Ollama | gemma2:9b | 0.506 | $0 | Yes |
-| OpenRouter | gemini-2.0-flash | **0.552** | ~$0.00005 | No (CloakPipe strips PII) |
+| Type | Description |
+|---|---|
+| mentions | X is named in the context of Y |
+| located_at | X is physically or conceptually at Y |
+| related_to | X is associated with Y (fallback when nothing else fits) |
+| caused | X led to Y |
+| preceded | X happened before Y |
+| references | X cites, links, or builds on Y |
+| owned_by | Y owns or controls X |
+| part_of | X is a component of Y |
+| depends_on | X requires Y to function |
+| participated_in | X was an actor in Y |
 
-**Recommended**: GPT-4o-mini for best quality ($0.30/1K eps). Gemini Flash for cheapest cloud ($0.05/1K eps). Qwen 2.5 7B for fully local ($0).
+### 6.3 Why these specific types
 
-### Head-to-Head: ctxgraph vs Graphiti (Fair Evaluation)
+- **Personal-wiki coverage**: People you meet, places you go, organizations you interact with, concepts you encounter, artifacts you build/use, events you participate in, dates, your own ideas, and verified facts. Nine entity types map to the nine things a journal or wiki actually accumulates.
+- **Universal relations**: Eight specific verbs plus two utility verbs (`mentions` for co-occurrence with no other relation, `related_to` as the explicit "I know they're connected but don't know how" fallback). Cover ~95% of natural English connecting verbs.
+- **Resist expansion**: V0.3 ships with exactly these 9 + 10. Piece 5 (§ 9) is the mechanism by which new types get added over time, conservatively, without users having to think about it.
 
-Same model (GPT-4o-mini), same data, same evaluation methodology:
+### 6.4 Schema-invisibility commitment
 
-| Metric | Graphiti | ctxgraph | |
-|---|---|---|---|
-| Tech Combined F1 | 0.601 | **0.846** | ctxgraph wins |
-| Cross-domain Combined F1 | 0.474 | **0.650** | ctxgraph wins |
-| Tech Relation F1 | 0.349 | **0.714** | ctxgraph 2x better |
-| Cross-domain Relation F1 | 0.092 | **0.457** | ctxgraph 5x better |
-| LLM calls per episode | 6 | **1** | 6x fewer |
-| Extraction time | 15s | **5s** | 3x faster |
-| Query latency (fused search) | ~300ms | **<15ms** | 20x faster |
-| Graph traversal | 5-50ms (Neo4j) | **<5ms** (SQLite CTE) | 10x faster |
-| Cost per 1000 episodes | $1.80 | **$0.30** | 6x cheaper |
-| Works offline? | No | **Yes** | |
-| Works with Ollama? | No | **Yes** | |
-| Infrastructure | Neo4j + Docker | **SQLite** | |
-
-### Why 6x Cheaper
-
-Graphiti makes 6 LLM calls per episode (entity extraction, dedup, relation extraction, contradiction detection, summarization, community detection). **Every episode, regardless of complexity.**
-
-ctxgraph makes 0-1 calls:
-- Tech text: 0 calls (local ONNX handles it at 0.846 F1)
-- Cross-domain: 1 call (entities + relations in one prompt)
-- Dedup, temporal, community: always local (Jaro-Winkler, SQL, bi-temporal model)
-
-### Why 20x Faster Queries
-
-| Query Type | ctxgraph (SQLite) | Graphiti (Neo4j) |
-|---|---|---|
-| Full-text search | **<1ms** (FTS5) | ~50ms (BM25) |
-| Semantic search | **3-5ms** (local cosine) | ~100ms (cloud embeddings) |
-| Graph traversal (2-3 hops) | **<5ms** (recursive CTE) | 5-50ms (Cypher) |
-| Fused search (all modes) | **5-15ms** (RRF) | ~300ms |
-| Time-travel query | **<5ms** (bi-temporal SQL) | ~300ms |
-
-ctxgraph queries are faster because everything runs in-process (embedded SQLite) with no serialization overhead. Graphiti requires network round-trips to Neo4j.
-
-### Bi-Temporal vs Point-in-Time
-
-ctxgraph tracks three timestamps per edge:
-- `valid_from`: when the relationship was established in the real world
-- `valid_until`: when it was superseded (NULL if still active)
-- `recorded_at`: when ctxgraph ingested this fact
-
-Graphiti tracks `valid_at` and `expired_at` (point-in-time). ctxgraph's model is more precise for developer workflows where you need to distinguish "when did this become true?" from "when did we learn about it?"
+Users in v0.3 **never write a schema and never see a schema file**. `ctxgraph init` doesn't prompt for types. The TOML file exists for power users (`ctxgraph schema edit`) but is hidden from the default flow. This is non-negotiable per `CLARITY.md` § 2.
 
 ---
 
-## Privacy Architecture
+## 7. Target v0.3 (§-T): the read path
 
-### Default: Local-First
+> Source: `CLARITY.md` § 5. **Currently the read path is unspecified — this is new architecture.**
 
-- All data stays on the developer's machine by default
-- No cloud services, no API calls unless LLM tier is configured
-- SQLite file is the single source of truth
-- No network access required for core functionality (Tier 0 + Tier 1)
+### 7.1 The crucial property
 
-### CloakPipe Integration (Built-In)
+**No cloud LLM in the read path, ever, in any mode.** Even cloud-quality mode (§ 8 Mode C) keeps reads local. Cloud is only for writes.
 
-CloakPipe will be integrated into the extraction pipeline, not an add-on:
+This is the bit competitors can't match. Graphiti, Mem0, Letta all need an LLM at read time because their relation types are free-form text the SQL engine can't reason about. ctxgraph's typed relations make this unnecessary.
 
-- **On LLM escalation**: PII detected and redacted before any text leaves the machine
-- **Encrypted entity cache**: AES-256-GCM vault stores entity type resolutions — same patterns never cost twice
-- **Fuzzy entity resolution**: CloakPipe's entity resolver deduplicates entities across episodes
-- **App/directory exclusion rules**: Skip `~/.ssh`, `~/.aws`, etc.
-- **Optional encrypted graph storage**: AES-256-GCM for the SQLite file itself
+### 7.2 Query classification
+
+```
+USER ASKS NATURAL LANGUAGE QUERY
+   │
+   ▼
+┌──────────────────────────────────────────────────┐
+│  Step 1: Classify (heuristic, no LLM)            │
+│    - count graph operations needed               │
+│    - ≤ 1 → simple. > 1 → complex.                │
+└──────────────────────────────────────────────────┘
+   │
+   ├── SIMPLE PATH (~90% of queries) ─────────────────────────────┐
+   │                                                              │
+   │  2a. Extract entity + verb from query                        │
+   │      (regex + lightweight NER; local; instant)               │
+   │  2b. Match verb → typed relation                             │
+   │      (embedding cosine match against the 10 relations —      │
+   │       Piece 3, § 9.3)                                        │
+   │  2c. Run deterministic SQL                                   │
+   │      (WHERE head=? AND relation=?  — bi-temporal predicates  │
+   │       handled by index)                                      │
+   │                                                              │
+   │  Total: ~10–50 ms per query. Zero LLM calls.                 │
+   │                                                              │
+   └──────────────────────────────────────────────────────────────┘
+   │
+   └── COMPLEX PATH (~10% of queries) ────────────────────────────┐
+                                                                  │
+       2a. Send query to local Qwen3-1.5B via Ollama              │
+           (few-shot prompt — Piece 4, § 9.4)                     │
+           outputs structured graph-operation JSON                │
+                                                                  │
+       2b. Dispatch op to SQL handlers                            │
+           op=traverse → recursive CTE                            │
+           op=filter   → WHERE + time predicates                  │
+           op=compare  → JOIN with grouping                       │
+           op=list     → flat scan with type filter               │
+                                                                  │
+       Total: ~200–500 ms. One small local LLM call.              │
+                                                                  │
+   ──────────────────────────────────────────────────────────────┘
+   │
+   ▼
+RESULTS with provenance + confidence
+```
+
+### 7.3 Why this works architecturally
+
+Three properties combine:
+
+1. **Typed relations are a finite known set.** A user verb only ever needs to map to one of 10 strings. That's a closed-set classification problem, perfectly suited to embedding cosine match.
+2. **SQL handles graph traversal natively.** Recursive CTEs (already used in the FTS5+RRF fused search) cover multi-hop with no LLM involvement.
+3. **Bi-temporal predicates are SQL.** Time-travel queries (`as of 2025-Q3`) compile to `WHERE valid_from <= ?t AND (valid_until IS NULL OR valid_until > ?t)` — no LLM reasoning needed.
+
+The local LLM (Qwen3-1.5B) only enters when the query has *structure* the deterministic parser can't infer: multi-hop, conjunctions, time filters, comparisons. Even there, the LLM emits *a graph operation*, not a result — it never sees the data.
 
 ---
 
-## Configuration
+## 8. Target v0.3 (§-T): three modes
 
-Single TOML file: `ctxgraph.toml` (or `.ctxgraph/config.toml`)
+> Source: `CLARITY.md` § 4. **Replaces the implicit single-mode "always tier-up to whatever's available" behavior in current code.**
+
+The user picks one mode at `ctxgraph init`. All three keep reads local; they differ only in the write-path tier chain.
+
+### 8.1 Mode A — `local-only` (privacy mode)
+
+Zero data leaves the machine.
+
+```
+Tier 1: GLiNER2 ONNX (CPU)              ~30 ms,  ~70% of episodes
+Tier 2: NuExtract 2.0-4B (Ollama)       ~2–4 s,  ~25% of episodes
+Tier 3: Qwen3-8B Q4 (Ollama)            ~5–8 s,  ~5% of episodes
+
+Embedding model: all-MiniLM-L6-v2 (local, 384-dim)
+Query parser:    Qwen3-1.5B (Ollama, loaded on demand)
+```
+
+Default if `[privacy] allow_cloud = false` is set.
+
+### 8.2 Mode B — `cloud-fallback` (recommended default)
+
+Local handles the easy 95%, cloud (free tier) handles the hard 5%.
+
+```
+Tier 1: GLiNER2 ONNX (local CPU)
+Tier 2: NuExtract 2.0-4B (local Ollama, if available)
+Tier 3: Cerebras free — Qwen3-32B  ($0 ≤ 1 M tok/day, 30 RPM)
+Tier 4: DeepInfra paid — google/gemma-4-26b-a4b-it
+        (~$0.11 / 1k episodes; fires only when Cerebras rate-limited)
+```
+
+Recommended for most users. `ctxgraph init` should default to this if a Cerebras key is detected, otherwise `local-only`.
+
+### 8.3 Mode C — `cloud-quality` (power users)
+
+Skip local tiers; every episode goes to a high-quality hosted model.
+
+```
+Default: Cerebras Qwen3-32B (free, fast — 2000+ tok/s)
+Paid alt: DeepInfra Gemma-4-26B-A4B
+Premium: OpenRouter Hermes 4 70B (highest IE quality)
+```
+
+Useful for long-form text (papers, transcripts) where local extraction quality degrades.
+
+### 8.4 Config
+
+`~/.ctxgraph/config.toml`:
 
 ```toml
-[daemon]
-pid_file = "~/.ctxgraph/daemon.pid"
-log_level = "info"
-
-[connectors.git]
-enabled = true
-repos = ["."]                     # Watch current directory by default
-bootstrap_commits = 100           # Import last N commits on first run
-
-[connectors.shell]
-enabled = true
-history_files = ["auto"]          # Auto-detect bash/zsh/fish
-
-[connectors.fs]
-enabled = true
-watch_paths = ["."]
-debounce_ms = 500                 # Coalesce rapid save events
-ignore = ["target/", "node_modules/", ".git/"]
-
-[connectors.browser]
-enabled = false                   # Phase 3, opt-in
-allowed_domains = [
-    "github.com", "gitlab.com",
-    "stackoverflow.com",
-    "docs.rs", "developer.mozilla.org",
-    "linear.app", "jira.atlassian.com",
-]
-
-[connectors.screenpipe]
-enabled = false                   # Phase 3, opt-in
-window_filter = ["terminal", "ide", "browser"]
-
-[schema]
-name = "developer"
-
-[schema.entities]
-File = "A source code file or configuration file"
-Function = "A function, method, or class definition"
-Error = "An error, exception, or stack trace"
-Package = "A library, package, or dependency with version"
-PR = "A pull request or merge request"
-Issue = "A bug report, feature request, or ticket"
-Person = "A developer, team member, or contributor"
-Command = "A CLI command or script execution"
-URL = "A web URL visited during development"
-Branch = "A git branch"
-Commit = "A git commit"
-
-[schema.relations]
-modified_in = { head = ["File"], tail = ["Commit"] }
-authored_by = { head = ["Commit"], tail = ["Person"] }
-caused_by = { head = ["Error"], tail = ["File", "Commit", "Command"] }
-depends_on = { head = ["File", "Package"], tail = ["Package"] }
-referenced_in = { head = ["Issue", "PR"], tail = ["Commit", "PR"] }
-resolved_by = { head = ["Error"], tail = ["Commit"] }
-browsed_while = { head = ["URL"], tail = ["File", "Error"] }
-branched_from = { head = ["Branch"], tail = ["Branch"] }
-ran_in = { head = ["Command"], tail = ["File", "Branch"] }
-reviewed_in = { head = ["File"], tail = ["PR"] }
-
 [extraction]
-precision_mode = false            # Enable GLiREL for better relation quality
+mode = "cloud-fallback"   # or "local-only" | "cloud-quality"
 
-[extraction.dedup]
-threshold = 0.85                  # Jaro-Winkler similarity for entity dedup
+[cerebras]
+api_key = "..."
+model   = "qwen3-32b"     # auto-migrates to gpt-oss-120b after deprecation
+
+[deepinfra]
+api_key = "..."
+model   = "google/gemma-4-26b-a4b-it"
 
 [privacy]
-exclude_paths = ["~/.ssh", "~/.aws", "~/.gnupg"]
-redact_secrets = false            # Phase 4: CloakPipe integration
-
-[llm]
-enabled = false                   # Tier 3: opt-in only
-
-[llm.provider.ollama]
-base_url = "http://localhost:11434"
-model = "llama3.2:8b"
+pii_scrubbing = true      # CloakPipe-style PII strip before any cloud call
+allow_cloud   = true      # false ⇒ forced into Mode A regardless of `mode`
 ```
+
+`allow_cloud = false` is the privacy override. Flip it and ctxgraph cannot leak data even if misconfigured.
 
 ---
 
-## Design Principles
+## 9. Target v0.3 (§-T): host-memory prompt caching
 
-1. **Zero infrastructure** — One binary, one SQLite file. No Docker, no API keys, no Python.
-2. **Structured ingestion over screen capture** — Parse structured data from developer tools directly. OCR and NER are last resorts, not defaults.
-3. **Privacy by default** — Nothing leaves the machine unless explicitly enabled.
-4. **Progressive enhancement** — Structural extraction works great alone. ONNX NER adds depth. LLM handles edge cases. Each tier is additive.
-5. **Developer-native** — Entity types, relationship types, and query patterns are all designed for developer workflows.
-6. **Temporal-first** — Every relationship has a time dimension. The graph is a living history, not a static snapshot.
-7. **Daemon, not manual** — Background ingestion solves the adoption killer of manual logging.
-8. **Embeddable** — ctxgraph is a Rust library first, a CLI second. Other tools can embed it directly.
+> Source: `deep-research/FINAL.md` § 6. Measured 4.2 s → 0.3 s prefill TTFT on RTX 3090 with an 8 k-token system prompt.
+
+ctxgraph's system prompt (entity types, relation types, schema rules, format constraints) is **identical across episodes** — perfect for KV-cache reuse.
+
+### 6.1 llama-server config
+
+```bash
+llama-server \
+  --model ./models/qwen3-8b.q4_k_m.gguf \
+  --ctx-size 32768 \
+  --np 4 \
+  --cram 256 \
+  --flash-attn \
+  --system-prompt-file ./ctxgraph_schema.txt \
+  --debug-slot
+```
+
+Key params:
+- `--cram 256` — 256 MB host-memory cache for pre-computed KV blocks
+- `--system-prompt-file` — static schema/ontology block
+- `--flash-attn` — required for stable prefix caching
+
+### 6.2 Ollama config
+
+```json
+{
+  "model": "qwen3:8b",
+  "keep_alive": "-1",
+  "options": { "num_ctx": 16384 }
+}
+```
+
+`keep_alive: -1` is the critical bit — without it, the model unloads on idle and the KV cache is purged.
+
+### 6.3 Prefix-isolation requirement
+
+For cache hits, the schema/ontology/few-shot block must be **byte-for-byte stable**. The dynamic episode text and current-facts retrieval go at the *end* of the prompt sequence. This is enforced by ctxgraph's prompt-builder in `llm_extract.rs`.
+
+### 6.4 SWA gotcha
+
+Some Qwen variants use Sliding Window Attention, which conflicts with static KV caches. Force global attention with `--override-kv` to disable sliding-window restrictions.
+
+### 6.5 Measured impact
+
+Combined with the GLiNER2 swap and NuExtract Tier 2 default, expected local-tier latency:
+
+| Current | Target v0.3 |
+|---|---|
+| ~17 s/episode (Gemma 4 26B via Ollama, no caching) | **3–5 s/episode** |
+
+---
+
+## 10. Target v0.3 (§-T): cloud routing (verified pricing)
+
+> Source: `deep-research/FINAL.md` § 4. All prices verified by the External-A pass; some had to be corrected from earlier passes' rounded numbers.
+
+| Tier | Provider | Model | Price | Notes |
+|---|---|---|---|---|
+| **2.5 Dev (free)** | Cerebras | Qwen3-32B → gpt-oss-120B | $0 ≤ 1 M tok/day | Qwen3-32B deprecating Feb 2026 |
+| **2.5 Dev alt** | Groq | Llama 3.3 70B | $0 ≤ 1 K req/day | 30 RPM cap |
+| **3 Paid default** | **DeepInfra** | **Gemma-4-26B-A4B** | **$0.07 in / $0.34 out** | Verified; clean local / cloud parity |
+| **3 Paid alt cheap** | DeepInfra | Qwen3-32B | $0.08 in / $0.28 out | Split-priced (corrected from "$0.08 flat") |
+| **3 Paid high-quality** | OpenRouter | Hermes 4 70B | $0.13 in / $0.40 out | IE quality leader, slowest s/ep |
+| **3 Premium + fine-tune** | Together AI | Llama 3.3 70B | $0.88 in / $0.88 out | Best when training a LoRA on the same platform |
+
+**Cost per 1 000 episodes** (800 tokens: 600 in + 200 out):
+
+| Stack | $/1k eps |
+|---|---|
+| Cerebras free (up to 1 250 eps/day) | $0 |
+| DeepInfra Gemma-4-26B-A4B | **$0.11** |
+| Current default (OpenRouter gpt-4o-mini) | $0.24 |
+| Graphiti + GPT-4o-mini | $1.80 (≈22× more) |
+
+The swap from OpenRouter gpt-4o-mini → DeepInfra Gemma 4 26B is **2.2× cheaper**.
+
+---
+
+## 11. Target v0.3 (§-T): improvements to `llm_extract.rs`
+
+These map onto specific lines in the current code:
+
+1. **`OLLAMA_PREFERRED_MODELS`** (currently `llm_extract.rs:20–26`): add `aravhawk/gemma4`, `nuextract:2.0-4b`, `qwen3:8b`, `hermes-4:8b`, expand to ~8 variants. Order from most VRAM to least.
+2. **GPU autodetect**: probe `nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits` / Apple Metal / ROCm. Route by free VRAM (table in § 5). Add a `CTXGRAPH_VRAM_OVERRIDE` env for testing.
+3. **Prompt cache enforcement**: stable-prefix prompt builder; serialize the schema/few-shot/format block before any episode-specific text.
+4. **Default cloud model**: change `DEFAULT_MODEL` constant from `gpt-4o-mini` to `google/gemma-4-26b-a4b-it`. Change `graph.rs:657` schema-inference default from `google/gemma-4-31b-it` to the same — one model across both code paths.
+5. **Speculative decoding**: do *not* enable by default. Per pass-3 audit, naïve model-based SpS with a sub-1B draft is often net-negative on 8B targets; EAGLE-3 still helps but requires measurement. Make it a `--speculate` flag, document the caveat.
+
+---
+
+## 12. Target v0.3 (§-T): schema-improvement loop (Piece 5)
+
+> Source: `CLARITY.md` § 3 / Piece 5. The mechanism by which the universal 9/10 schema grows over time without users having to think about it.
+
+The universal schema covers most cases but not all. Without an evolution mechanism, edge-case domains (recipes, scientific datasets, gaming, etc.) would force `Concept` or `related_to` as the fallback for everything. Three-layer loop:
+
+### 12.1 Layer A — suggestion logging (always on)
+
+The extraction prompt (§ 5.1) is extended to allow the LLM to *suggest* a more specific type when the universal label feels too generic:
+
+```json
+"suggestions": [
+  {"kind": "entity_type", "name": "Ingredient",
+   "supporting_entity_ids": ["e1", "e3"], "rationale": "..."},
+  {"kind": "relation_type", "name": "contains",
+   "head_id": "e2", "tail_id": "e3", "rationale": "..."}
+]
+```
+
+These go into a `schema_suggestions` table — never directly into the schema. Each row: timestamp, episode_id, rationale, confidence.
+
+### 12.2 Layer B — promotion threshold (background job)
+
+A nightly cron (`ctxgraph schema review`) scans `schema_suggestions`. A suggestion is promoted to the schema only if:
+
+- It has appeared in **≥ K distinct episodes** (K = 5 default, configurable)
+- It has appeared across **≥ M distinct sources/contexts** (M = 3 default)
+- Average confidence > 0.7
+- It is **not semantically near an existing type** (cosine similarity < 0.85 against all current type embeddings — prevents "Place" / "Location" / "Region" duplication)
+
+When promoted: added to the schema TOML with a `provisional: true` flag. User is notified at next CLI invocation:
+
+```
+$ ctxgraph add "..."
+[ctxgraph] note: 2 schema additions in last review:
+  + entity:   Ingredient   (seen 7 times across 5 episodes)
+  + relation: contains     (seen 12 times across 8 episodes)
+  to revert: ctxgraph schema revert
+```
+
+### 12.3 Layer C — user override
+
+Power users can edit the schema directly via `ctxgraph schema edit` (opens TOML in `$EDITOR`). Provisional additions can be confirmed, rejected, or renamed. Manual additions are fully supported. Most users never touch this.
+
+---
+
+## 13. Target v0.3 (§-T): bi-temporal storage tweaks
+
+The existing schema already supports `valid_from` / `valid_until`. The v0.3 change is **wiring the LLM's `invalidates:` output to the storage layer**:
+
+```rust
+// pseudo-code; lives in ctxgraph-core/src/graph.rs
+fn add_episode(&mut self, episode: Episode) -> Result<EpisodeResult> {
+    let extraction = pipeline.extract(&episode.text)?;
+    for invalid_edge_id in &extraction.invalidates {
+        self.invalidate_edge(invalid_edge_id, episode.reference_time)?;
+    }
+    for new_edge in extraction.relations {
+        self.insert_edge(new_edge, episode.reference_time)?;
+    }
+    // …
+}
+```
+
+The current-facts retrieval that feeds the LLM context (so it knows what to invalidate) is a new helper: `Graph::current_facts_touching(entities: &[Entity], k_per_entity: usize) -> Vec<Edge>`.
+
+---
+
+## 14. Target v0.3 (§-T): not in scope
+
+These show up in the older `ARCHITECTURE.md` as future work; per the deep-research synthesis, they are **not v0.3 work**:
+
+- `ctxgraph-ingest` crate (git / shell / FS / browser / Screenpipe connectors) — interesting, but the headline F1 win doesn't depend on it. Defer to v0.4+.
+- Reflect API (`ctxgraph_reflect*` MCP tools) — defer to v0.4 or v0.5.
+- Python SDK (PyO3 bindings) — defer to post-launch.
+- Web dashboard (graph visualization) — defer.
+- Daemon mode + TUI — defer.
+- A-MEM-style append-only memory notes — v0.4 (per `ROADMAP.md`).
+- mistral.rs embedded inference (single-binary moat) — v0.4 spike.
+- Graph Judge nightly pass — v0.5.
+
+What **is** v0.3 is the four-tier extraction pipeline, host-memory caching, the bi-temporal `invalidates:` prompt, the cloud-routing swap, and a re-run of the 29-episode benchmark to confirm the headline number lands at ≥ 0.745 combined F1 with the new local stack.
+
+---
+
+## 15. Cross-references
+
+- **Master working doc** (product + the 5 pieces + non-negotiable decisions): `docs/CLARITY.md`
+- **Headline benchmark + raw numbers**: `docs/research_brief.md` (session-measured results, 7 model runs, two Graphiti runs)
+- **All measured numbers + hostile-reader audit**: `docs/BENCHMARKS.md`
+- **Roadmap & 12-week schedule**: `docs/ROADMAP.md`
+- **Deep-research source material**: `docs/deep-research/FINAL.md` (synthesized), plus `claude-dr.md`, `chatgpt-dr.md`, `claude-dr-2.md`, `grok.md`, `gemini-dr.md` (per-source detail)
+- **ADRs** (still authoritative for past decisions): `docs/adr/001-sqlite-over-neo4j.md` through `006-unified-gliner2-model.md`
+
+---
+
+*End of architecture v2. Re-verify all pricing 24 h before any HN-facing claim.*
