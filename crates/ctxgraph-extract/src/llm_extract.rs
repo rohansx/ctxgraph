@@ -25,6 +25,18 @@ const OLLAMA_PREFERRED_MODELS: &[&str] = &[
     "llama3.2:3b", // Llama 3.2 3B — widely available
 ];
 
+/// HTTP request timeout for LLM calls. Defaults to `default_secs` but can be
+/// raised via `CTXGRAPH_LLM_TIMEOUT` (seconds) — large local models (e.g. a
+/// 12B GGUF partly offloaded to CPU) can take well over a minute per episode.
+fn llm_timeout(default_secs: u64) -> std::time::Duration {
+    let secs = std::env::var("CTXGRAPH_LLM_TIMEOUT")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .filter(|&v| v > 0)
+        .unwrap_or(default_secs);
+    std::time::Duration::from_secs(secs)
+}
+
 /// LLM extraction engine — works with any OpenAI-compatible endpoint.
 ///
 /// Supports: nvidia-litellm-router (free), OpenRouter, Ollama, OpenAI, Anthropic.
@@ -209,7 +221,7 @@ impl LlmExtractor {
         };
 
         let client = reqwest::blocking::Client::builder()
-            .timeout(std::time::Duration::from_secs(60))
+            .timeout(llm_timeout(60))
             .build()
             .ok()?;
 
@@ -248,7 +260,7 @@ impl LlmExtractor {
             let model =
                 std::env::var("CTXGRAPH_LLM_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string());
             let client = reqwest::blocking::Client::builder()
-                .timeout(std::time::Duration::from_secs(60))
+                .timeout(llm_timeout(60))
                 .build()
                 .ok()?;
             return Some(Self {
@@ -303,7 +315,7 @@ impl LlmExtractor {
             std::env::var("CTXGRAPH_LLM_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string());
 
         let client = reqwest::blocking::Client::builder()
-            .timeout(std::time::Duration::from_secs(60))
+            .timeout(llm_timeout(60))
             .build()
             .ok()?;
 
@@ -371,7 +383,7 @@ impl LlmExtractor {
             // None of our preferred models installed, use whatever is first
             if let Some(first) = available.first() {
                 let client = reqwest::blocking::Client::builder()
-                    .timeout(std::time::Duration::from_secs(120))
+                    .timeout(llm_timeout(120))
                     .build()
                     .ok()?;
                 eprintln!(
@@ -389,7 +401,7 @@ impl LlmExtractor {
         }
 
         let client = reqwest::blocking::Client::builder()
-            .timeout(std::time::Duration::from_secs(120))
+            .timeout(llm_timeout(120))
             .build()
             .ok()?;
 
