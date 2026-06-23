@@ -176,30 +176,60 @@ def score_relations(
 # ── OpenRouter call ─────────────────────────────────────────────────
 
 
-def call_model(model: str, text: str, api_key: str, timeout: int = 60) -> tuple[dict, dict]:
-    """Returns (parsed_json, usage_meta)."""
-    resp = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://github.com/rohansx/ctxgraph",
-            "X-Title": "ctxgraph-bench",
-        },
-        json={
+def call_model(model: str, text: str, api_key: str, timeout: int = 120) -> tuple[dict, dict]:
+    """Returns (parsed_json, usage_meta).
+
+    Fairness fixes (bias audit): extraction is not a reasoning task, but several
+    strong models (gpt-5-mini, MiniMax, GLM) are reasoning models — with reasoning
+    ON they burned the token budget thinking and returned empty/non-JSON content,
+    which the old parser scored as 0 (a harness artifact, not model quality). We
+    now (1) disable reasoning, (2) request JSON output mode, (3) raise the token
+    cap, and (4) fall back to reasoning_content and strip <think> blocks.
+    """
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com/rohansx/ctxgraph",
+        "X-Title": "ctxgraph-bench",
+    }
+
+    def _post(extra: dict):
+        payload = {
             "model": model,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": text},
             ],
-            "temperature": 0,
-            "max_tokens": 1024,
-        },
-        timeout=timeout,
-    )
+            "max_tokens": 2048,
+        }
+        payload.update(extra)
+        return requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers, json=payload, timeout=timeout,
+        )
+
+    # Tiered fallback so every model gets a fair shot at emitting parseable JSON.
+    # Some providers reject response_format, the `reasoning` param, or temperature=0
+    # (e.g. GPT-5 reasoning models) — progressively drop the strictest params.
+    attempts = [
+        {"temperature": 0, "reasoning": {"enabled": False}, "response_format": {"type": "json_object"}},
+        {"temperature": 0, "reasoning": {"enabled": False}},
+        {"temperature": 0},
+        {},  # maximally compatible: provider defaults
+    ]
+    resp = None
+    for extra in attempts:
+        resp = _post(extra)
+        if resp.status_code < 400:
+            break
     resp.raise_for_status()
     body = resp.json()
-    content = body["choices"][0]["message"]["content"] or ""
+
+    msg = body["choices"][0]["message"]
+    content = msg.get("content") or msg.get("reasoning_content") or msg.get("reasoning") or ""
+    # Strip reasoning <think>...</think> preamble if any leaked into content
+    if "</think>" in content:
+        content = content.split("</think>", 1)[1]
     # Strip code fences if present
     if "```" in content:
         if "```json" in content:

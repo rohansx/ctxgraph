@@ -10,3 +10,5 @@ checkpoints/
 models/
 __pycache__/
 .fastembed_cache/
+.venv-bench/
+.venv-graphiti/

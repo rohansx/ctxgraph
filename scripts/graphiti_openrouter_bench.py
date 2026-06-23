@@ -92,13 +92,15 @@ def score(pred_ent_names, pred_rel_pairs, gold_ents, gold_rels):
     return ent_f1, rel_f1
 
 
-async def run(model: str, out_path: str):
+async def run(model: str, out_path: str, limit: int | None = None):
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
         print("ERROR: OPENROUTER_API_KEY not set", file=sys.stderr)
         sys.exit(1)
 
     fixtures = json.loads(FIXTURE.read_text())
+    if limit:
+        fixtures = fixtures[:limit]
     print(f"Loaded {len(fixtures)} episodes from {FIXTURE.name}")
     print(f"Model: {model}")
 
@@ -134,9 +136,6 @@ async def run(model: str, out_path: str):
     err_count = 0
 
     for i, ep in enumerate(fixtures):
-        with driver.session() as s:
-            before = s.run("MATCH (n:Entity) RETURN count(n) AS c").single()["c"]
-
         start = time.time()
         try:
             await graphiti.add_episode(
@@ -150,20 +149,26 @@ async def run(model: str, out_path: str):
             elapsed = time.time() - start
             total_time += elapsed
 
+            gid = f"v2_ep_{i}"
             with driver.session() as s:
+                # FIX (bias audit): scope reads to THIS episode's group_id.
                 ent_rows = s.run(
-                    "MATCH (n:Entity) RETURN n.name AS name SKIP $skip",
-                    skip=before,
+                    "MATCH (n:Entity) WHERE n.group_id = $gid RETURN n.name AS name",
+                    gid=gid,
                 ).data()
                 pred_ents = [r["name"] for r in ent_rows if r["name"]]
 
+                # FIX (bias audit): the original query had NO group_id filter and a
+                # `LIMIT 50`, so it scored Graphiti against up to 50 edges from the
+                # entire accumulating graph (pred_rels pinned at 50), mechanically
+                # capping relation precision at ~4/50. Scope to this episode.
                 edge_rows = s.run(
                     """
                     MATCH (a:Entity)-[r:RELATES_TO]->(b:Entity)
-                    WHERE r.fact IS NOT NULL
+                    WHERE r.group_id = $gid AND r.fact IS NOT NULL
                     RETURN a.name AS head, r.name AS rel, b.name AS tail
-                    ORDER BY r.created_at DESC LIMIT 50
-                    """
+                    """,
+                    gid=gid,
                 ).data()
                 pred_rels = [(e["head"], e["tail"]) for e in edge_rows]
 
@@ -237,8 +242,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--limit", type=int, default=None, help="Cap episodes (smoke test)")
     args = ap.parse_args()
-    asyncio.run(run(args.model, args.out))
+    asyncio.run(run(args.model, args.out, args.limit))
 
 
 if __name__ == "__main__":
