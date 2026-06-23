@@ -58,12 +58,25 @@ auto-fetched + scored by `scripts/conll04_bench.py`.
 
 | Model (single call) | entity F1 | **relation F1 (directional+typed)** | relation F1 (lenient) |
 |---|---|---|---|
+| anthropic/claude-haiku-4.5 | 0.864 | **0.604** | 0.748 |
+| z-ai/glm-5.2 | 0.867 | **0.589** | 0.660 |
 | google/gemini-2.5-flash-lite | 0.846 | **0.560** | 0.647 |
+| minimax/minimax-m3 | 0.840 | **0.541** | 0.631 |
+| deepseek/deepseek-v4-flash | 0.844 | **0.525** | 0.580 |
 | deepseek/deepseek-v3.2 | 0.861 | **0.514** | 0.568 |
 
 These are **higher** than on the self-authored fixture (strict relation 0.24–0.41),
 because CoNLL04 is cleaner and the scoring is honest — and they hold up under a
 directional metric on third-party data. This is the defensible accuracy claim.
+
+> **Local Gemma-4-12B note (honest):** on CoNLL04 via ollama it scored ent 0.550 /
+> rel(dir) 0.295 — but with **13/40 JSON parse failures**, a `conll04_bench.py`
+> parse-robustness gap with this GGUF, **not** a quality gap. The Rust harness
+> (robust `/no_think` parsing) measures the same local model **competitive — 0.607
+> combined, tied with cloud DeepSeek, 0 parse errors**. A fair local CoNLL04 number
+> needs a parse-hardening pass on the Python harness (port the Rust `/no_think` +
+> fenced-JSON handling); until then the local row is omitted from the leaderboard
+> rather than published at a misleading 0.295.
 
 ### Ablations (measured, both negative/modest — recorded for honesty)
 
