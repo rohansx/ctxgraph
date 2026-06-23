@@ -16,21 +16,29 @@ ctxgraph query "why did we move away from Redis?"
 
 ---
 
-## Headline result (measured 2026-05-13)
+## Benchmarks (measured, third-party + reproducible)
 
-Same LLM, same fixture, same scoring code. ctxgraph's single-call schema-typed prompt vs Graphiti's 6-call pipeline:
+> **Correction (2026-06):** an earlier headline here claimed "+0.227 combined F1 over Graphiti." That was a **measurement bug** — an un-scoped Graphiti relation query (`LIMIT 50`, no `group_id`) scored Graphiti against the whole accumulating graph. Fixed. The honest picture: **extraction quality is at parity with Graphiti and with cloud frontier models; the win is architectural — one LLM call, fully local, $0.** Full detail + audit in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
-| Metric (Gemma 4 26B-A4B in both columns) | ctxgraph | Graphiti | Δ |
-|---|---|---|---|
-| entity F1 (pair-fuzzy) | 0.819 | 0.824 | -0.005 |
-| **relation F1 (pair-fuzzy)** | **0.555** | 0.096 | **+0.459 (5.8×)** |
-| **combined F1** | **0.687** | 0.460 | **+0.227** |
+**Third-party accuracy — CoNLL04** (standard RE dataset neither tool authored), **strict directional + typed** relation scorer, 80 test sentences, single call. Reproduce: `scripts/conll04_bench.py`.
 
-The win **replicates** with Gemma 4 31B (ctxgraph 0.739 vs Graphiti 0.467, +0.272 combined / +0.499 relation). It's architectural, not model-specific. Graphiti's 6-call pipeline tops out at combined F1 ≈ 0.46 regardless of which Gemma you feed it.
+| Model (single call) | entity F1 | relation F1 (directional + typed) |
+|---|---|---|
+| anthropic/claude-haiku-4.5 | 0.864 | **0.604** |
+| z-ai/glm-5.2 | 0.867 | **0.589** |
+| google/gemini-2.5-flash-lite | 0.846 | 0.560 |
+| minimax/minimax-m3 | 0.840 | 0.541 |
+| deepseek/deepseek-v4-flash | 0.844 | 0.525 |
+| deepseek/deepseek-v3.2 | 0.861 | 0.514 |
 
-Fixture: 29 hand-labeled cross-domain episodes covering 25 domains (`crates/ctxgraph-extract/tests/fixtures/cross_domain_v2.json`). Scoring code: `scripts/openrouter_bench.py` + `scripts/graphiti_openrouter_bench.py`. Raw per-episode outputs: `scripts/results/v0.9_cross_domain_v2/*.json`. Total cost to reproduce: ~$0.15.
+**vs Graphiti — same model (gemini-2.5-flash-lite), same fixture, same scorer** (after fixing the bug): combined F1 **0.638 (ctxgraph) vs 0.636 (Graphiti)** — a statistical tie on extraction. The real, measured advantage is efficiency:
 
-[Full benchmark detail → docs/BENCHMARKS.md](docs/BENCHMARKS.md)
+| | LLM calls / episode (measured) | local Gemma-4-12B latency |
+|---|---|---|
+| **ctxgraph** | **1.0** | **~33 s/ep** |
+| Graphiti | 2.55 | ~84 s/ep |
+
+→ **equivalent extraction quality at ~2.6× fewer LLM calls, fully local, $0 marginal cost.** That — not an accuracy edge — is the moat.
 
 ---
 
@@ -199,31 +207,33 @@ crates/
 └── ctxgraph-mcp/       MCP server
 ```
 
-## Reproducing the benchmark
+## Reproducing the benchmarks
 
 ```bash
 export OPENROUTER_API_KEY=sk-or-...
-python scripts/openrouter_bench.py \
-  --model google/gemma-4-26b-a4b-it \
-  --out bench.json \
-  --skip-tech \
-  --cd-fixture crates/ctxgraph-extract/tests/fixtures/cross_domain_v2.json
 
-# Spin up Neo4j for Graphiti
-docker run -d --name neo4j-bench -p 7687:7687 \
-  -e NEO4J_AUTH=neo4j/benchpass123 neo4j:5.26-community
+# 1) Third-party accuracy on CoNLL04 (auto-fetches the dataset; strict directional+typed scorer)
+python scripts/conll04_bench.py --model google/gemini-2.5-flash-lite --out conll04.json --limit 80
+#   …or against a LOCAL model via ollama (no API cost):
+python scripts/conll04_bench.py --model 'hf.co/<your>/gemma-gguf:Q4_K_M' \
+  --base-url http://localhost:11434/v1/chat/completions --out conll04_local.json --limit 40
 
-# Graphiti through OpenRouter (needs Python 3.12 venv)
-python3.12 -m venv /tmp/graphiti_venv
-/tmp/graphiti_venv/bin/pip install graphiti-core neo4j openai
-/tmp/graphiti_venv/bin/python scripts/graphiti_openrouter_bench.py \
-  --model google/gemma-4-26b-a4b-it \
-  --out graphiti.json
+# 2) Cross-domain model bake-off (ctxgraph single-call prompt)
+python scripts/openrouter_bench.py --model deepseek/deepseek-v3.2 --out bench.json \
+  --skip-tech --cd-fixture crates/ctxgraph-extract/tests/fixtures/cross_domain_v2.json
 
-python scripts/compare_v2.py
+# 3) ctxgraph-vs-Graphiti, same model, same scorer (needs Neo4j + graphiti venv)
+docker run -d --name neo4j-bench -p 7687:7687 -e NEO4J_AUTH=neo4j/benchpass123 neo4j:5.26
+python3 -m venv .venv-graphiti && .venv-graphiti/bin/pip install graphiti-core neo4j fastembed
+.venv-graphiti/bin/python scripts/graphiti_openrouter_bench.py \
+  --model google/gemini-2.5-flash-lite --out graphiti.json
+
+# 4) Cost/efficiency: measure Graphiti's ACTUAL LLM calls/episode vs ctxgraph's 1
+.venv-graphiti/bin/python scripts/cost_efficiency_bench.py --model google/gemini-2.5-flash-lite
 ```
 
-Total cost: ~$0.15. Total wall-clock: ~90 minutes.
+Each model run costs ~$0.005–0.02 on OpenRouter; the CoNLL04 dataset is fetched
+from HuggingFace at run time (no third-party data committed to the repo).
 
 ## Contributing
 
