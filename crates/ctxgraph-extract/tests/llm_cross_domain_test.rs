@@ -177,7 +177,10 @@ fn llm_smoke_test() {
         }
     }
 
-    eprintln!("\nsmoke summary: {failures}/{} samples errored", samples.len());
+    eprintln!(
+        "\nsmoke summary: {failures}/{} samples errored",
+        samples.len()
+    );
     assert!(
         any_nonempty,
         "model returned zero entities on every smoke sample (or every call errored) — \
@@ -212,8 +215,11 @@ fn llm_cross_domain_hard_test() {
         let (predicted_entities, predicted_strict, predicted_relations) =
             match extractor.extract(&ep.text, &schema) {
                 Ok(result) => {
-                    let names: Vec<String> =
-                        result.entities.iter().map(|e| e.text.to_lowercase()).collect();
+                    let names: Vec<String> = result
+                        .entities
+                        .iter()
+                        .map(|e| e.text.to_lowercase())
+                        .collect();
                     let strict: Vec<String> = result
                         .entities
                         .iter()
@@ -240,8 +246,11 @@ fn llm_cross_domain_hard_test() {
                 }
             };
 
-        let expected_entities: Vec<String> =
-            ep.expected_entities.iter().map(|e| e.name.to_lowercase()).collect();
+        let expected_entities: Vec<String> = ep
+            .expected_entities
+            .iter()
+            .map(|e| e.name.to_lowercase())
+            .collect();
         let expected_strict: Vec<String> = ep
             .expected_entities
             .iter()
@@ -315,6 +324,9 @@ fn llm_cross_domain_hard_test() {
     eprintln!("Overall avg entity F1 (strict): {avg_entity_strict_f1:.3}");
     eprintln!("Overall avg relation F1:        {avg_relation_f1:.3}");
     eprintln!("Overall combined F1:            {combined_f1:.3}");
-    eprintln!("Episodes with extraction errors: {error_episodes}/{}", episodes.len());
+    eprintln!(
+        "Episodes with extraction errors: {error_episodes}/{}",
+        episodes.len()
+    );
     eprintln!("================================");
 }
