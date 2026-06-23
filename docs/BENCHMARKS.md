@@ -4,21 +4,47 @@
 > **Master working doc**: `CLARITY.md` — this is the measured-evidence backing for its claims.
 > **Supersedes**: `archive/benchmark_v0.6.md` (historical tech-only baseline) and `archive/benchmark_v0.9_round1.md` (round-1 5-model run on tech + small CD).
 >
-> ⚠️ **Schema note for v0.3 forward**: The numbers in this doc are measured against the legacy tech-focused 10/9 schema that's still hard-coded in `crates/ctxgraph-extract/src/schema.rs`. From v0.3 W3 onward (per `CLARITY.md` § 3 / Piece 1 + `ROADMAP.md`), the schema swaps to a **universal 9/10 taxonomy** (Person, Place, Organization, Concept, Artifact, Event, Time, Idea, Fact). The 29-episode `cross_domain_v2` fixture will need a one-time relabel-to-universal-schema pass before the v0.3 launch re-run. The apples-to-apples ctxgraph-vs-Graphiti deltas (+0.227, +0.272) are expected to hold or improve under the universal schema since both systems will be scored against the same updated labels — the architectural win doesn't depend on the schema choice. The deltas will be re-verified in W7 of the roadmap.
+> ⚠️ **Schema note for v0.3 forward**: The numbers in this doc are measured against the legacy tech-focused 10/9 schema that's still hard-coded in `crates/ctxgraph-extract/src/schema.rs`. From v0.3 W3 onward (per `CLARITY.md` § 3 / Piece 1 + `ROADMAP.md`), the schema swaps to a **universal 9/10 taxonomy** (Person, Place, Organization, Concept, Artifact, Event, Time, Idea, Fact). The 29-episode `cross_domain_v2` fixture will need a one-time relabel-to-universal-schema pass before the v0.3 launch re-run. ~~The apples-to-apples deltas (+0.227, +0.272) are expected to hold.~~ **RETRACTED (2026-06): those deltas were a measurement artifact (un-scoped Graphiti relation query) — see the CORRECTION below. Corrected result is a quality tie; the defensible win is call-efficiency (1 vs ~2.6 calls/episode), not accuracy.**
 > **Synthesizes**: session-measured results from `docs/research_brief.md` + the hostile-reader audit from `docs/deep-research/FINAL.md` § 1, § 11.
 
 ---
 
-## TL;DR — the only number you should lead with
+## ⚠️ CORRECTION (2026-06) — the +0.227 claim was a measurement artifact, retracted
 
-> **Same LLM, same fixture, same scoring code. ctxgraph's single-call schema-typed prompt beats Graphiti's 6-call pipeline by +0.227 combined F1 (Gemma 4 26B) and +0.272 (Gemma 4 31B). The win replicates across both LLMs → it is architectural, not model-specific.**
+A 5-reviewer adversarial audit + direct re-verification found the original
+ctxgraph-vs-Graphiti result was **biased in ctxgraph's favor by a benchmark bug**,
+not a real capability gap:
 
-| Same LLM, two systems | ctxgraph (1 call) | Graphiti (~6 calls) | Δ |
-|---|---|---|---|
-| **Gemma 4 26B-A4B** — combined F1 | **0.687** | 0.460 | **+0.227** |
-| **Gemma 4 31B** — combined F1 | **0.739** | 0.467 | **+0.272** |
+- **The leak:** `graphiti_openrouter_bench.py` read Graphiti's relations with **no
+  `group_id` filter and a `LIMIT 50`**, scoring Graphiti against up to 50 edges from
+  the entire accumulating graph (`pred_rels` pinned at 50) while ctxgraph was scored
+  against its own ~4. This mechanically capped Graphiti relation F1 at ~0.08
+  regardless of quality. **Fixed** (reads now scoped by `group_id`).
+- **Corrected result** (same model gemini-2.5-flash-lite, same fixture, same scorer):
+  ctxgraph **0.638** vs Graphiti **0.636** — **a tie.** The +0.227 was the bug.
+- **"6-call pipeline"** was also unverified: Graphiti's *measured* call count on this
+  fixture is **2.55 calls/episode** (minimal extraction path), not 6.
+- Extraction **quality is equivalent** across ctxgraph, Graphiti, local Gemma-4-12B,
+  and cloud DeepSeek (all within ~0.02 on these fixtures).
 
-Pass-3 audit confirms this is the strongest defensible claim — it doesn't depend on model choice, schema bias, or LLM-as-judge methodology.
+## TL;DR — the honest, defensible claim
+
+> **At equivalent extraction quality, ctxgraph extracts a typed graph in ONE LLM call
+> per episode vs Graphiti's measured ~2.6, fully local — ~2.6× fewer calls → ~2.6×
+> faster on-device at $0 marginal cost. The advantage is architectural (single-call +
+> typed + local), NOT extraction accuracy.**
+
+| Same model (gemini-2.5-flash-lite), 29-ep cross_domain_v2 | ctxgraph | Graphiti (fixed) |
+|---|---|---|
+| combined F1 (pair-fuzzy) | 0.638 | 0.636 |
+| LLM calls / episode (**measured**) | **1.0** | 2.55 |
+| local Gemma-4-12B projection | **~33s/ep** | ~84s/ep |
+
+> ⚠️ Still open before any *public* claim: the pair-fuzzy scorer ignores relation
+> type/direction (use the strict variant for typed-graph quality); gold labels are
+> self-authored in ctxgraph's own schema; n=29, single run. A third-party dataset
+> (Re-DocRED/DocRED) + directional scorer + multi-run CIs are required for an
+> externally bulletproof claim.
 
 ---
 
