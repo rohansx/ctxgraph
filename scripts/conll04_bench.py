@@ -18,6 +18,7 @@ from pathlib import Path
 import requests
 
 EPISODES = Path("/tmp/ctxgraph-bakeoff/conll04_episodes.json")
+BASE_URL = "https://openrouter.ai/api/v1/chat/completions"  # overridable via --base-url (e.g. ollama)
 ENTITY_TYPES = ["Person", "Organization", "Location", "Other"]
 RELATION_TYPES = ["Work_For", "Live_In", "Located_In", "OrgBased_In", "Kill"]
 
@@ -83,7 +84,7 @@ def chat(model, system, user, key, timeout=120):
         p = {"model": model, "messages": [{"role": "system", "content": system},
              {"role": "user", "content": user}], "max_tokens": 1536}
         p.update(extra)
-        return requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=p, timeout=timeout)
+        return requests.post(BASE_URL, headers=headers, json=p, timeout=timeout)
     for extra in ({"temperature": 0, "reasoning": {"enabled": False}, "response_format": {"type": "json_object"}},
                   {"temperature": 0, "reasoning": {"enabled": False}}, {"temperature": 0}, {}):
         r = post(extra)
@@ -142,9 +143,10 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--limit", type=int, default=100)
     ap.add_argument("--verify", action="store_true")
+    ap.add_argument("--base-url", default=BASE_URL, help="OpenAI-compatible endpoint (e.g. http://localhost:11434/v1/chat/completions for local ollama)")
     a = ap.parse_args()
-    key = os.environ.get("OPENROUTER_API_KEY")
-    if not key: print("OPENROUTER_API_KEY not set", file=sys.stderr); sys.exit(1)
+    globals()["BASE_URL"] = a.base_url
+    key = os.environ.get("OPENROUTER_API_KEY", "ollama")  # local servers ignore the key
     ensure_episodes()
     eps = json.loads(EPISODES.read_text())[:a.limit]
     print(f"== {a.model} on CoNLL04 ({len(eps)} eps){' +verify' if a.verify else ''} ==", flush=True)
