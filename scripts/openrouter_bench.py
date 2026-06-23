@@ -65,14 +65,35 @@ Reply with ONLY valid JSON — no prose, no markdown fences.
 Entity types: {", ".join(ENTITY_TYPES)}
 Relation types: {", ".join(RELATION_TYPES)}
 
-Rules:
-- Use SHORT canonical names ("Redis" not "Redis cache server", "Stripe" not "Stripe SDK v2")
-- Teams/departments/roles are Person entities ("platform team", "treasury department")
-- Constraints are compliance requirements, SLAs, certifications, budget caps
-- Relation head/tail MUST be the EXACT name string from the entities list
-- For migrations prefer "replaced" over "depends_on"
+ENTITY rules:
+- Use the SHORTEST atomic canonical name. SPLIT compound phrases into separate
+  entities: "Python-based trading engine" -> "Python" (Language) AND "trading engine"
+  (Service); "COBOL-based clearing system" -> "COBOL" AND "clearing system".
+- Strip qualifiers/suffixes: "FHIR R4 APIs" -> "FHIR R4"; "Epic's MyChart" -> "MyChart";
+  "Redis cache server" -> "Redis".
+- Teams/departments/roles are Person ("platform team", "compliance officer").
+- Constraints = compliance requirements, SLAs, certifications, budget caps.
+
+RELATION rules — DIRECTION IS CRITICAL. head = SUBJECT/actor, tail = OBJECT:
+- "X chose/rejected/introduced/deprecated Y"   -> head=X, tail=Y
+- "X replaced Y"  (X is the NEW thing)         -> head=X, tail=Y
+- "X depends_on Y"  (X needs Y to work)        -> head=X, tail=Y
+- "X caused Y"                                  -> head=X, tail=Y
+- "X constrained_by Y"  (Y limits X)           -> head=X, tail=Y
+- head and tail MUST be EXACT names from your entities list.
+- Emit a relation ONLY if the text explicitly supports it AND its direction.
+  Prefer FEWER correct relations over many guesses; do not invent relations.
 
 Schema: {{"entities":[{{"name":"...","entity_type":"..."}}], "relations":[{{"head":"...","relation":"...","tail":"..."}}]}}"""
+
+# Optional second pass (Step 2): repair relation direction / spurious edges.
+VERIFY_PROMPT = """You are auditing an entity-relation extraction for errors.
+Given the TEXT and the extracted JSON, return CORRECTED JSON (identical schema):
+- Fix any relation whose DIRECTION is reversed (head must be the subject/actor).
+- DELETE relations not explicitly supported by the text, or whose head/tail are
+  not present in the entities list.
+- Do NOT add new entities. Keep correct items unchanged.
+Reply with ONLY the corrected JSON, no prose."""
 
 
 # ── F1 scoring ──────────────────────────────────────────────────────
@@ -176,16 +197,8 @@ def score_relations(
 # ── OpenRouter call ─────────────────────────────────────────────────
 
 
-def call_model(model: str, text: str, api_key: str, timeout: int = 120) -> tuple[dict, dict]:
-    """Returns (parsed_json, usage_meta).
-
-    Fairness fixes (bias audit): extraction is not a reasoning task, but several
-    strong models (gpt-5-mini, MiniMax, GLM) are reasoning models — with reasoning
-    ON they burned the token budget thinking and returned empty/non-JSON content,
-    which the old parser scored as 0 (a harness artifact, not model quality). We
-    now (1) disable reasoning, (2) request JSON output mode, (3) raise the token
-    cap, and (4) fall back to reasoning_content and strip <think> blocks.
-    """
+def _chat(model: str, system: str, user: str, api_key: str, timeout: int) -> tuple[dict, dict]:
+    """One LLM round-trip → (parsed_json, usage). Tiered fallback + robust parse."""
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -197,8 +210,8 @@ def call_model(model: str, text: str, api_key: str, timeout: int = 120) -> tuple
         payload = {
             "model": model,
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": text},
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
             ],
             "max_tokens": 2048,
         }
@@ -208,8 +221,7 @@ def call_model(model: str, text: str, api_key: str, timeout: int = 120) -> tuple
             headers=headers, json=payload, timeout=timeout,
         )
 
-    # Tiered fallback so every model gets a fair shot at emitting parseable JSON.
-    # Some providers reject response_format, the `reasoning` param, or temperature=0
+    # Some providers reject response_format / the `reasoning` param / temperature=0
     # (e.g. GPT-5 reasoning models) — progressively drop the strictest params.
     attempts = [
         {"temperature": 0, "reasoning": {"enabled": False}, "response_format": {"type": "json_object"}},
@@ -227,16 +239,13 @@ def call_model(model: str, text: str, api_key: str, timeout: int = 120) -> tuple
 
     msg = body["choices"][0]["message"]
     content = msg.get("content") or msg.get("reasoning_content") or msg.get("reasoning") or ""
-    # Strip reasoning <think>...</think> preamble if any leaked into content
     if "</think>" in content:
         content = content.split("</think>", 1)[1]
-    # Strip code fences if present
     if "```" in content:
         if "```json" in content:
             content = content.split("```json", 1)[1].split("```", 1)[0]
         else:
             content = content.split("```", 1)[1].split("```", 1)[0]
-    # Trim to JSON object
     if "{" in content and "}" in content:
         content = content[content.index("{"): content.rindex("}") + 1]
     try:
@@ -246,10 +255,33 @@ def call_model(model: str, text: str, api_key: str, timeout: int = 120) -> tuple
     return parsed, body.get("usage", {})
 
 
+def call_model(model: str, text: str, api_key: str, timeout: int = 120,
+               verify: bool = False) -> tuple[dict, dict]:
+    """Returns (parsed_json, usage_meta).
+
+    Single schema-typed call (reasoning off + JSON mode + robust parse). With
+    verify=True, adds ONE repair pass (Step 2) that fixes relation direction and
+    deletes spurious/unsupported edges — measured against the single-call baseline.
+    """
+    parsed, usage = _chat(model, SYSTEM_PROMPT, text, api_key, timeout)
+    cost = float(usage.get("cost", 0) or 0)
+    toks = usage.get("total_tokens") or 0
+
+    if verify and not parsed.get("_parse_error") and (parsed.get("entities") or parsed.get("relations")):
+        payload = json.dumps({"entities": parsed.get("entities", []),
+                              "relations": parsed.get("relations", [])})
+        vp, vu = _chat(model, VERIFY_PROMPT, f"TEXT:\n{text}\n\nEXTRACTION:\n{payload}", api_key, timeout)
+        if not vp.get("_parse_error"):
+            parsed = vp
+        usage = {"cost": cost + float(vu.get("cost", 0) or 0),
+                 "total_tokens": toks + (vu.get("total_tokens") or 0)}
+    return parsed, usage
+
+
 # ── Runner ──────────────────────────────────────────────────────────
 
 
-def run_fixture(model: str, fixture: list[dict], label: str, api_key: str) -> dict:
+def run_fixture(model: str, fixture: list[dict], label: str, api_key: str, verify: bool = False) -> dict:
     print(f"\n══ {model} on {label} ({len(fixture)} episodes) ══", flush=True)
     per_ep = []
     cost_total = 0.0
@@ -262,7 +294,7 @@ def run_fixture(model: str, fixture: list[dict], label: str, api_key: str) -> di
 
         start = time.time()
         try:
-            parsed, usage = call_model(model, text, api_key)
+            parsed, usage = call_model(model, text, api_key, verify=verify)
             elapsed = time.time() - start
             time_total += elapsed
             cost_total += float(usage.get("cost", 0) or 0)
@@ -353,6 +385,7 @@ def main():
     ap.add_argument("--skip-tech", action="store_true")
     ap.add_argument("--skip-cd", action="store_true")
     ap.add_argument("--cd-fixture", default=None, help="Override cross-domain fixture path")
+    ap.add_argument("--verify", action="store_true", help="Add a relation-repair second pass (Step 2)")
     args = ap.parse_args()
 
     api_key = os.environ.get("OPENROUTER_API_KEY")
@@ -371,10 +404,10 @@ def main():
     results = {"model": args.model, "tech": None, "cross_domain": None}
 
     if not args.skip_tech:
-        results["tech"] = run_fixture(args.model, tech, "tech (50ep)", api_key)
+        results["tech"] = run_fixture(args.model, tech, "tech (50ep)", api_key, verify=args.verify)
         print_summary(results["tech"])
     if not args.skip_cd:
-        results["cross_domain"] = run_fixture(args.model, cd, "cross-domain (10ep)", api_key)
+        results["cross_domain"] = run_fixture(args.model, cd, "cross-domain (10ep)", api_key, verify=args.verify)
         print_summary(results["cross_domain"])
 
     Path(args.out).write_text(json.dumps(results, indent=2))

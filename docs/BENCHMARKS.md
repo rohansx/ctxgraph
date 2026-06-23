@@ -48,6 +48,39 @@ not a real capability gap:
 
 ---
 
+## Third-party validation: CoNLL04 (2026-06) — bias-free numbers
+
+To remove the "open-book gold" objection (the cross_domain fixtures were labeled
+in ctxgraph's own schema), single-call extraction was measured on **CoNLL04** — a
+standard RE dataset neither tool authored — with a **strict directional + typed**
+relation scorer (head→tail order and relation type must match). 80 test sentences,
+auto-fetched + scored by `scripts/conll04_bench.py`.
+
+| Model (single call) | entity F1 | **relation F1 (directional+typed)** | relation F1 (lenient) |
+|---|---|---|---|
+| google/gemini-2.5-flash-lite | 0.846 | **0.560** | 0.647 |
+| deepseek/deepseek-v3.2 | 0.861 | **0.514** | 0.568 |
+
+These are **higher** than on the self-authored fixture (strict relation 0.24–0.41),
+because CoNLL04 is cleaner and the scoring is honest — and they hold up under a
+directional metric on third-party data. This is the defensible accuracy claim.
+
+### Ablations (measured, both negative/modest — recorded for honesty)
+
+- **Verify/repair second pass: makes relations WORSE, every model.** A second LLM
+  call to fix direction/spurious edges *dropped* directional F1 in all 4 tests
+  (CoNLL04 gemini 0.560→0.288, deepseek 0.514→0.476; cross-domain similar). It
+  removes correct edges faster than it fixes wrong ones. **Single call stays.**
+- **Direction/canonicalization prompt rules: mixed/modest.** Strict relation F1
+  on cross-domain: deepseek 0.241→0.331, minimax 0.271→0.322 (better), gemini
+  0.345→0.314 (slightly worse). Kept (free), but not a breakthrough.
+
+**Takeaway:** more LLM calls do not buy accuracy here — the single-call architecture
+is both the cheaper *and* the equal-or-better-quality choice. The moat is the
+1-call efficiency (vs Graphiti's measured 2.55) + local-native, at parity accuracy.
+
+---
+
 ## v0.3 universal-pipeline smoke test (Pieces 1–5, measured 2026-05-14)
 
 A second measurement, separate from the headline above: an end-to-end smoke test of the five CLARITY pieces against 25 hand-labeled wiki-style episodes spanning 14 domains (`universal_smoke.json`). Both backends side-by-side. **Cerebras free tier is included as the recommended Mode B default per CLARITY § 4.**
