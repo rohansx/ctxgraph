@@ -72,9 +72,8 @@ fn find_models_dir(db_path: &std::path::Path) -> Option<PathBuf> {
         }
     }
 
-    // 2. ~/.cache/ctxgraph/models
-    if let Ok(home) = env::var("HOME") {
-        let p = PathBuf::from(home).join(".cache/ctxgraph/models");
+    // 2. Default cache directory (XDG or macOS)
+    if let Ok(p) = ctxgraph_extract::model_manager::ModelManager::default_cache_dir() {
         if p.is_dir() {
             return Some(p);
         }
