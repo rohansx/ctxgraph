@@ -9,7 +9,10 @@ pub fn run(
     _source: Option<String>,
 ) -> ctxgraph::Result<()> {
     let graph = open_graph()?;
-    let results = graph.search(&text, limit)?;
+
+    let safe_query = super::query_universal::sanitize_query(&text);
+
+    let results = graph.search(&safe_query, limit)?;
 
     if results.is_empty() {
         println!("No results found for '{text}'");
