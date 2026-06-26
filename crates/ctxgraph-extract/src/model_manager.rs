@@ -123,6 +123,13 @@ impl ModelManager {
                 .progress_chars("#>-"),
         );
 
+        if let Some(parent) = dest.parent() {
+            fs::create_dir_all(parent).map_err(|e| ModelManagerError::Io {
+                context: format!("creating directory {}", parent.display()),
+                source: e,
+            })?;
+        }
+
         let mut file = fs::File::create(&dest).map_err(|e| ModelManagerError::Io {
             context: format!("creating {}", dest.display()),
             source: e,
