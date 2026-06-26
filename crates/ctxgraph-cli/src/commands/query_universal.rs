@@ -170,20 +170,7 @@ pub fn run(query_text: String, limit: usize) -> ctxgraph::Result<()> {
     }
 
     // ── Stage 3: fallback fused search ───────────────────────────
-    // FTS5 doesn't like punctuation. Strip everything except word chars.
-    let safe_query: String = query_text
-        .chars()
-        .map(|c| {
-            if c.is_alphanumeric() || c == ' ' || c == '_' {
-                c
-            } else {
-                ' '
-            }
-        })
-        .collect::<String>()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
+    let safe_query = sanitize_query(&query_text);
 
     println!("\n  FALLBACK fused search results:");
     let entity_hits = graph.search_entities(&safe_query, limit.min(10))?;
@@ -300,20 +287,7 @@ fn split_verb_entity(
 }
 
 fn exact_entity_lookup(graph: &ctxgraph::Graph, name: &str) -> ctxgraph::Result<Option<Entity>> {
-    // Strip punctuation for FTS5 compatibility
-    let safe: String = name
-        .chars()
-        .map(|c| {
-            if c.is_alphanumeric() || c == ' ' || c == '_' {
-                c
-            } else {
-                ' '
-            }
-        })
-        .collect::<String>()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
+    let safe = sanitize_query(name);
     if safe.is_empty() {
         return Ok(None);
     }
@@ -326,6 +300,22 @@ fn exact_entity_lookup(graph: &ctxgraph::Graph, name: &str) -> ctxgraph::Result<
         }
     }
     Ok(None)
+}
+
+/// Sanitize a query string for FTS5 by stripping non-alphanumeric characters.
+pub fn sanitize_query(text: &str) -> String {
+    text.chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c == ' ' || c == '_' {
+                c
+            } else {
+                ' '
+            }
+        })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn is_pure_stopwords(s: &str) -> bool {
