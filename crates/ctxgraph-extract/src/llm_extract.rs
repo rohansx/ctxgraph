@@ -162,6 +162,14 @@ pub struct LlmConfig {
     pub auto_escalate: bool,
 }
 
+fn ensure_chat_path(url: String) -> String {
+    if url.contains("/chat/completions") {
+        url
+    } else {
+        format!("{}/chat/completions", url.trim_end_matches('/'))
+    }
+}
+
 fn default_true() -> bool {
     true
 }
@@ -195,7 +203,7 @@ impl LlmExtractor {
         }
 
         let url = if !config.base_url.is_empty() {
-            format!("{}/chat/completions", config.base_url.trim_end_matches('/'))
+            ensure_chat_path(config.base_url.clone())
         } else {
             match config.provider.as_str() {
                 "nvidia" => "http://localhost:4000/v1/chat/completions".to_string(),
@@ -256,7 +264,7 @@ impl LlmExtractor {
         if let Ok(key) = std::env::var("CTXGRAPH_LLM_KEY")
             && !key.is_empty()
         {
-            let url = std::env::var("CTXGRAPH_LLM_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());
+            let url = ensure_chat_path(std::env::var("CTXGRAPH_LLM_URL").unwrap_or_else(|_| DEFAULT_URL.to_string()));
             let model =
                 std::env::var("CTXGRAPH_LLM_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string());
             let client = reqwest::blocking::Client::builder()
@@ -310,7 +318,7 @@ impl LlmExtractor {
             return None;
         };
 
-        let url = std::env::var("CTXGRAPH_LLM_URL").unwrap_or(default_url);
+        let url = ensure_chat_path(std::env::var("CTXGRAPH_LLM_URL").unwrap_or(default_url));
         let model =
             std::env::var("CTXGRAPH_LLM_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string());
 
@@ -568,11 +576,14 @@ RULES:
         schema: &ExtractionSchema,
     ) -> Result<LlmExtractionResult, LlmError> {
         // Try strict JSON schema first
-        if let Ok(result) = self.extract_strict(text, schema) {
-            return Ok(result);
+        match self.extract_strict(text, schema) {
+            Ok(result) => Ok(result),
+            Err(_e) => {
+                // If the model explicitly rejects response_format, immediately fall back.
+                // Otherwise, if it's a 4xx error that might be related to strict config, fall back.
+                self.extract_prompt_json(text, schema)
+            }
         }
-        // Fall back to prompt-based JSON for small models
-        self.extract_prompt_json(text, schema)
     }
 
     fn extract_strict(
